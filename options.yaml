@@ -1,0 +1,41 @@
+### sample configuration file for ezextensionbuilder
+### to be saved in $myextension/pake
+
+extension:
+    name: myextension
+
+# extension properties 
+version:
+    major: 1
+    minor: 0
+    release: 0alpha
+
+    license:  GNU General Public License v2.0
+
+create:
+    tarball: yes
+
+# ezpublish properties: required version
+ezp:
+    version:
+        major: 4
+        minor: 5
+        release: 0beta2
+
+# Subversion url
+svn:
+    url: http://svn.projects.ez.no/myexetension/trunk/extension/myexetension
+
+# Git url
+git:
+    url: http://svn.projects.ez.no/myexetension/trunk/extension/myexetension
+
+# working directories
+build:
+    dir: build
+dist:
+    dir: dist
+
+# misc stuff
+releasenr:
+    separator: .

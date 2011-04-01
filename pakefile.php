@@ -1,0 +1,306 @@
+<?php
+/**
+ * eZExtensionBuilder pakefile
+ *
+ * @author G. Giunta
+ * @copyright
+ * @license (C) G. Giunta 2011
+ * @version SVN: $Id$
+ *
+ * @todo switch to an ini-file based configuration instead of yaml? advantages:
+*        . easier options parsing, everything is on 2 levels
+*        . pake code holds options instead of our class
+*/
+
+pake_desc( 'Shows help message' );
+pake_task( 'default' );
+
+pake_desc( 'Shows the properties for this build file' );
+pake_task( 'show-properties' );
+
+pake_desc( 'Prepares the extension to be built' );
+pake_task( 'init' );
+
+pake_desc( 'Builds the extension' );
+pake_task( 'build', array( 'init' ) );
+
+pake_desc( 'Removes the entire build directory' );
+pake_task( 'clean' );
+
+pake_desc( 'Removes the build/ and the dist/ directory' );
+pake_task( 'clean-all' );
+
+pake_desc( 'Removes the generated tarball' );
+pake_task( 'dist-clean' );
+
+pake_desc( 'Updates ezinfo.php with correct version numbers' );
+pake_task( 'update-ezinfo' );
+
+pake_desc( 'Update license headers in source code files' );
+pake_task( 'update-license-headers' );
+
+pake_desc( 'Updates extra files with correct version numbers and licensing info' );
+pake_task( 'update-extra-files' );
+
+pake_desc( 'Generates the document of the extension, if created in RST' );
+pake_task( 'generate-documentation' );
+
+pake_desc( 'Checks PHP code coding standard, requires PHPCodeSniffer' );
+pake_task( 'coding-standards-check' );
+
+pake_desc( 'Generates an MD5 file with all md5 sums of source code files' );
+pake_task( 'generate-md5sums' );
+
+pake_desc( 'Checks if a schema.sql / cleandata.sql is available for supported databases' );
+pake_task( 'check-sql-files' );
+
+pake_desc( 'Checks for LICENSE and README files' );
+pake_task( 'check-gnu-files' );
+
+pake_desc( 'Generates an XML definition for eZ Publish extension package types' );
+pake_task( 'generate-ezpackage-xml-definition' );
+
+pake_desc( 'Updates version numbers in package.xml' );
+pake_task( 'update-package-xml' );
+
+pake_desc( 'Build dependent extensions' );
+pake_task( 'build-dependencies' );
+
+pake_desc( 'Creates tarballs for ezpackages.' );
+pake_task( 'create-package-tarballs' );
+
+pake_desc( 'Converts an existing ant properties file in its corresponding yaml version' );
+pake_task( 'convert-configuration' );
+
+// ***
+
+function run_default()
+{
+    pake_echo ( 'Please run : pake --tasks to learn more about available tasks' );
+}
+
+function run_show_properties()
+{
+    $opts = eZExtBuilder::getOpts();
+    pake_echo ( 'Build dir: ' . $opts['build']['dir'] );
+    pake_echo ( 'Extension name: ' . $opts['extension']['name'] );
+}
+
+
+function run_init()
+{
+    $opts = eZExtBuilder::getOpts();
+    pake_mkdirs( $opts['build']['dir'] );
+
+    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    if ( @$opts['svn']['url'] != '' )
+    {
+        pake_echo( 'Fetching code from SVN repository' );
+        pakeSubversion::checkout( $opts['svn']['url'], $destdir );
+    }
+    else if ( @$opts['git']['url'] != '' )
+    {
+        pake_echo( 'Fetching code from GIT repository' );
+        pakeGit::clone_repository( $opts['git']['url'], $destdir );
+        if ( @$opts['git']['branch'] != '' )
+        {
+            /// @todo allow to check out a specific branch
+            pakeGit::checkout_repo( $destdir, @$opts['git']['branch'] );
+        }
+    }
+    else
+    {
+        throw new pakeException( "Missing source repo option: either svn:url or git:url" );
+    }
+
+    // remove files
+    if ( file_exists( 'pake/files.to.exclude.txt' ) )
+    {
+        //var_dump(array_reverse(pakeFinder::get_files_from_argument(file( 'pake/files.to.exclude.txt' ), $destdir)));
+        pake_remove( file( 'pake/files.to.exclude.txt' ), $destdir );
+    }
+}
+
+function run_clean()
+{
+    $opts = eZExtBuilder::getOpts();
+    pake_remove_dir( $opts['build']['dir'] );
+}
+
+function run_clean_all()
+{
+    /// @todo shall we pass via some pake call?
+    run_clean();
+    run_dist_clean();
+}
+
+function run_dist_clean()
+{
+    $opts = eZExtBuilder::getOpts();
+    pake_remove_dir( $opts['dist']['dir'] );
+}
+
+function run_convert_configuration()
+{
+    $extname = dirname(__FILE__);
+    while ( !is_file( "ant/$extname.properties" ) )
+    {
+        $extname = pake_input( 'What is the name of the current extension?' );
+        if ( !is_file( "ant/$extname.properties" ) )
+        {
+            pake_echo( "File ant/$extname.properties not found" );
+        }
+    }
+
+    eZExtBuilder::covertPropertyFileToYamlFile(
+        "ant/$extname.properties",
+        'pake/options.yaml',
+        array( $extname => '' ),
+        "extension:\n    name: $extname\n\n" );
+
+    foreach( array( 'files.to.parse.txt', 'files.to.exclude.txt' ) as $file )
+    {
+        $src = "ant/$file";
+        $dst = "pake/$file";
+        if ( file_exists( $src ) )
+        {
+            $ok = !file_exists( $dst ) || ( pake_input( "Destionation file $dst exists. Overwrite? [y/n]", 'n' ) == 'y' );
+            $ok && pake_copy( $src, $dst, array( 'override' => true ) );
+        }
+    }
+}
+
+// ***
+
+class eZExtBuilder
+{
+    static $options = null;
+
+    static function getOpts()
+    {
+        if ( !is_array( self::$options ) )
+        {
+            self::loadConfiguration();
+        }
+        return self::$options;
+    }
+
+    /// @bug this only works as long as all defaults are 2 leles deep
+    static function loadConfiguration ( $infile='pake/options.yaml' )
+    {
+        $mandatory_opts = array( 'extension' => array( 'name' ), 'version' => array( 'major', 'minor', 'release' ) );
+        $default_opts = array(
+            'build' => array( 'dir' => 'build' ),
+            'dist' => array( 'dir' => 'dist' ),
+            'create' => array( 'tarball' => false ),
+            'version' => array( 'license' => 'GNU General Public License v2.0' ),
+            'releasenr' => array( 'separator' => '-' ) );
+        /// @todo !important: test i !file_exists give a nicer warning than what we get from loadFile()
+        $options = pakeYaml::loadFile( $infile );
+        foreach( $mandatory_opts as $key => $opts )
+        {
+            foreach( $opts as $opt )
+            {
+                if ( !isset( $options[$key][$opt] ) )
+                {
+                    throw new pakeException( "Missing mandatory option: $key:$opt" );
+                }
+            }
+        }
+        if ( !isset( $options['version']['alias'] ) )
+        {
+            $options['version']['alias'] = $options['version']['major'] . '.' . $options['version']['minor'];
+        }
+        foreach( $default_opts as $key => $opts )
+        {
+
+            if ( isset($options[$key] ) && is_array( $options[$key] ) )
+            {
+                $options[$key] = array_merge( $opts, $options[$key] );
+            }
+            else
+            {
+                /// @todo echo a warning if $options[$key] is set but not array?
+                $options[$key] = $opts;
+            }
+        }
+        self::$options = $options;
+        return true;
+    }
+
+    /// @todo move to a separate class
+    static function covertPropertyFileToYamlFile( $infile, $outfile='pake/options.yaml', $transform = array(), $prepend='' )
+    {
+        $current = array();
+        $out = array();
+        foreach ( file( $infile ) as $line )
+        {
+            $line = trim( $line );
+            if ( $line == '' )
+            {
+                $out[] = '';
+            }
+            else if ( strpos( $line, '<!--' ) === 0 )
+            {
+                $out[] .= preg_replace( '/^<!-- *(.*) *-->$/', '# $1', $line );
+            }
+            else if ( strpos( $line, '=' ) != 0 )
+            {
+                $line = explode( '=', $line, 2 );
+                $path = explode( '.', trim( $line[0] ) );
+                foreach( $transform as $src => $dst )
+                {
+                    foreach( $path as $i => $element )
+                    {
+                        if ( $element == $src )
+                        {
+                            if ( $dst == '' )
+                            {
+                                unset( $path[$i] );
+                            }
+                            else
+                            {
+                                $path[$i] = $dst;
+                            }
+                        }
+                    }
+                }
+                $value = $line[1];
+                $token = array_pop( $path );
+                if ( $path != $current )
+                {
+                    // elements index can have holes here, cannot trust them => reorder
+                    foreach( array_values(  $path ) as $j => $element )
+                    {
+                        $line = '';
+                        for ( $i = 0; $i < $j; $i++ )
+                        {
+                            $line .= '    ';
+                        }
+                        $line .= $element . ':';
+                        $out[] = $line;
+                    }
+                }
+                $line = '';
+                for ( $i = 0; $i < count( $path ); $i++ )
+                {
+                    $line .= '    ';
+                }
+                $line .= $token . ': ' . $value;
+                $out[] = $line;
+                $current = $path;
+            }
+            else
+            {
+                /// @todo log warning?
+            }
+        }
+        pake_mkdirs( 'pake' );
+        // ask confirmation if file exists
+        $ok = !file_exists( $outfile ) || ( pake_input( "Destionation file $outfile exists. Overwrite? [y/n]", 'n' ) == 'y' );
+        $ok && file_put_contents( $outfile, $prepend . implode( $out, "\n" ) );
+    }
+
+}
+
+?>

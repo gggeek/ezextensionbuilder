@@ -1,6 +1,7 @@
 <?php
 /**
  * eZExtensionBuilder pakefile
+ * Needs the Pake tool to run: https://github.com/indeyets/pake/wiki
  *
  * @author G. Giunta
  * @copyright
@@ -10,6 +11,9 @@
  * @todo switch to an ini-file based configuration instead of yaml? advantages:
 *        . easier options parsing, everything is on 2 levels
 *        . pake code holds options instead of our class
+*
+* @bug at least on win, after using svn to checkout a project, the script does
+*      not have enough rights to remove the checkout dir...
 */
 
 pake_desc( 'Shows help message' );
@@ -21,8 +25,8 @@ pake_task( 'show-properties' );
 pake_desc( 'Prepares the extension to be built' );
 pake_task( 'init' );
 
-pake_desc( 'Builds the extension' );
-pake_task( 'build', array( 'init' ) );
+//pake_desc( 'Builds the extension' );
+//pake_task( 'build', array( 'init' ) );
 
 pake_desc( 'Removes the entire build directory' );
 pake_task( 'clean' );
@@ -33,6 +37,7 @@ pake_task( 'clean-all' );
 pake_desc( 'Removes the generated tarball' );
 pake_task( 'dist-clean' );
 
+/*
 pake_desc( 'Updates ezinfo.php with correct version numbers' );
 pake_task( 'update-ezinfo' );
 
@@ -68,6 +73,7 @@ pake_task( 'build-dependencies' );
 
 pake_desc( 'Creates tarballs for ezpackages.' );
 pake_task( 'create-package-tarballs' );
+*/
 
 pake_desc( 'Converts an existing ant properties file in its corresponding yaml version' );
 pake_task( 'convert-configuration' );
@@ -85,7 +91,6 @@ function run_show_properties()
     pake_echo ( 'Build dir: ' . $opts['build']['dir'] );
     pake_echo ( 'Extension name: ' . $opts['extension']['name'] );
 }
-
 
 function run_init()
 {
@@ -116,8 +121,12 @@ function run_init()
     // remove files
     if ( file_exists( 'pake/files.to.exclude.txt' ) )
     {
-        //var_dump(array_reverse(pakeFinder::get_files_from_argument(file( 'pake/files.to.exclude.txt' ), $destdir)));
-        pake_remove( file( 'pake/files.to.exclude.txt' ), $destdir );
+        $files = file( 'pake/files.to.exclude.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
+        $files = pakeFinder::type( 'file' )->name( $files )->in( $destdir );
+        foreach ( $files as $file )
+        {
+            pake_remove( $file, '' );
+        }
     }
 }
 

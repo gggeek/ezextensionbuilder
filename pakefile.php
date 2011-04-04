@@ -134,10 +134,10 @@ pake_task( 'update-ezinfo' );
 pake_desc( 'Update license headers in source code files' );
 pake_task( 'update-license-headers' );
 
-/*
 pake_desc( 'Updates extra files with correct version numbers and licensing info' );
 pake_task( 'update-extra-files' );
 
+/*
 pake_desc( 'Generates the document of the extension, if created in RST' );
 pake_task( 'generate-documentation' );
 
@@ -221,18 +221,7 @@ function run_init()
     /// @todo !important shall we make this configurable?
     $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php' );
     // files from user configuration
-    if ( file_exists( 'pake/files.to.exclude.txt' ) )
-    {
-        $files = array_merge( $files, file( 'pake/files.to.exclude.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES ) );
-    }
-    foreach ( $files as $i => $file )
-    {
-        $file = trim( $file );
-        if ( $file == '' || $file[0] == '#' )
-        {
-            unset( $files[$i] );
-        }
-    }
+    $files = array_merge( $files, eZExtBuilder::loadFileListFromFile( 'pake/files.to.exclude.txt' ) );
 
     /**
      Uses a regular expression to search and replace the correct string
@@ -315,6 +304,18 @@ function run_update_license_headers()
         '#// SOFTWARE RELEASE: (.*)#m' => '// SOFTWARE RELEASE: ' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] ) );
     pake_replace_regexp( $files, $destdir, array(
         '/Copyright \(C\) 1999-[\d]{4} eZ Systems AS/m' => 'Copyright (C) 1999-' . strftime( '%Y' ). ' eZ Systems AS' ) );
+}
+
+function run_update_extra_files()
+{
+    $opts = eZExtBuilder::getOpts();
+    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $extrafiles = eZExtBuilder::loadFileListFromFile( 'pake/files.to.parse.txt' );
+    $files = pakeFinder::type( 'file' )->name( $extrafiles )->in( $destdir );
+    pake_replace_tokens( $files, $destdir, '[', ']', array(
+        'EXTENSION_VERSION' => $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
+        'EXTENSION_PUBLISH_VERSION' => $opts['ezp']['version']['major'] . $opts['ezp']['version']['minor'] . $opts['ezp']['version']['release'],
+        'EXTENSION_LICENSE' => $opts['version']['license'] ) );
 }
 
 function run_convert_configuration()
@@ -478,6 +479,29 @@ class eZExtBuilder
         $ok && file_put_contents( $outfile, $prepend . implode( $out, "\n" ) );
     }
 
+    /**
+    * Reads a list of files from a txt file
+    * . one file per line
+    * . comment lines start with #
+    * . whitespace stripped at beginning/end of line
+    */
+    static function loadFileListFromFile( $file )
+    {
+        if ( !file_exists( $file ) )
+        {
+            return array();
+        }
+        $files = file( $file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
+        foreach ( $files as $i => $file )
+        {
+            $file = trim( $file );
+            if ( $file == '' || $file[0] == '#' )
+            {
+                unset( $files[$i] );
+            }
+        }
+        return array_values( $files );
+    }
 }
 
 }

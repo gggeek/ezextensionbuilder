@@ -162,10 +162,10 @@ pake_task( 'generate-documentation' );
 pake_desc( 'Generates an MD5 file with all md5 sums of source code files' );
 pake_task( 'generate-md5sums' );
 
-/*
 pake_desc( 'Checks if a schema.sql / cleandata.sql is available for supported databases' );
 pake_task( 'check-sql-files' );
 
+/*
 pake_desc( 'Checks for LICENSE and README files' );
 pake_task( 'check-gnu-files' );
 
@@ -368,7 +368,6 @@ function run_generate_documentation()
 
 }
 
-
 function run_generate_md5sums()
 {
     $opts = eZExtBuilder::getOpts();
@@ -383,6 +382,74 @@ function run_generate_md5sums()
     pake_mkdirs( $destdir . '/share' );
     file_put_contents( $destdir . '/share/filelist.md5', implode( "\n", $out ) );
     pake_echo_action('file+', $destdir . '/share/filelist.md5' );
+}
+
+/**
+* Checks if a schema.sql file is present for
+* any supported database
+*
+* The accepted directory structure is:
+*
+* myextension
+* |___share
+* |   |___db_schema.dba
+* |   `___db_data.dba
+* `__ sql
+*     |__ mysql
+*     |   |__ cleandata.sql
+*     |   `__ schema.sql
+*     |__ oracle
+*     |   |__ cleandata.sql
+*     |   `__ schema.sql
+*     `__ postgresql
+*         |__ cleandata.sql
+*         `__ schema.sql
+*
+* NB: there are NOT a lot of extensions currently following this schema.
+* Alternativate used are: sql/mysql/mysql.sql, sql/mysql/random.sql
+*/
+function run_check_sql_files()
+{
+    $opts = eZExtBuilder::getOpts();
+    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+
+    $schemafiles = array( 'share' => 'db_schema.dba', 'sql/mysql' => 'schema.sql', 'sql/oracle' => 'schema.sql', 'sql/postgres' => 'schema.sql' );
+    $count = 0;
+    foreach( $schemafiles as $dir => $file )
+    {
+        $files = pakeFinder::type( 'file' )->name( $file )->maxdepth( 1 )->in( $destdir . "/$dir" );
+        if ( count( $files ) )
+        {
+             if ( filesize( $files[0] ) == 0 )
+             {
+                 throw new pakeException( "Sql schema file {$files[0]} is empty. Please fix" );
+             }
+            $count++;
+        }
+    }
+    if ( $count > 0 && $count < 4 )
+    {
+        throw new pakeException( "Found some sql schema files but not all of them. Please fix" );
+    }
+
+    $datafiles = array( 'share' => 'db_data.dba', 'sql/mysql' => 'cleandata.sql', 'sql/oracle' => 'cleandata.sql', 'sql/postgres' => 'cleandata.sql' );
+    $count = 0;
+    foreach( $datafiles as $dir => $file )
+    {
+        $files = pakeFinder::type( 'file' )->name( $file )->maxdepth( 1 )->in( $destdir . "/$dir" );
+        if ( count( $files ) )
+        {
+            if ( filesize( $files[0] ) == 0 )
+            {
+                throw new pakeException( "Sql data file {$files[0]} is empty. Please fix" );
+            }
+            $count++;
+        }
+    }
+    if ( $count > 0 && $count < 4 )
+    {
+        throw new pakeException( "Found some sql data files but not all of them. Please fix" );
+    }
 }
 
 function run_convert_configuration()

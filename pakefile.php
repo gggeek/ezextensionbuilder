@@ -137,6 +137,15 @@ pake_task( 'clean' );
 pake_desc( 'Removes the build/ and the dist/ directory' );
 pake_task( 'clean-all' );
 
+pake_desc( 'Creates a tarball of the built extension' );
+pake_task( 'dist' );
+
+//pake_desc( 'Creates a tarball of all extensions in the build/ directory' );
+//pake_task( 'fat-dist' );
+
+pake_desc( 'Build the extension and generate the tarball' );
+pake_task( 'all' );
+
 pake_desc( 'Removes the generated tarball' );
 pake_task( 'dist-clean' );
 
@@ -277,6 +286,26 @@ function run_clean_all()
     /// @todo shall we pass via some pakeApp call?
     run_clean();
     run_dist_clean();
+}
+
+function run_dist()
+{
+    $opts = eZExtBuilder::getOpts();
+    if ( $opts['create']['tarball'] )
+    {
+        pake_mkdirs( $opts['dist']['dir'] );
+        $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] );
+        $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar.gz';
+        pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
+    }
+}
+
+function run_all()
+{
+    /// @todo shall we pass via some pakeApp call?
+    run_build();
+    run_dist();
+    // run_build_dependencies();
 }
 
 function run_dist_clean()

@@ -31,6 +31,21 @@ if ( !function_exists( 'pake_desc' ) )
     if ( file_exists( 'pake/src/bin/pake.php' ) )
     {
         include( 'pake/src/bin/pake.php' );
+
+        // try to force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
+        if ( !class_exists( 'ezcBase' ) )
+        {
+            @include( 'ezc/Base/base.php' ); // pear install
+            if ( !class_exists( 'ezcBase' ) )
+            {
+                @include( 'Base/src/base.php' ); // tarball download / svn install
+            }
+            if ( class_exists( 'ezcBase' ) )
+            {
+                spl_autoload_register( array( 'ezcBase', 'autoload' ) );
+            }
+        }
+
         $pake = pakeApp::get_instance();
         $pake->run();
     }
@@ -101,7 +116,8 @@ if ( !function_exists( 'pake_desc' ) )
         echo
             "Succesfully downloaded sources\n" .
             "  Next steps: copy pake/options-sample.yaml to pake/options.yaml, edit it\n" .
-            "  then run again this script";
+            "  then run again this script.\n".
+            "  Use the environment var PHP_CLASSPATH for proper class autoloading of eg. Zeta Components";
         exit( 0 );
 
     }
@@ -137,9 +153,10 @@ pake_task( 'update-license-headers' );
 pake_desc( 'Updates extra files with correct version numbers and licensing info' );
 pake_task( 'update-extra-files' );
 
-/*
 pake_desc( 'Generates the document of the extension, if created in RST' );
 pake_task( 'generate-documentation' );
+
+/*
 
 pake_desc( 'Checks PHP code coding standard, requires PHPCodeSniffer' );
 pake_task( 'coding-standards-check' );
@@ -280,7 +297,7 @@ function run_update_ezinfo()
     /// @todo shall we limit this to 1 level deep?
     $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->in( $destdir );
 
-    /**
+    /*
     * Uses a regular expression to search and replace the correct string
     * Within the file, please note there is a limit of 25 sets to indent 3rd party
     * lib version numbers, if you use more than 25 spaces the version number will
@@ -316,6 +333,40 @@ function run_update_extra_files()
         'EXTENSION_VERSION' => $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
         'EXTENSION_PUBLISH_VERSION' => $opts['ezp']['version']['major'] . $opts['ezp']['version']['minor'] . $opts['ezp']['version']['release'],
         'EXTENSION_LICENSE' => $opts['version']['license'] ) );
+}
+
+/**
+* @todo allow config file to specify doc dir
+* @todo parse any doxygen file found, too
+*/
+function run_generate_documentation()
+{
+    $opts = eZExtBuilder::getOpts();
+    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $docdir = $destdir . '/doc';
+    $files = pakeFinder::type( 'file' )->name( '*.rst' )->in( $docdir );
+    foreach ( $files as $i => $file )
+    {
+        // on 1st pass only: test if ezcDocumentRst can be found, write a nice error msg if not
+        if ( !$i && !class_exists( 'ezcDocumentRst' ) )
+        {
+            throw new pakeException( "Missing Zeta Components: cannot generate html doc from rst. Use the environment var PHP_CLASSPATH" );
+        }
+        $dst = substr( $file, 0, -3 ) . 'html';
+        $document = new ezcDocumentRst();
+        $document->loadFile( $file );
+        $docbook = $document->getAsXhtml();
+        file_put_contents( $dst, $docbook->save() );
+        pake_echo_action( 'file+', $dst );
+        pake_remove( $file, '' );
+    }
+
+    /*
+    * A few extension have Makefiles to generate documentation
+    * We remove them as well as original .rst files
+    */
+    pake_remove( pakeFinder::type( 'file' )->name( 'Makefile' )->in( $destdir ), '' );
+
 }
 
 function run_convert_configuration()

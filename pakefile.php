@@ -11,11 +11,7 @@
 * @license
 * @version   SVN: $Id$
 *
-* @todo switch to an ini-file based configuration instead of yaml? advantages:
-*        . easier options parsing, everything is on 2 levels
-*        . pake code holds options instead of our class
-*
-* @todo move all known paths to class constants
+* @todo move all known paths/names/... to class constants
 *
 * @todo add to php include dir a custom dir for our own pake tasks
 *
@@ -24,7 +20,7 @@
 */
 
 // First off, test if user is running directly this script
-// (we allow both direct invokation via "php pakefile.php" and invocation via "php pake.php")
+// (we allow both direct invocation via "php pakefile.php" and invocation via "php pake.php")
 if ( !function_exists( 'pake_desc' ) )
 {
     // the folder where this script installs the pake tool is pake/src
@@ -165,10 +161,10 @@ pake_task( 'generate-md5sums' );
 pake_desc( 'Checks if a schema.sql / cleandata.sql is available for supported databases' );
 pake_task( 'check-sql-files' );
 
-/*
 pake_desc( 'Checks for LICENSE and README files' );
 pake_task( 'check-gnu-files' );
 
+/*
 pake_desc( 'Generates an XML definition for eZ Publish extension package types' );
 pake_task( 'generate-ezpackage-xml-definition' );
 
@@ -451,6 +447,18 @@ function run_check_sql_files()
         throw new pakeException( "Found some sql data files but not all of them. Please fix" );
     }
 }
+
+function run_check_gnu_files()
+{
+    $opts = eZExtBuilder::getOpts();
+    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $files = pakeFinder::type( 'file' )->name( array( 'README', 'LICENSE' ) )->maxdepth( 1 )->in( $destdir );
+    if ( count( $files ) != 2 )
+    {
+        throw new pakeException( "README and/or INSTALL files missing. Please fix" );
+    }
+}
+
 
 function run_convert_configuration()
 {

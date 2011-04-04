@@ -1,0 +1,8 @@
+# list of files to parse for token substitution
+# rename to files.to.parse.txt to activate
+# one file per line
+# comments start with a hash sign
+
+INSTALL
+README
+FAQ

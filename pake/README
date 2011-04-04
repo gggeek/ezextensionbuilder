@@ -17,11 +17,13 @@ or questions please contact info@ez.no
 ---------------
 
 - the php cli
-- Pake version ? or later. Get it from https://github.com/indeyets/pake/wiki
+- Pake version ? or later.
+  You can get it either from https://github.com/indeyets/pake/wiki
+  or as part of the extension itself
 - the Zeta Components php library (only for generating an ezpackage)
 - command line tools: svn and/or git, rst2html.py
 
 4. Installing
 -------------
 
-Read the README file to get started
+Read the INSTALL file to get started

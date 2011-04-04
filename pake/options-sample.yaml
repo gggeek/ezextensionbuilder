@@ -1,5 +1,5 @@
 ### sample configuration file for ezextensionbuilder
-### to be saved in $myextension/pake
+### to be saved in $rootdir/pake
 
 extension:
     name: myextension
@@ -26,9 +26,10 @@ ezp:
 svn:
     url: http://svn.projects.ez.no/myexetension/trunk/extension/myexetension
 
-# Git url
+# Git url and branch (leave empty for master)
 git:
     url: http://svn.projects.ez.no/myexetension/trunk/extension/myexetension
+    branch:
 
 # working directories
 build:

@@ -156,14 +156,13 @@ pake_task( 'update-extra-files' );
 pake_desc( 'Generates the document of the extension, if created in RST' );
 pake_task( 'generate-documentation' );
 
-/*
-
-pake_desc( 'Checks PHP code coding standard, requires PHPCodeSniffer' );
-pake_task( 'coding-standards-check' );
+//pake_desc( 'Checks PHP code coding standard, requires PHPCodeSniffer' );
+//pake_task( 'coding-standards-check' );
 
 pake_desc( 'Generates an MD5 file with all md5 sums of source code files' );
 pake_task( 'generate-md5sums' );
 
+/*
 pake_desc( 'Checks if a schema.sql / cleandata.sql is available for supported databases' );
 pake_task( 'check-sql-files' );
 
@@ -234,9 +233,9 @@ function run_init()
 
     // remove files
 
-    // known files/dirs not to be packed.
+    // known files/dirs not to be packed / md5'ed
     /// @todo !important shall we make this configurable?
-    $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php' );
+    $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php', '.svn', '.git' );
     // files from user configuration
     $files = array_merge( $files, eZExtBuilder::loadFileListFromFile( 'pake/files.to.exclude.txt' ) );
 
@@ -367,6 +366,23 @@ function run_generate_documentation()
     */
     pake_remove( pakeFinder::type( 'file' )->name( 'Makefile' )->in( $destdir ), '' );
 
+}
+
+
+function run_generate_md5sums()
+{
+    $opts = eZExtBuilder::getOpts();
+    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $files = pakeFinder::type( 'file' )->in( $destdir );
+    $out = array();
+    $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
+    foreach( $files as $file )
+    {
+        $out[] = md5_file( $file ) . '  ' . ltrim( str_replace( array( $rootpath[0], '\\' ), array( '', '/' ), $file ), '/' );
+    }
+    pake_mkdirs( $destdir . '/share' );
+    file_put_contents( $destdir . '/share/filelist.md5', implode( "\n", $out ) );
+    pake_echo_action('file+', $destdir . '/share/filelist.md5' );
 }
 
 function run_convert_configuration()

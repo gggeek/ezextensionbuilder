@@ -164,13 +164,14 @@ pake_task( 'check-sql-files' );
 pake_desc( 'Checks for LICENSE and README files' );
 pake_task( 'check-gnu-files' );
 
-/*
-pake_desc( 'Generates an XML definition for eZ Publish extension package types' );
-pake_task( 'generate-ezpackage-xml-definition' );
+
+//pake_desc( 'Generates an XML definition for eZ Publish extension package types' );
+//pake_task( 'generate-ezpackage-xml-definition' );
 
 pake_desc( 'Updates version numbers in package.xml' );
 pake_task( 'update-package-xml' );
 
+/*
 pake_desc( 'Build dependent extensions' );
 pake_task( 'build-dependencies' );
 
@@ -299,7 +300,7 @@ function run_update_ezinfo()
     * not be updated correctly
     */
     pake_replace_regexp( $files, $destdir, array(
-        '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+\x27)(.*)(\x27,\r?\n)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3' ) );
+        '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+\x27)(.*)(\x27,\r?\n?)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3' ) );
 }
 
 /**
@@ -326,7 +327,7 @@ function run_update_extra_files()
     $files = pakeFinder::type( 'file' )->name( $extrafiles )->in( $destdir );
     pake_replace_tokens( $files, $destdir, '[', ']', array(
         'EXTENSION_VERSION' => $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
-        'EXTENSION_PUBLISH_VERSION' => $opts['ezp']['version']['major'] . $opts['ezp']['version']['minor'] . $opts['ezp']['version']['release'],
+        'EXTENSION_PUBLISH_VERSION' => $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'],
         'EXTENSION_LICENSE' => $opts['version']['license'] ) );
 }
 
@@ -456,6 +457,27 @@ function run_check_gnu_files()
     if ( count( $files ) != 2 )
     {
         throw new pakeException( "README and/or INSTALL files missing. Please fix" );
+    }
+}
+
+function run_update_package_xml()
+{
+    $opts = eZExtBuilder::getOpts();
+    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 1 )->in( $destdir );
+    if ( count( $files ) == 1 )
+    {
+        pake_replace_regexp( $files, $destdir, array(
+            // <version>xxx</version>
+            '#^(    \074version\076)(.*)(\074/version\076\r?\n?)$#m' => '${1}' . $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'] . '$3',
+            // <named-version>xxx</named-version>
+            '#^(    \074named-version\076)(.*)(\074/named-version\076\r?\n?)$#m' => '${1}' . $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '$3',
+            // <package version="zzzz"
+            '#^(    \074version\076)(.*)(\074/version\076\r?\n?)$#m' => '${1}' . $opts['version']['major'] . '.' . $opts['version']['minor'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
+            // <number>xxxx</number>
+            '#^(    \074number\076)(.*)(\074/number\076\r?\n?)$#m' => '${1}' . $opts['version']['alias'] . '$3',
+            // <release>yyy</release>
+            '#^(    \074release\076)(.*)(\074/release\076\r?\n?)$#m' => '${1}' . $opts['version']['release'] . '$3' ) );
     }
 }
 

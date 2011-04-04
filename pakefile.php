@@ -131,10 +131,10 @@ pake_task( 'dist-clean' );
 pake_desc( 'Updates ezinfo.php with correct version numbers' );
 pake_task( 'update-ezinfo' );
 
-/*
 pake_desc( 'Update license headers in source code files' );
 pake_task( 'update-license-headers' );
 
+/*
 pake_desc( 'Updates extra files with correct version numbers and licensing info' );
 pake_task( 'update-extra-files' );
 
@@ -299,6 +299,22 @@ function run_update_ezinfo()
     */
     pake_replace_regexp( $files, $destdir, array(
         '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+\x27)(.*)(\x27,\r?\n)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3' ) );
+}
+
+/**
+* @todo use more tolerant comment tags (eg multiline comments)
+* @todo parse tpl files too?
+* @todo use other strings than these, since it's gonna be community extensions?
+*/
+function run_update_license_headers()
+{
+    $opts = eZExtBuilder::getOpts();
+    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $files = pakeFinder::type( 'file' )->name( array( '*.php', '*.css', '*.js' ) )->in( $destdir );
+    pake_replace_regexp( $files, $destdir, array(
+        '#// SOFTWARE RELEASE: (.*)#m' => '// SOFTWARE RELEASE: ' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] ) );
+    pake_replace_regexp( $files, $destdir, array(
+        '/Copyright \(C\) 1999-[\d]{4} eZ Systems AS/m' => 'Copyright (C) 1999-' . strftime( '%Y' ). ' eZ Systems AS' ) );
 }
 
 function run_convert_configuration()

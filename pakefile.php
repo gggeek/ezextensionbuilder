@@ -117,7 +117,7 @@ pake_desc( 'Prepares the extension to be built' );
 pake_task( 'init' );
 
 pake_desc( 'Builds the extension' );
-pake_task( 'build', array( 'init' ) );
+pake_task( 'build', 'init' );
 
 pake_desc( 'Removes the entire build directory' );
 pake_task( 'clean' );
@@ -128,10 +128,10 @@ pake_task( 'clean-all' );
 pake_desc( 'Removes the generated tarball' );
 pake_task( 'dist-clean' );
 
-/*
 pake_desc( 'Updates ezinfo.php with correct version numbers' );
 pake_task( 'update-ezinfo' );
 
+/*
 pake_desc( 'Update license headers in source code files' );
 pake_task( 'update-license-headers' );
 
@@ -234,10 +234,17 @@ function run_init()
         }
     }
 
-    $files = pakeFinder::type( 'any' )->name( $files )->in( $destdir );
+    /**
+     Uses a regular expression to search and replace the correct string
+     Within the file, please note there is a limit of 25 sets to indent 3rd party
+     lib version numbers, if you use more than 25 spaces the version number will
+     not be updated correctly
+    */
+    $files = pakeFinder::type( 'any' )->name( $files )->in( $opts['build']['dir'] );
     foreach ( $files as $file )
     {
-        pake_remove( $file, '' );
+        pake_replace_regexp( $files, $opts['build']['dir'], array(
+            '/^([\s]{1,25}\047Version\047[\s]+=>[\s]+\047)(.*)(\047,)$/m' => '$1'.$opts['version']['alias'].$opts['releasenr']['separator'].$opts['version']['release'].'$3' ) );
     }
 }
 
@@ -274,6 +281,24 @@ function run_dist_clean()
 {
     $opts = eZExtBuilder::getOpts();
     pake_remove_dir( $opts['dist']['dir'] );
+}
+
+/// @todo make sure pake_replace_regexp is merged upstream or devlivered by us
+function run_update_ezinfo()
+{
+    $opts = eZExtBuilder::getOpts();
+    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    /// @todo shall we limit this to 1 level deep?
+    $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->in( $destdir );
+
+    /**
+    * Uses a regular expression to search and replace the correct string
+    * Within the file, please note there is a limit of 25 sets to indent 3rd party
+    * lib version numbers, if you use more than 25 spaces the version number will
+    * not be updated correctly
+    */
+    pake_replace_regexp( $files, $destdir, array(
+        '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+\x27)(.*)(\x27,\r?\n)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3' ) );
 }
 
 function run_convert_configuration()

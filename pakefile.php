@@ -19,6 +19,13 @@
 *      not have enough rights to remove the checkout dir...
 */
 
+// too smart for your own good: allow this script to be gotten off web servers in source form
+if ( isset( $_GET['show'] ) && $_GET['show'] == 'source' )
+{
+    echo file_get_contents( __FILE__ );
+    exit;
+}
+
 // *** function definition (live code at the end) ***/
 
 // Since this script might be included twice, we wrap any function in an ifdef
@@ -40,55 +47,6 @@ if ( !function_exists( 'register_ezc_autoload' ) )
                 spl_autoload_register( array( 'ezcBase', 'autoload' ) );
             }
         }
-    }
-}
-
-if ( !function_exists( 'bootstrap' ) )
-{
-    function bootstrap()
-    {
-        if ( is_file( 'pake ' ) )
-        {
-            echo "Error: could not create 'pake' directory to install the extension because a file named 'pake' exists";
-            exit( -1 );
-        }
-
-        if ( is_dir( 'pake') )
-        {
-            /// @todo test: if dir is not empty, ask for confirmation,
-            ///       least we overwrite something
-        }
-
-        if ( !is_dir( 'pake' ) && !mkdir( 'pake' ) )
-        {
-            echo "Error: could not create 'pake' directory to install the extension";
-            exit( -1 );
-        }
-
-        // download components
-        $src = 'http://svn.projects.ez.no/ezextensionbuilder/stable/pake/ezextensionbuilder_pakedir.zip';
-        $zipfile = tempnam( "tmp", "zip" );
-        if ( !file_put_contents( $zipfile, file_get_contents( $src ) ) )
-        {
-            echo "Error: could not download source file $src";
-            exit -1;
-        }
-
-        // unzip them
-        $zip = new ZipArchive;
-        if ( $zip->open( $zipfile ) !== true )
-        {
-            echo "Error: downloaded source file $src is not a valid zip file";
-            exit -1;
-        }
-        if ( !$zip->extractTo( 'pake' ) )
-        {
-            echo "Error: could not decompress source file $zipfile";
-            $zip->close();
-            exit -1;
-        }
-        $zip->close();
-        unlink( $zipfile );
     }
 }
 
@@ -481,12 +439,59 @@ function run_convert_configuration()
     }
 }
 
+function run_tool_upgrade_check()
+{
+    $latest = eZExtBuilder::latestVersion();
+    if ( $latest == false )
+    {
+        pake_echo ( "Cannot determine latest version available. Please check that you can connect to the internet" );
+    }
+    else
+    {
+        $current = eZExtBuilder::$version;
+        $check = version_compare( $latest, $current );
+        if ( $check == -1 )
+        {
+            pake_echo ( "Danger, Will Robinson! You are running a newer version ($current) than the lastest available online ($latest)" );
+        }
+        else if( $check == 0 )
+        {
+            pake_echo ( "You are running the lastest available version: $latest" );
+        }
+        else
+        {
+            pake_echo ( "A newer version is available online: $latest (you are running $current)" );
+            $ok = pake_select_input( "Do you want to upgrade? ", array( 'y', 'n' ), 'n' );
+            if ( $ok == 'y' )
+            {
+                run_tool_upgrade();
+            }
+        }
+    }
+}
+
+function run_tool_upgrade()
+{
+    $latest = eZExtBuilder::latestVersion( true );
+    if ( $latest == false )
+    {
+        pake_echo ( "Cannot download latest version available. Please check that you can connect to the internet" );
+    }
+    else
+    {
+        /// @todo test: does this work on windows?
+        file_put_contents( __FILE__, $latest );
+    }
+}
+
 /**
 * @todo separate in another file?
 */
 class eZExtBuilder
 {
     static $options = null;
+    static $installurl = 'http://svn.projects.ez.no/ezextensionbuilder/stable/pake';
+    static $version = '0.1';
 
     static function getOpts()
     {
@@ -636,6 +641,79 @@ class eZExtBuilder
         }
         return array_values( $files );
     }
+
+    /**
+    * Download from the web all files that make up the extension (except self)
+    * and uncompress them in ./pake dir
+    */
+    static function bootstrap()
+    {
+        if ( is_file( 'pake ' ) )
+        {
+            echo "Error: could not create 'pake' directory to install the extension because a file named 'pake' exists";
+            exit( -1 );
+        }
+
+        if ( is_dir( 'pake') )
+        {
+            /// @todo test: if dir is not empty, ask for confirmation,
+            ///       least we overwrite something
+        }
+
+        if ( !is_dir( 'pake' ) && !mkdir( 'pake' ) )
+        {
+            echo "Error: could not create 'pake' directory to install the extension";
+            exit( -1 );
+        }
+
+        // download components
+        /// @todo use a recursive fget, so that we do not need to download a zip
+        $src = self::$installurl.'/pake/ezextensionbuilder_pakedir.zip';
+        $zipfile = tempnam( "tmp", "zip" );
+        if ( !file_put_contents( $zipfile, file_get_contents( $src ) ) )
+        {
+            echo "Error: could not download source file $src";
+            exit -1;
+        }
+
+        // unzip them
+        $zip = new ZipArchive;
+        if ( $zip->open( $zipfile ) !== true )
+        {
+            echo "Error: downloaded source file $src is not a valid zip file";
+            exit -1;
+        }
+        if ( !$zip->extractTo( 'pake' ) )
+        {
+            echo "Error: could not decompress source file $zipfile";
+            $zip->close();
+            exit -1;
+        }
+        $zip->close();
+        unlink( $zipfile );
+    }
+
+    /**
+    * Checks the latest version available online
+    * @return string the version nr. or the new version of the file, depending on input param (false in case of error)
+    */
+    static function latestVersion( $getfile=false )
+    {
+        $src = self::$installurl.'/pakefile.php?show=source';
+        /// @todo test using curl for allow_url-fopen off
+        if ( $source = file_get_contents( $src ) )
+        {
+            if ( $getfile )
+            {
+                return $source;
+            }
+            if ( preg_match( '/^[\s]*static \$version = \'([^\']+)\';/m', $source, $matches ) )
+            {
+                return $matches[1];
+            }
+        }
+        return false;
+    }
 }
 
 }
@@ -679,7 +757,7 @@ if ( !function_exists( 'pake_desc' ) )
             echo "\n";
         } while( true );
 
-        bootstrap();
+        eZExtBuilder::bootstrap();
 
         echo
             "Succesfully downloaded sources\n" .
@@ -768,6 +846,12 @@ pake_task( 'create-package-tarballs' );
 
 pake_desc( 'Converts an existing ant properties file in its corresponding yaml version' );
 pake_task( 'convert-configuration' );
+
+pake_desc( 'Checks if a newer version of the tool is available online' );
+pake_task( 'tool-upgrade-check' );
+
+pake_desc( 'Upgrades to the latest version of the tool available online' );
+pake_task( 'tool-upgrade' );
 
 }
 

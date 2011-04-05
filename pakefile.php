@@ -13,22 +13,21 @@
 *
 * @todo move all known paths/names/... to class constants
 *
-* @todo add to php include dir a custom dir for our own pake tasks
+* @todo add to php include dir a custom dir for our own pake tasks / register custom pake tasks
 *
 * @bug at least on win, after using svn to checkout a project, the script does
 *      not have enough rights to remove the checkout dir...
 */
 
-// First off, test if user is running directly this script
-// (we allow both direct invocation via "php pakefile.php" and invocation via "php pake.php")
-if ( !function_exists( 'pake_desc' ) )
-{
-    // the folder where this script installs the pake tool is pake/src
-    if ( file_exists( 'pake/src/bin/pake.php' ) )
-    {
-        include( 'pake/src/bin/pake.php' );
+// *** function definition (live code at the end) ***/
 
-        // try to force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
+// Since this script might be included twice, we wrap any function in an ifdef
+
+if ( !function_exists( 'register_ezc_autoload' ) )
+{
+    // try to force ezc autoloading. End user should have set php include path properly
+    function register_ezc_autoload()
+    {
         if ( !class_exists( 'ezcBase' ) )
         {
             @include( 'ezc/Base/base.php' ); // pear install
@@ -41,31 +40,13 @@ if ( !function_exists( 'pake_desc' ) )
                 spl_autoload_register( array( 'ezcBase', 'autoload' ) );
             }
         }
-
-        $pake = pakeApp::get_instance();
-        $pake->run();
     }
-    else
+}
+
+if ( !function_exists( 'bootstrap' ) )
+{
+    function bootstrap()
     {
-
-        echo "Pake tool not found. Bootstrap needed\n  (automatic download of missing components from project.ez.no)\n";
-        do
-        {
-            echo 'Continue? [y/n] ';
-            $fp = fopen('php://stdin', 'r');
-            $ok = trim( strtolower( fgets( $fp ) ) );
-            fclose( $fp );
-            if ( $ok == 'y' )
-            {
-                break;
-            }
-            else if ( $ok == 'n' )
-            {
-                exit ( 0 );
-            }
-            echo "\n";
-        } while( true );
-
         if ( is_file( 'pake ' ) )
         {
             echo "Error: could not create 'pake' directory to install the extension because a file named 'pake' exists";
@@ -108,95 +89,11 @@ if ( !function_exists( 'pake_desc' ) )
         }
         $zip->close();
         unlink( $zipfile );
-
-        echo
-            "Succesfully downloaded sources\n" .
-            "  Next steps: copy pake/options-sample.yaml to pake/options.yaml, edit it\n" .
-            "  then run again this script.\n".
-            "  Use the environment var PHP_CLASSPATH for proper class autoloading of eg. Zeta Components";
-        exit( 0 );
-
     }
 }
 
-pake_desc( 'Shows help message' );
-pake_task( 'default' );
-
-pake_desc( 'Shows the properties for this build file' );
-pake_task( 'show-properties' );
-
-pake_desc( 'Prepares the extension to be built' );
-pake_task( 'init' );
-
-pake_desc( 'Builds the extension' );
-pake_task( 'build', 'init' );
-
-pake_desc( 'Removes the entire build directory' );
-pake_task( 'clean' );
-
-pake_desc( 'Removes the build/ and the dist/ directory' );
-pake_task( 'clean-all' );
-
-pake_desc( 'Creates a tarball of the built extension' );
-pake_task( 'dist' );
-
-pake_desc( 'Creates a tarball of all extensions in the build/ directory' );
-pake_task( 'fat-dist' );
-
-pake_desc( 'Build the extension and generate the tarball' );
-pake_task( 'all' );
-
-pake_desc( 'Removes the generated tarball' );
-pake_task( 'dist-clean' );
-
-pake_desc( 'Updates ezinfo.php with correct version numbers' );
-pake_task( 'update-ezinfo' );
-
-pake_desc( 'Update license headers in source code files' );
-pake_task( 'update-license-headers' );
-
-pake_desc( 'Updates extra files with correct version numbers and licensing info' );
-pake_task( 'update-extra-files' );
-
-pake_desc( 'Generates the document of the extension, if created in RST' );
-pake_task( 'generate-documentation' );
-
-//pake_desc( 'Checks PHP code coding standard, requires PHPCodeSniffer' );
-//pake_task( 'coding-standards-check' );
-
-pake_desc( 'Generates an MD5 file with all md5 sums of source code files' );
-pake_task( 'generate-md5sums' );
-
-pake_desc( 'Checks if a schema.sql / cleandata.sql is available for supported databases' );
-pake_task( 'check-sql-files' );
-
-pake_desc( 'Checks for LICENSE and README files' );
-pake_task( 'check-gnu-files' );
-
-
-//pake_desc( 'Generates an XML definition for eZ Publish extension package types' );
-//pake_task( 'generate-ezpackage-xml-definition' );
-
-pake_desc( 'Updates version numbers in package.xml' );
-pake_task( 'update-package-xml' );
-
-/*
-pake_desc( 'Build dependent extensions' );
-pake_task( 'build-dependencies' );
-
-pake_desc( 'Creates tarballs for ezpackages.' );
-pake_task( 'create-package-tarballs' );
-*/
-
-pake_desc( 'Converts an existing ant properties file in its corresponding yaml version' );
-pake_task( 'convert-configuration' );
-
-// This file could be included twice, avoid redefining functions and classes
-
 if ( !function_exists( 'run_default' ) )
 {
-
-// ***
 
 function run_default()
 {
@@ -210,7 +107,7 @@ function run_show_properties()
     pake_echo ( 'Extension name: ' . $opts['extension']['name'] );
 }
 
-/// @todo add a dependency on a check-updates task that updates script itself
+    /// @todo add a dependency on a check-updates task that updates script itself
 function run_init()
 {
     $opts = eZExtBuilder::getOpts();
@@ -250,7 +147,7 @@ function run_init()
      Within the file, please note there is a limit of 25 sets to indent 3rd party
      lib version numbers, if you use more than 25 spaces the version number will
      not be updated correctly
-    */
+     */
     $files = pakeFinder::type( 'any' )->name( $files )->in( $opts['build']['dir'] );
     foreach ( $files as $file )
     {
@@ -293,6 +190,10 @@ function run_dist()
     $opts = eZExtBuilder::getOpts();
     if ( $opts['create']['tarball'] )
     {
+        if ( !class_exists( 'ezcArchive' ) )
+        {
+            throw new pakeException( "Missing Zeta Components: cannot generate tar file. Use the environment var PHP_CLASSPATH" );
+        }
         pake_mkdirs( $opts['dist']['dir'] );
         $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
         // get absolute path to build dir
@@ -316,26 +217,27 @@ function run_dist()
 function run_fat_dist()
 {
     $opts = eZExtBuilder::getOpts();
-    if ( $opts['create']['tarball'] )
+    if ( !class_exists( 'ezcArchive' ) )
     {
-        pake_mkdirs( $opts['dist']['dir'] );
-        $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] );
-        // get absolute path to build dir
-        $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
-        $rootpath = dirname( $rootpath[0] );
-        $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '-bundle.tar';
-        // we do not rely on this, not to depend on phar extension and also because it's slightly buggy if there are dots in archive file name
-        //pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
-        $tar = ezcArchive::open( $target, ezcArchive::TAR );
-        $tar->appendToCurrent( $files, $rootpath );
-        $tar->close();
-        $fp = fopen( 'compress.zlib://' . $target . '.gz', 'wb9' );
-        /// @todo read file by small chunks to avoid memory exhaustion
-        fwrite( $fp, file_get_contents( $target ) );
-        fclose( $fp );
-        unlink( $target );
-        pake_echo_action( 'file+', $target . '.gz' );
+        throw new pakeException( "Missing Zeta Components: cannot generate tar file. Use the environment var PHP_CLASSPATH" );
     }
+    pake_mkdirs( $opts['dist']['dir'] );
+    $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] );
+    // get absolute path to build dir
+    $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
+    $rootpath = dirname( $rootpath[0] );
+    $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '-bundle.tar';
+    // we do not rely on this, not to depend on phar extension and also because it's slightly buggy if there are dots in archive file name
+    //pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
+    $tar = ezcArchive::open( $target, ezcArchive::TAR );
+    $tar->appendToCurrent( $files, $rootpath );
+    $tar->close();
+    $fp = fopen( 'compress.zlib://' . $target . '.gz', 'wb9' );
+    /// @todo read file by small chunks to avoid memory exhaustion
+    fwrite( $fp, file_get_contents( $target ) );
+    fclose( $fp );
+    unlink( $target );
+    pake_echo_action( 'file+', $target . '.gz' );
 }
 
 function run_all()
@@ -352,7 +254,7 @@ function run_dist_clean()
     pake_remove_dir( $opts['dist']['dir'] );
 }
 
-/// @todo make sure pake_replace_regexp is merged upstream or devlivered by us
+    /// @todo make sure pake_replace_regexp is merged upstream or devlivered by us
 function run_update_ezinfo()
 {
     $opts = eZExtBuilder::getOpts();
@@ -361,20 +263,20 @@ function run_update_ezinfo()
     $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->in( $destdir );
 
     /*
-    * Uses a regular expression to search and replace the correct string
-    * Within the file, please note there is a limit of 25 sets to indent 3rd party
-    * lib version numbers, if you use more than 25 spaces the version number will
-    * not be updated correctly
+       * Uses a regular expression to search and replace the correct string
+       * Within the file, please note there is a limit of 25 sets to indent 3rd party
+       * lib version numbers, if you use more than 25 spaces the version number will
+       * not be updated correctly
     */
     pake_replace_regexp( $files, $destdir, array(
         '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+\x27)(.*)(\x27,\r?\n?)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3' ) );
 }
 
 /**
-* @todo use more tolerant comment tags (eg multiline comments)
-* @todo parse tpl files too?
-* @todo use other strings than these, since it's gonna be community extensions?
-*/
+ * @todo use more tolerant comment tags (eg multiline comments)
+ * @todo parse tpl files too?
+ * @todo use other strings than these, since it's gonna be community extensions?
+ */
 function run_update_license_headers()
 {
     $opts = eZExtBuilder::getOpts();
@@ -399,9 +301,9 @@ function run_update_extra_files()
 }
 
 /**
-* @todo allow config file to specify doc dir
-* @todo parse any doxygen file found, too
-*/
+ * @todo allow config file to specify doc dir
+ * @todo parse any doxygen file found, too
+ */
 function run_generate_documentation()
 {
     $opts = eZExtBuilder::getOpts();
@@ -425,8 +327,8 @@ function run_generate_documentation()
     }
 
     /*
-    * A few extension have Makefiles to generate documentation
-    * We remove them as well as original .rst files
+       * A few extension have Makefiles to generate documentation
+       * We remove them as well as original .rst files
     */
     pake_remove( pakeFinder::type( 'file' )->name( 'Makefile' )->in( $destdir ), '' );
 
@@ -449,29 +351,29 @@ function run_generate_md5sums()
 }
 
 /**
-* Checks if a schema.sql file is present for
-* any supported database
-*
-* The accepted directory structure is:
-*
-* myextension
-* |___share
-* |   |___db_schema.dba
-* |   `___db_data.dba
-* `__ sql
-*     |__ mysql
-*     |   |__ cleandata.sql
-*     |   `__ schema.sql
-*     |__ oracle
-*     |   |__ cleandata.sql
-*     |   `__ schema.sql
-*     `__ postgresql
-*         |__ cleandata.sql
-*         `__ schema.sql
-*
-* NB: there are NOT a lot of extensions currently following this schema.
-* Alternativate used are: sql/mysql/mysql.sql, sql/mysql/random.sql
-*/
+ * Checks if a schema.sql file is present for
+ * any supported database
+ *
+ * The accepted directory structure is:
+ *
+ * myextension
+ * |___share
+ * |   |___db_schema.dba
+ * |   `___db_data.dba
+ * `__ sql
+ *     |__ mysql
+ *     |   |__ cleandata.sql
+ *     |   `__ schema.sql
+ *     |__ oracle
+ *     |   |__ cleandata.sql
+ *     |   `__ schema.sql
+ *     `__ postgresql
+ *         |__ cleandata.sql
+ *         `__ schema.sql
+ *
+ * NB: there are NOT a lot of extensions currently following this schema.
+ * Alternativate used are: sql/mysql/mysql.sql, sql/mysql/random.sql
+ */
 function run_check_sql_files()
 {
     $opts = eZExtBuilder::getOpts();
@@ -484,10 +386,10 @@ function run_check_sql_files()
         $files = pakeFinder::type( 'file' )->name( $file )->maxdepth( 1 )->in( $destdir . "/$dir" );
         if ( count( $files ) )
         {
-             if ( filesize( $files[0] ) == 0 )
-             {
-                 throw new pakeException( "Sql schema file {$files[0]} is empty. Please fix" );
-             }
+            if ( filesize( $files[0] ) == 0 )
+            {
+                throw new pakeException( "Sql schema file {$files[0]} is empty. Please fix" );
+            }
             $count++;
         }
     }
@@ -579,8 +481,9 @@ function run_convert_configuration()
     }
 }
 
-// ***
-
+/**
+* @todo separate in another file?
+*/
 class eZExtBuilder
 {
     static $options = null;
@@ -711,11 +614,11 @@ class eZExtBuilder
     }
 
     /**
-    * Reads a list of files from a txt file
-    * . one file per line
-    * . comment lines start with #
-    * . whitespace stripped at beginning/end of line
-    */
+     * Reads a list of files from a txt file
+     * . one file per line
+     * . comment lines start with #
+     * . whitespace stripped at beginning/end of line
+     */
     static function loadFileListFromFile( $file )
     {
         if ( !file_exists( $file ) )
@@ -734,6 +637,137 @@ class eZExtBuilder
         return array_values( $files );
     }
 }
+
+}
+
+
+// *** Live code starts here ***
+
+// First off, test if user is running directly this script
+// (we allow both direct invocation via "php pakefile.php" and invocation via "php pake.php")
+if ( !function_exists( 'pake_desc' ) )
+{
+    // Running script directly. look if pake is found in the folder where this script installs it: ./pake/src
+    if ( file_exists( 'pake/src/bin/pake.php' ) )
+    {
+        include( 'pake/src/bin/pake.php' );
+
+        // force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
+        register_ezc_autoload();
+
+        $pake = pakeApp::get_instance();
+        $pake->run();
+    }
+    else
+    {
+
+        echo "Pake tool not found. Bootstrap needed\n  (automatic download of missing components from project.ez.no)\n";
+        do
+        {
+            echo 'Continue? [y/n] ';
+            $fp = fopen('php://stdin', 'r');
+            $ok = trim( strtolower( fgets( $fp ) ) );
+            fclose( $fp );
+            if ( $ok == 'y' )
+            {
+                break;
+            }
+            else if ( $ok == 'n' )
+            {
+                exit ( 0 );
+            }
+            echo "\n";
+        } while( true );
+
+        bootstrap();
+
+        echo
+            "Succesfully downloaded sources\n" .
+            "  Next steps: copy pake/options-sample.yaml to pake/options.yaml, edit it\n" .
+            "  then run again this script.\n".
+            "  Use the environment var PHP_CLASSPATH for proper class autoloading of eg. Zeta Components";
+        exit( 0 );
+
+    }
+}
+else
+{
+    // pake is loaded
+
+    // force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
+    register_ezc_autoload();
+
+pake_desc( 'Shows help message' );
+pake_task( 'default' );
+
+pake_desc( 'Shows the properties for this build file' );
+pake_task( 'show-properties' );
+
+pake_desc( 'Prepares the extension to be built' );
+pake_task( 'init' );
+
+pake_desc( 'Builds the extension' );
+pake_task( 'build', 'init' );
+
+pake_desc( 'Removes the entire build directory' );
+pake_task( 'clean' );
+
+pake_desc( 'Removes the build/ and the dist/ directory' );
+pake_task( 'clean-all' );
+
+pake_desc( 'Creates a tarball of the built extension' );
+pake_task( 'dist' );
+
+pake_desc( 'Creates a tarball of all extensions in the build/ directory' );
+pake_task( 'fat-dist' );
+
+pake_desc( 'Build the extension and generate the tarball' );
+pake_task( 'all' );
+
+pake_desc( 'Removes the generated tarball' );
+pake_task( 'dist-clean' );
+
+pake_desc( 'Updates ezinfo.php with correct version numbers' );
+pake_task( 'update-ezinfo' );
+
+pake_desc( 'Update license headers in source code files' );
+pake_task( 'update-license-headers' );
+
+pake_desc( 'Updates extra files with correct version numbers and licensing info' );
+pake_task( 'update-extra-files' );
+
+pake_desc( 'Generates the document of the extension, if created in RST' );
+pake_task( 'generate-documentation' );
+
+//pake_desc( 'Checks PHP code coding standard, requires PHPCodeSniffer' );
+//pake_task( 'coding-standards-check' );
+
+pake_desc( 'Generates an MD5 file with all md5 sums of source code files' );
+pake_task( 'generate-md5sums' );
+
+pake_desc( 'Checks if a schema.sql / cleandata.sql is available for supported databases' );
+pake_task( 'check-sql-files' );
+
+pake_desc( 'Checks for LICENSE and README files' );
+pake_task( 'check-gnu-files' );
+
+
+//pake_desc( 'Generates an XML definition for eZ Publish extension package types' );
+//pake_task( 'generate-ezpackage-xml-definition' );
+
+pake_desc( 'Updates version numbers in package.xml' );
+pake_task( 'update-package-xml' );
+
+/*
+pake_desc( 'Build dependent extensions' );
+pake_task( 'build-dependencies' );
+
+pake_desc( 'Creates tarballs for ezpackages.' );
+pake_task( 'create-package-tarballs' );
+*/
+
+pake_desc( 'Converts an existing ant properties file in its corresponding yaml version' );
+pake_task( 'convert-configuration' );
 
 }
 

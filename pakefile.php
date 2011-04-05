@@ -241,7 +241,7 @@ function run_init()
 
     // known files/dirs not to be packed / md5'ed
     /// @todo !important shall we make this configurable?
-    $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php', '.svn', '.git' );
+    $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php', '.svn', '.git', '.gitignore' );
     // files from user configuration
     $files = array_merge( $files, eZExtBuilder::loadFileListFromFile( 'pake/files.to.exclude.txt' ) );
 

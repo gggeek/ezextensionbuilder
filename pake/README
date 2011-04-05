@@ -17,7 +17,7 @@ or questions please contact info@ez.no
 ---------------
 
 - the php cli
-- Pake version ? or later.
+- Pake version 1.6.1 or later.
   You can get it either from https://github.com/indeyets/pake/wiki
   or as part of the extension itself
 - the Zeta Components php library (only for generating an ezpackage)

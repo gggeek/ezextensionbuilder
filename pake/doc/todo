@@ -1,1 +1,25 @@
-. a class providing archive/unarchive functionality based on zetacmponents instead of phar
+. support auto-update of the tool (two tasks: upgrade-check and upgrade)
+
+. more flexible naming of sql files (how?)
+
+. allow extension to build self
+
+. add a task to generate .sql files from .dba
+
+. add some code quality checks (possibly from other extensions)
+
+. switch to an ini-file based configuration instead of yaml? advantages:
+  - easier options parsing, everything is on 2 levels
+  - pake code holds options instead of our class
+
+. add support for building packages?
+
+. add support for different dir schemas for extensions providing packages? nb: better if we can do it without that...
+
+. add support for building dependent extensions
+
+. add support for generating more docs:
+  . manual from doxygen
+  . api docs from phpdocumentor
+
+. add support for launching testsuite

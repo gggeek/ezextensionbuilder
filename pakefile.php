@@ -140,8 +140,8 @@ pake_task( 'clean-all' );
 pake_desc( 'Creates a tarball of the built extension' );
 pake_task( 'dist' );
 
-//pake_desc( 'Creates a tarball of all extensions in the build/ directory' );
-//pake_task( 'fat-dist' );
+pake_desc( 'Creates a tarball of all extensions in the build/ directory' );
+pake_task( 'fat-dist' );
 
 pake_desc( 'Build the extension and generate the tarball' );
 pake_task( 'all' );
@@ -294,9 +294,47 @@ function run_dist()
     if ( $opts['create']['tarball'] )
     {
         pake_mkdirs( $opts['dist']['dir'] );
+        $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
+        // get absolute path to build dir
+        $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
+        $rootpath = dirname( $rootpath[0] );
+        $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar';
+        // we do not rely on this, not to depend on phar extension and also because it's slightly buggy if there are dots in archive file name
+        //pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
+        $tar = ezcArchive::open( $target, ezcArchive::TAR );
+        $tar->appendToCurrent( $files, $rootpath );
+        $tar->close();
+        $fp = fopen( 'compress.zlib://' . $target . '.gz', 'wb9' );
+        /// @todo read file by small chunks to avoid memory exhaustion
+        fwrite( $fp, file_get_contents( $target ) );
+        fclose( $fp );
+        unlink( $target );
+        pake_echo_action( 'file+', $target . '.gz' );
+    }
+}
+
+function run_fat_dist()
+{
+    $opts = eZExtBuilder::getOpts();
+    if ( $opts['create']['tarball'] )
+    {
+        pake_mkdirs( $opts['dist']['dir'] );
         $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] );
-        $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar.gz';
-        pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
+        // get absolute path to build dir
+        $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
+        $rootpath = dirname( $rootpath[0] );
+        $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '-bundle.tar';
+        // we do not rely on this, not to depend on phar extension and also because it's slightly buggy if there are dots in archive file name
+        //pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
+        $tar = ezcArchive::open( $target, ezcArchive::TAR );
+        $tar->appendToCurrent( $files, $rootpath );
+        $tar->close();
+        $fp = fopen( 'compress.zlib://' . $target . '.gz', 'wb9' );
+        /// @todo read file by small chunks to avoid memory exhaustion
+        fwrite( $fp, file_get_contents( $target ) );
+        fclose( $fp );
+        unlink( $target );
+        pake_echo_action( 'file+', $target . '.gz' );
     }
 }
 

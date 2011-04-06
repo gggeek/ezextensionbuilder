@@ -718,6 +718,38 @@ class eZExtBuilder
 
 }
 
+// The following two functions we use, and submitted for inclusion in pake.
+// While we wait for acceptance, we define them here...
+if ( !function_exists( 'pake_replace_regexp_to_dir' ) )
+{
+
+function pake_replace_regexp_to_dir($arg, $src_dir, $target_dir, $regexps)
+{
+    $files = pakeFinder::get_files_from_argument($arg, $src_dir, true);
+
+    foreach ($files as $file)
+    {
+        $replaced = false;
+        $content = pake_read_file($src_dir.'/'.$file);
+        foreach ($regexps as $key => $value)
+        {
+            $content = preg_replace($key, $value, $content, -1, $count);
+            if ($count) $replaced = true;
+        }
+
+        pake_echo_action('regexp', $target_dir.DIRECTORY_SEPARATOR.$file);
+
+        file_put_contents($target_dir.DIRECTORY_SEPARATOR.$file, $content);
+    }
+}
+
+function pake_replace_regexp($arg, $target_dir, $regexps)
+{
+    pake_replace_regexp_to_dir($arg, $target_dir, $target_dir, $regexps);
+}
+
+}
+
 
 // *** Live code starts here ***
 

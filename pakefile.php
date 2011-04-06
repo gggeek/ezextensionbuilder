@@ -8,7 +8,7 @@
 *
 * @author    G. Giunta
 * @copyright (C) G. Giunta 2011
-* @license
+* @license   code licensed under the GNU GPL 2.0: see README file
 * @version   SVN: $Id$
 *
 * @todo move all known paths/names/... to class constants
@@ -52,6 +52,8 @@ if ( !function_exists( 'register_ezc_autoload' ) )
 
 if ( !function_exists( 'run_default' ) )
 {
+
+// definition of the pake tasks
 
 function run_default()
 {
@@ -212,22 +214,31 @@ function run_dist_clean()
     pake_remove_dir( $opts['dist']['dir'] );
 }
 
-    /// @todo make sure pake_replace_regexp is merged upstream or devlivered by us
 function run_update_ezinfo()
 {
     $opts = eZExtBuilder::getOpts();
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
-    /// @todo shall we limit this to 1 level deep?
-    $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->in( $destdir );
 
+    $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->maxdepth( 1 )->in( $destdir );
     /*
        * Uses a regular expression to search and replace the correct string
        * Within the file, please note there is a limit of 25 sets to indent 3rd party
        * lib version numbers, if you use more than 25 spaces the version number will
        * not be updated correctly
     */
+    /// @todo use a real php parser instead
     pake_replace_regexp( $files, $destdir, array(
         '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+\x27)(.*)(\x27,\r?\n?)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3' ) );
+
+    $files = pakeFinder::type( 'file' )->maxdepth( 1 )->name( 'extension.xml' )->in( $destdir );
+    // here again, do not replace version of required extensions
+    /// @todo use a real xml parser instead
+    pake_replace_regexp( $files, $destdir, array(
+        '#^([\s]{1,8}<version>)([^<]*)(</version>\r?\n?)#m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3' ) );
+    /// @bug we should use a better xml escaping here
+    pake_replace_regexp( $files, $destdir, array(
+        '#^([\s]{1,8}<license>)([^<]*)(</license>\r?\n?)#m' => '${1}' . htmlspecialchars( $opts['version']['license'] ) . '$3',
+        '#^([\s]{1,8}<copyright>)Copyright \(C\) 1999-[\d]{4} eZ Systems AS(</copyright>\r?\n?)#m' => '${1}' . 'Copyright (C) 1999-' . strftime( '%Y' ). ' eZ Systems AS' . '$2' ) );
 }
 
 /**
@@ -485,6 +496,7 @@ function run_tool_upgrade()
 }
 
 /**
+* Class implementing the core logic for our pake tasks
 * @todo separate in another file?
 */
 class eZExtBuilder
@@ -718,38 +730,6 @@ class eZExtBuilder
 
 }
 
-// The following two functions we use, and submitted for inclusion in pake.
-// While we wait for acceptance, we define them here...
-if ( !function_exists( 'pake_replace_regexp_to_dir' ) )
-{
-
-function pake_replace_regexp_to_dir($arg, $src_dir, $target_dir, $regexps)
-{
-    $files = pakeFinder::get_files_from_argument($arg, $src_dir, true);
-
-    foreach ($files as $file)
-    {
-        $replaced = false;
-        $content = pake_read_file($src_dir.'/'.$file);
-        foreach ($regexps as $key => $value)
-        {
-            $content = preg_replace($key, $value, $content, -1, $count);
-            if ($count) $replaced = true;
-        }
-
-        pake_echo_action('regexp', $target_dir.DIRECTORY_SEPARATOR.$file);
-
-        file_put_contents($target_dir.DIRECTORY_SEPARATOR.$file, $content);
-    }
-}
-
-function pake_replace_regexp($arg, $target_dir, $regexps)
-{
-    pake_replace_regexp_to_dir($arg, $target_dir, $target_dir, $regexps);
-}
-
-}
-
 
 // *** Live code starts here ***
 
@@ -822,7 +802,7 @@ pake_task( 'build', 'init' );
 pake_desc( 'Removes the entire build directory' );
 pake_task( 'clean' );
 
-pake_desc( 'Removes the build/ and the dist/ directory' );
+pake_desc( 'Removes the build/ and dist/ directories' );
 pake_task( 'clean-all' );
 
 pake_desc( 'Creates a tarball of the built extension' );
@@ -837,10 +817,10 @@ pake_task( 'all' );
 pake_desc( 'Removes the generated tarball' );
 pake_task( 'dist-clean' );
 
-pake_desc( 'Updates ezinfo.php with correct version numbers' );
+pake_desc( 'Updates ezinfo.php and extension.xml with correct version numbers and licensing info' );
 pake_task( 'update-ezinfo' );
 
-pake_desc( 'Update license headers in source code files' );
+pake_desc( 'Update license headers in source code files (php, js, css)' );
 pake_task( 'update-license-headers' );
 
 pake_desc( 'Updates extra files with correct version numbers and licensing info' );

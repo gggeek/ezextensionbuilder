@@ -57,7 +57,7 @@ if ( !function_exists( 'run_default' ) )
 
 function run_default()
 {
-    pake_echo ( 'Please run: pake --tasks to learn more about available tasks' );
+    pake_echo ( "eZ Extension Builder ver." . eZExtBuilder::$version . "\nSyntax: php pakefile.php [--\$general-options] \$task [\$extension] [--\$task-options].\n  If no extension name is provided, a default configuration file will be searched for.\n  Run: php pakefile.php --tasks to learn more about available tasks." );
 }
 
 function run_show_properties( $task=null, $args=array(), $opts=array() )
@@ -676,30 +676,6 @@ class eZExtBuilder
         $ok = !file_exists( $outfile ) || ( pake_input( "Destionation file $outfile exists. Overwrite? [y/n]", 'n' ) == 'y' );
         $ok && file_put_contents( $outfile, $prepend . implode( $out, "\n" ) );
     }
-
-    /**
-     * Reads a list of files from a txt file
-     * . one file per line
-     * . comment lines start with #
-     * . whitespace stripped at beginning/end of line
-     */
-    /*static function loadFileListFromFile( $file )
-    {
-        if ( !file_exists( $file ) )
-        {
-            return array();
-        }
-        $files = file( $file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
-        foreach ( $files as $i => $file )
-        {
-            $file = trim( $file );
-            if ( $file == '' || $file[0] == '#' )
-            {
-                unset( $files[$i] );
-            }
-        }
-        return array_values( $files );
-    }*/
 
     /**
     * Download from the web all files that make up the extension (except self)

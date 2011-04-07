@@ -57,7 +57,7 @@ if ( !function_exists( 'run_default' ) )
 
 function run_default()
 {
-    pake_echo ( 'Please run : pake --tasks to learn more about available tasks' );
+    pake_echo ( 'Please run: pake --tasks to learn more about available tasks' );
 }
 
 function run_show_properties()
@@ -67,7 +67,10 @@ function run_show_properties()
     pake_echo ( 'Extension name: ' . $opts['extension']['name'] );
 }
 
-    /// @todo add a dependency on a check-updates task that updates script itself
+/**
+* Downloads the extension from its source repository, removes files not to be built
+* @todo add a dependency on a check-updates task that updates script itself
+*/
 function run_init()
 {
     $opts = eZExtBuilder::getOpts();
@@ -100,7 +103,7 @@ function run_init()
     /// @todo !important shall we make this configurable?
     $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php', '.svn', '.git', '.gitignore' );
     // files from user configuration
-    $files = array_merge( $files, eZExtBuilder::loadFileListFromFile( 'pake/files.to.exclude.txt' ) );
+    $files = array_merge( $files, $opts['filed']['to_exclude'] );
 
     /**
      Uses a regular expression to search and replace the correct string
@@ -242,10 +245,11 @@ function run_update_ezinfo()
 }
 
 /**
- * @todo use more tolerant comment tags (eg multiline comments)
- * @todo parse tpl files too?
- * @todo use other strings than these, since it's gonna be community extensions?
- */
+* Update .php, .css and .js files replacing tokens found in the std eZ Systems header comment
+* @todo use more tolerant comment tags (eg multiline comments)
+* @todo parse tpl files too?
+* @todo use other strings than these, since it's gonna be community extensions?
+*/
 function run_update_license_headers()
 {
     $opts = eZExtBuilder::getOpts();
@@ -257,11 +261,15 @@ function run_update_license_headers()
         '/Copyright \(C\) 1999-[\d]{4} eZ Systems AS/m' => 'Copyright (C) 1999-' . strftime( '%Y' ). ' eZ Systems AS' ) );
 }
 
+/**
+* Updates all files specified in user configuration,
+* replacing the tokens [EXTENSION_VERSION], [EXTENSION_PUBLISH_VERSION] and [EXTENSION_LICENSE]
+*/
 function run_update_extra_files()
 {
     $opts = eZExtBuilder::getOpts();
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
-    $extrafiles = eZExtBuilder::loadFileListFromFile( 'pake/files.to.parse.txt' );
+    $extrafiles = $opts['filed']['to_parse'];
     $files = pakeFinder::type( 'file' )->name( $extrafiles )->in( $destdir );
     pake_replace_tokens( $files, $destdir, '[', ']', array(
         'EXTENSION_VERSION' => $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
@@ -270,9 +278,10 @@ function run_update_extra_files()
 }
 
 /**
- * @todo allow config file to specify doc dir
- * @todo parse any doxygen file found, too
- */
+* Builds an html file of all doc/*.rst files, and removes the source
+* @todo allow config file to specify doc dir
+* @todo parse any doxygen file found, too
+*/
 function run_generate_documentation()
 {
     $opts = eZExtBuilder::getOpts();
@@ -303,6 +312,9 @@ function run_generate_documentation()
 
 }
 
+/**
+* Creates a share/filelist.md5 file, with the checksul of all files in the build
+*/
 function run_generate_md5sums()
 {
     $opts = eZExtBuilder::getOpts();
@@ -419,10 +431,10 @@ function run_update_package_xml()
     }
 }
 
-
+/// @todo allow user to specify extension name on the command line
 function run_convert_configuration()
 {
-    $extname = dirname(__FILE__);
+    $extname = dirname( __FILE__ );
     while ( !is_file( "ant/$extname.properties" ) )
     {
         $extname = pake_input( 'What is the name of the current extension?' );
@@ -432,20 +444,25 @@ function run_convert_configuration()
         }
     }
 
-    eZExtBuilder::covertPropertyFileToYamlFile(
+    eZExtBuilder::convertPropertyFileToYamlFile(
         "ant/$extname.properties",
-        'pake/options.yaml',
+        "pake/options-$extname.yaml",
         array( $extname => '' ),
         "extension:\n    name: $extname\n\n" );
 
-    foreach( array( 'files.to.parse.txt', 'files.to.exclude.txt' ) as $file )
+    foreach( array( 'files.to.parse.txt' => 'to_parse', 'files.to.exclude.txt' => 'to_exclude' ) as $file => $option )
     {
         $src = "ant/$file";
-        $dst = "pake/$file";
+        //$dst = "pake/$file";
         if ( file_exists( $src ) )
         {
-            $ok = !file_exists( $dst ) || ( pake_input( "Destionation file $dst exists. Overwrite? [y/n]", 'n' ) == 'y' );
-            $ok && pake_copy( $src, $dst, array( 'override' => true ) );
+            //$ok = !file_exists( $dst ) || ( pake_input( "Destionation file $dst exists. Overwrite? [y/n]", 'n' ) == 'y' );
+            //$ok && pake_copy( $src, $dst, array( 'override' => true ) );
+            if ( count( $in = file( $src, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES ) ) )
+            {
+                $in = "\n\nfiles:\n    $option: [" . implode( ', ', $in ) . "]\n";
+                file_put_contents( "pake/options-$extname.yaml", $in, FILE_APPEND );
+            }
         }
     }
 }
@@ -502,16 +519,45 @@ function run_tool_upgrade()
 class eZExtBuilder
 {
     static $options = null;
+    static $defaultext = null;
     static $installurl = 'http://svn.projects.ez.no/ezextensionbuilder/stable/pake';
     static $version = '0.1';
 
-    static function getOpts()
+    static function getDefaultExtName()
     {
-        if ( !is_array( self::$options ) )
+        if ( self::$defaultext != null )
         {
-            self::loadConfiguration();
+            return self::$defaultext;
         }
-        return self::$options;
+        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->maxdepth( 1 )->in( 'pake' );
+        if ( count( $files ) == 1 )
+        {
+            self::$defaultext = substr( basename( $files[0] ), 8, -5 );
+            pake_echo ( 'Found extension: ' . self::$defaultext );
+            return self::$defaultext;
+        }
+        else if ( count( $files ) == 0 )
+        {
+            throw new pakeException( "Missing configuration file pake/options-[extname].yaml, cannot continue" );
+        }
+        else
+        {
+            throw new pakeException( "Multiple configuration files pake/options-*.yaml found, need to specify an extension name to continue" );
+        }
+    }
+
+    static function getOpts( $extname='' )
+    {
+        if ( $extname == '' )
+        {
+            $extname = self::getDefaultExtName();
+            //self::$defaultext = $extname;
+        }
+        if ( !is_array( self::$options[$extname] ) )
+        {
+            self::loadConfiguration( "pake/options-$extname.yaml" );
+        }
+        return self::$options[$extname];
     }
 
     /// @bug this only works as long as all defaults are 2 leles deep
@@ -523,7 +569,8 @@ class eZExtBuilder
             'dist' => array( 'dir' => 'dist' ),
             'create' => array( 'tarball' => false ),
             'version' => array( 'license' => 'GNU General Public License v2.0' ),
-            'releasenr' => array( 'separator' => '-' ) );
+            'releasenr' => array( 'separator' => '-' ),
+            'files' => array( 'to_parse' => array(), 'to_exclude' => array() ) );
         /// @todo !important: test i !file_exists give a nicer warning than what we get from loadFile()
         $options = pakeYaml::loadFile( $infile );
         foreach( $mandatory_opts as $key => $opts )
@@ -557,8 +604,8 @@ class eZExtBuilder
         return true;
     }
 
-    /// @todo move to a separate class to slim down base class
-    static function covertPropertyFileToYamlFile( $infile, $outfile='pake/options.yaml', $transform = array(), $prepend='' )
+    /// @todo move to a separate class to slim down base class?
+    static function convertPropertyFileToYamlFile( $infile, $outfile='pake/options.yaml', $transform = array(), $prepend='' )
     {
         $current = array();
         $out = array();
@@ -636,7 +683,7 @@ class eZExtBuilder
      * . comment lines start with #
      * . whitespace stripped at beginning/end of line
      */
-    static function loadFileListFromFile( $file )
+    /*static function loadFileListFromFile( $file )
     {
         if ( !file_exists( $file ) )
         {
@@ -652,7 +699,7 @@ class eZExtBuilder
             }
         }
         return array_values( $files );
-    }
+    }*/
 
     /**
     * Download from the web all files that make up the extension (except self)

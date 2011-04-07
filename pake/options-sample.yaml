@@ -1,10 +1,10 @@
 ### sample configuration file for ezextensionbuilder
-### to be saved in $rootdir/pake
+### to be saved in $rootdir/pake-$extension.yaml
 
 extension:
     name: myextension
 
-# extension properties 
+# extension properties
 version:
     major: 1
     minor: 0
@@ -40,3 +40,10 @@ dist:
 # misc stuff
 releasenr:
     separator: .
+
+files:
+    # list of files where tokens will be replaced
+    to_parse:
+    
+    # files that will be excluded from the build
+    to_exclude:

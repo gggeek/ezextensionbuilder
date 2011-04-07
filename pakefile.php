@@ -105,23 +105,28 @@ function run_init( $task=null, $args=array(), $opts=array() )
     // files from user configuration
     $files = array_merge( $files, $opts['files']['to_exclude'] );
 
-    /**
-     Uses a regular expression to search and replace the correct string
-     Within the file, please note there is a limit of 25 sets to indent 3rd party
-     lib version numbers, if you use more than 25 spaces the version number will
-     not be updated correctly
-     */
-    $files = pakeFinder::type( 'any' )->name( $files )->in( $opts['build']['dir'] );
-    foreach ( $files as $file )
+    /// @todo figure a way to allow user to speficy both:
+    ///       files in a spefici subdir
+    ///       files to be removed globally (ie. from any subdir)
+    $files = pakeFinder::type( 'any' )->name( $files )->in( $destdir );
+    foreach( $files as $key => $file )
     {
-        pake_replace_regexp( $files, $opts['build']['dir'], array(
-            '/^([\s]{1,25}\047Version\047[\s]+=>[\s]+\047)(.*)(\047,)$/m' => '$1'.$opts['version']['alias'].$opts['releasenr']['separator'].$opts['version']['release'].'$3' ) );
+        if ( is_dir( $file ) )
+        {
+            pake_remove_dir( $file );
+            unset( $files[$key] );
+        }
     }
+    pake_remove( $files, '' );
 }
 
 function run_build( $task=null, $args=array(), $opts=array() )
 {
     /// @todo shall we pass via some pakeApp call?
+    if ( !@$opts['skip-init'] )
+    {
+        run_init( $task, $args, $opts );
+    }
     run_update_ezinfo( $task, $args, $opts );
     run_update_license_headers( $task, $args, $opts );
     run_update_extra_files( $task, $args, $opts );
@@ -132,7 +137,7 @@ function run_build( $task=null, $args=array(), $opts=array() )
     //run_eznetwork_certify();
     run_update_package_xml( $task, $args, $opts );
     //run_generate_ezpackage_xml_definition( $task, $args, $opts );
-    run_create_package_tarballs( $task, $args, $opts );
+    //run_create_package_tarballs( $task, $args, $opts );
 }
 
 function run_clean( $task=null, $args=array(), $opts=array() )
@@ -269,7 +274,7 @@ function run_update_extra_files( $task=null, $args=array(), $opts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
-    $extrafiles = $opts['filed']['to_parse'];
+    $extrafiles = $opts['files']['to_parse'];
     $files = pakeFinder::type( 'file' )->name( $extrafiles )->in( $destdir );
     pake_replace_tokens( $files, $destdir, '[', ']', array(
         'EXTENSION_VERSION' => $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
@@ -738,7 +743,7 @@ class eZExtBuilder
     {
         $src = self::$installurl.'/pakefile.php?show=source';
         /// @todo test using curl for allow_url-fopen off
-        if ( $source = file_get_contents( $src ) )
+        if ( $source = pake_read_file( $src ) )
         {
             if ( $getfile )
             {
@@ -855,7 +860,7 @@ pake_desc( 'Prepares the extension to be built' );
 pake_task( 'init' );
 
 pake_desc( 'Builds the extension' );
-pake_task( 'build', 'init' );
+pake_task( 'build' );
 
 pake_desc( 'Removes the entire build directory' );
 pake_task( 'clean' );

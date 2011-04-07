@@ -1,6 +1,6 @@
 . test .gitignore file
 
-. add auto-update task to std build task?
+. add auto-update task to std build task, except when using --skip-upgrade-check option
 
 . allow to build many extensions in a single call
 
@@ -14,14 +14,19 @@
 
 . add some detailed documentation of expected coding/file layouts standards / existing tasks undertakings
 
-. investigate proper usage of phar archives instead of using crazy bottstrap/upgrade processes
+. investigate proper usage of phar archives instead of using crazy bootstrap/upgrade processes
 
 
 # new tasks
 
 . add a task to generate .sql files from .dba
 
+. add translation checking task (see checks done in ez 4.5 cli script)
+
 . add some code quality checks (possibly from other extensions)
+  - validity of php files
+  - proper php opening tag for ini files, absence of charset tag (or only utf8 recommended)
+  - proper naming of ini files
 
 . add support for building packages?
 
@@ -32,10 +37,18 @@
 
 # improve tasks
 
+. init task that start with a dir copy / file untar
+
+. allow better specification of files.to_parse and files.to_exclude:
+  - allow a file in any dir or a file in a specific dir
+
 . upgrade task can only upgrade pakefile itself, not all of the tool. Fix this
 
 . add support for generating more docs:
   . manual from doxygen
   . api docs from phpdocumentor
+  . rst docs in other dirs?
 
 . sql file check: more flexible naming of sql files (how?)
+
+. show properties: show all of them, not just two

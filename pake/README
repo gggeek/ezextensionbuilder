@@ -74,4 +74,5 @@ FAQ
     add a single file to your versioned source code:
     ./pake/options-myextension.yaml
     You should configure git / svn to ignore all other files in the pake/
-    directory, as well as the complete build/ and dist/ directories
+    directory, as well as the complete build/ and dist/ directories, and the
+    ./pakefile.php file

@@ -103,7 +103,7 @@ function run_init( $task=null, $args=array(), $opts=array() )
     /// @todo !important shall we make this configurable?
     $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php', '.svn', '.git', '.gitignore' );
     // files from user configuration
-    $files = array_merge( $files, $opts['filed']['to_exclude'] );
+    $files = array_merge( $files, $opts['files']['to_exclude'] );
 
     /**
      Uses a regular expression to search and replace the correct string
@@ -122,17 +122,17 @@ function run_init( $task=null, $args=array(), $opts=array() )
 function run_build( $task=null, $args=array(), $opts=array() )
 {
     /// @todo shall we pass via some pakeApp call?
-    run_update_ezinfo();
-    run_update_license_headers();
-    run_update_extra_files();
-    run_generate_documentation();
-    run_generate_md5sums();
-    run_check_sql_files();
-    run_check_gnu_files();
+    run_update_ezinfo( $task, $args, $opts );
+    run_update_license_headers( $task, $args, $opts );
+    run_update_extra_files( $task, $args, $opts );
+    run_generate_documentation( $task, $args, $opts );
+    run_generate_md5sums( $task, $args, $opts );
+    run_check_sql_files( $task, $args, $opts );
+    run_check_gnu_files( $task, $args, $opts );
     //run_eznetwork_certify();
-    run_update_package_xml();
-    run_generate_ezpackage_xml_definition();
-    run_create_package_tarballs();
+    run_update_package_xml( $task, $args, $opts );
+    //run_generate_ezpackage_xml_definition( $task, $args, $opts );
+    run_create_package_tarballs( $task, $args, $opts );
 }
 
 function run_clean( $task=null, $args=array(), $opts=array() )
@@ -144,8 +144,8 @@ function run_clean( $task=null, $args=array(), $opts=array() )
 function run_clean_all( $task=null, $args=array(), $opts=array() )
 {
     /// @todo shall we pass via some pakeApp call?
-    run_clean();
-    run_dist_clean();
+    run_clean( $task, $args, $opts );
+    run_dist_clean( $task, $args, $opts );
 }
 
 function run_dist( $task=null, $args=array(), $opts=array() )
@@ -206,8 +206,8 @@ function run_fat_dist( $task=null, $args=array(), $opts=array() )
 function run_all( $task=null, $args=array(), $opts=array() )
 {
     /// @todo shall we pass via some pakeApp call?
-    run_build();
-    run_dist();
+    run_build( $task, $args, $opts );
+    run_dist( $task, $args, $opts );
     // run_build_dependencies();
 }
 
@@ -492,7 +492,7 @@ function run_tool_upgrade_check( $task=null, $args=array(), $opts=array() )
             $ok = pake_select_input( "Do you want to upgrade? ", array( 'y', 'n' ), 'n' );
             if ( $ok == 'y' )
             {
-                run_tool_upgrade();
+                run_tool_upgrade(  $task, $args, $opts );
             }
         }
     }

@@ -4,6 +4,8 @@
 
 . add auto-update task to std build task?
 
+. allow to build many extensions in a single call
+
 . allow extension to build self
 
 . switch to an ini-file based configuration instead of yaml? advantages:
@@ -12,7 +14,7 @@
 
 . add support for different dir schemas for extensions providing packages? nb: better if we can do it without that...
 
-. add some detailed documentation of expected standards / task execution
+. add some detailed documentation of expected coding/file layouts standards / existing tasks undertakings
 
 
 # new tasks
@@ -25,7 +27,7 @@
 
 . add support for building dependent extensions
 
-. add support for launching testsuite
+. add support for launching testsuite tests
 
 
 # improve tasks

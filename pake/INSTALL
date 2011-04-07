@@ -1,0 +1,60 @@
+Requirements
+============
+
+- the php cli
+- the Zeta Components php library (only for generating tarballs and html docs from rst)
+- command line tools: svn and/or git
+
+
+How to install and use eZ Extension Builder
+===========================================
+
+This is a 4 steps tutorial.
+
+1. Download the pakefile script
+-------------------------------
+
+Usually you would run the build script in root directory of your extension,
+but that is not a strict prerequisite. ::
+
+    wget http://svn.projects.ez.no/ezextensionbuilder/stable/pake/pakefile.php
+
+
+2. Launch the pakefile script for the first time
+------------------------------------------------
+
+The script is able to bootstrap, ie. to download all missing components the
+first time that you run it: ::
+
+    php pakefile.php
+
+This will create a directory ./pake/ and download all needed stuff into it from http://svn.projects.ez.no/ezextensionbuilder.
+
+
+3. Edit the configuration file
+------------------------------
+
+A sample configuration file is provided by the extension: ./pake/options-sample.yaml
+You should copy it to ./pake/options-myextension.yaml and edit it to suit your needs.
+Note that steps 1 to 3 have to be executed only once.
+
+
+4. Launch the final build
+-------------------------
+
+To get a list of all available tasks run::
+
+    php pakefile.php --tasks
+
+To build your extension run::
+
+    php pakefile.php build myextension
+
+NB: every time the extension is built, a fresh version is retrieved from its
+svn/github repository. The local copy is not used at all.
+
+
+More information
+================
+
+Read the README file and anything in the ./docs/ folder for more details

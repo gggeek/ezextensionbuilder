@@ -1,5 +1,3 @@
-. document the crazed file layout of this extension
-
 . test .gitignore file
 
 . add auto-update task to std build task?
@@ -31,6 +29,8 @@
 
 
 # improve tasks
+
+. upgrade task can only upgrade pakefile itself, not all of the tool. Fix this
 
 . add support for generating more docs:
   . manual from doxygen

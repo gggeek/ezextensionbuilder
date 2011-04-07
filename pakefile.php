@@ -498,6 +498,7 @@ function run_tool_upgrade_check( $task=null, $args=array(), $opts=array() )
     }
 }
 
+/// @todo add a backup enable/disable option
 function run_tool_upgrade( $task=null, $args=array(), $opts=array() )
 {
     $latest = eZExtBuilder::latestVersion( true );
@@ -507,6 +508,7 @@ function run_tool_upgrade( $task=null, $args=array(), $opts=array() )
     }
     else
     {
+        pake_copy( __FILE__, dirname( __FILE__ ) . '/pake/pakefile-' . eZExtBuilder::$version . '.php', array( 'override' => true ) );
         /// @todo test: does this work on windows?
         file_put_contents( __FILE__, $latest );
     }

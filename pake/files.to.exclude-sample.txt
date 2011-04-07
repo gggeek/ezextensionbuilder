@@ -1,7 +1,0 @@
-# a list of files that will not be part of the build
-# rename to files.to.exclude.txt to activate
-# one file per line
-# comments start with a hash sign
-
-dist.sh
-package.xml

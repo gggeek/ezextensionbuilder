@@ -1,8 +1,6 @@
-. support passing name of extension via cli options
-
 . document the crazed file layout of this extension
 
-. add .gitignore file
+. test .gitignore file
 
 . add auto-update task to std build task?
 

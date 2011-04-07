@@ -60,9 +60,9 @@ function run_default()
     pake_echo ( 'Please run: pake --tasks to learn more about available tasks' );
 }
 
-function run_show_properties()
+function run_show_properties( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     pake_echo ( 'Build dir: ' . $opts['build']['dir'] );
     pake_echo ( 'Extension name: ' . $opts['extension']['name'] );
 }
@@ -71,9 +71,9 @@ function run_show_properties()
 * Downloads the extension from its source repository, removes files not to be built
 * @todo add a dependency on a check-updates task that updates script itself
 */
-function run_init()
+function run_init( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     pake_mkdirs( $opts['build']['dir'] );
 
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
@@ -119,7 +119,7 @@ function run_init()
     }
 }
 
-function run_build()
+function run_build( $task=null, $args=array(), $opts=array() )
 {
     /// @todo shall we pass via some pakeApp call?
     run_update_ezinfo();
@@ -135,22 +135,22 @@ function run_build()
     run_create_package_tarballs();
 }
 
-function run_clean()
+function run_clean( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     pake_remove_dir( $opts['build']['dir'] );
 }
 
-function run_clean_all()
+function run_clean_all( $task=null, $args=array(), $opts=array() )
 {
     /// @todo shall we pass via some pakeApp call?
     run_clean();
     run_dist_clean();
 }
 
-function run_dist()
+function run_dist( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     if ( $opts['create']['tarball'] )
     {
         if ( !class_exists( 'ezcArchive' ) )
@@ -177,9 +177,9 @@ function run_dist()
     }
 }
 
-function run_fat_dist()
+function run_fat_dist( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     if ( !class_exists( 'ezcArchive' ) )
     {
         throw new pakeException( "Missing Zeta Components: cannot generate tar file. Use the environment var PHP_CLASSPATH" );
@@ -203,7 +203,7 @@ function run_fat_dist()
     pake_echo_action( 'file+', $target . '.gz' );
 }
 
-function run_all()
+function run_all( $task=null, $args=array(), $opts=array() )
 {
     /// @todo shall we pass via some pakeApp call?
     run_build();
@@ -211,15 +211,15 @@ function run_all()
     // run_build_dependencies();
 }
 
-function run_dist_clean()
+function run_dist_clean( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     pake_remove_dir( $opts['dist']['dir'] );
 }
 
-function run_update_ezinfo()
+function run_update_ezinfo( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
 
     $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->maxdepth( 1 )->in( $destdir );
@@ -250,9 +250,9 @@ function run_update_ezinfo()
 * @todo parse tpl files too?
 * @todo use other strings than these, since it's gonna be community extensions?
 */
-function run_update_license_headers()
+function run_update_license_headers( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
     $files = pakeFinder::type( 'file' )->name( array( '*.php', '*.css', '*.js' ) )->in( $destdir );
     pake_replace_regexp( $files, $destdir, array(
@@ -265,9 +265,9 @@ function run_update_license_headers()
 * Updates all files specified in user configuration,
 * replacing the tokens [EXTENSION_VERSION], [EXTENSION_PUBLISH_VERSION] and [EXTENSION_LICENSE]
 */
-function run_update_extra_files()
+function run_update_extra_files( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
     $extrafiles = $opts['filed']['to_parse'];
     $files = pakeFinder::type( 'file' )->name( $extrafiles )->in( $destdir );
@@ -282,9 +282,9 @@ function run_update_extra_files()
 * @todo allow config file to specify doc dir
 * @todo parse any doxygen file found, too
 */
-function run_generate_documentation()
+function run_generate_documentation( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
     $docdir = $destdir . '/doc';
     $files = pakeFinder::type( 'file' )->name( '*.rst' )->in( $docdir );
@@ -315,9 +315,9 @@ function run_generate_documentation()
 /**
 * Creates a share/filelist.md5 file, with the checksul of all files in the build
 */
-function run_generate_md5sums()
+function run_generate_md5sums( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
     $files = pakeFinder::type( 'file' )->in( $destdir );
     $out = array();
@@ -355,9 +355,9 @@ function run_generate_md5sums()
  * NB: there are NOT a lot of extensions currently following this schema.
  * Alternativate used are: sql/mysql/mysql.sql, sql/mysql/random.sql
  */
-function run_check_sql_files()
+function run_check_sql_files( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
 
     $schemafiles = array( 'share' => 'db_schema.dba', 'sql/mysql' => 'schema.sql', 'sql/oracle' => 'schema.sql', 'sql/postgres' => 'schema.sql' );
@@ -399,9 +399,9 @@ function run_check_sql_files()
     }
 }
 
-function run_check_gnu_files()
+function run_check_gnu_files( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
     $files = pakeFinder::type( 'file' )->name( array( 'README', 'LICENSE' ) )->maxdepth( 1 )->in( $destdir );
     if ( count( $files ) != 2 )
@@ -410,9 +410,9 @@ function run_check_gnu_files()
     }
 }
 
-function run_update_package_xml()
+function run_update_package_xml( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts();
+    $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
     $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 1 )->in( $destdir );
     if ( count( $files ) == 1 )
@@ -432,7 +432,7 @@ function run_update_package_xml()
 }
 
 /// @todo allow user to specify extension name on the command line
-function run_convert_configuration()
+function run_convert_configuration( $task=null, $args=array(), $opts=array() )
 {
     $extname = dirname( __FILE__ );
     while ( !is_file( "ant/$extname.properties" ) )
@@ -467,7 +467,7 @@ function run_convert_configuration()
     }
 }
 
-function run_tool_upgrade_check()
+function run_tool_upgrade_check( $task=null, $args=array(), $opts=array() )
 {
     $latest = eZExtBuilder::latestVersion();
     if ( $latest == false )
@@ -498,7 +498,7 @@ function run_tool_upgrade_check()
     }
 }
 
-function run_tool_upgrade()
+function run_tool_upgrade( $task=null, $args=array(), $opts=array() )
 {
     $latest = eZExtBuilder::latestVersion( true );
     if ( $latest == false )
@@ -555,13 +555,13 @@ class eZExtBuilder
         }
         if ( !is_array( self::$options[$extname] ) )
         {
-            self::loadConfiguration( "pake/options-$extname.yaml" );
+            self::loadConfiguration( "pake/options-$extname.yaml", $extname );
         }
         return self::$options[$extname];
     }
 
     /// @bug this only works as long as all defaults are 2 leles deep
-    static function loadConfiguration ( $infile='pake/options.yaml' )
+    static function loadConfiguration ( $infile='pake/options.yaml', $extname='' )
     {
         $mandatory_opts = array( 'extension' => array( 'name' ), 'version' => array( 'major', 'minor', 'release' ) );
         $default_opts = array(
@@ -600,7 +600,7 @@ class eZExtBuilder
                 $options[$key] = $opts;
             }
         }
-        self::$options = $options;
+        self::$options[$extname] = $options;
         return true;
     }
 
@@ -777,6 +777,37 @@ class eZExtBuilder
 
 }
 
+// The following two functions we use, and submitted for inclusion in pake.
+// While we wait for acceptance, we define them here...
+if ( !function_exists( 'pake_replace_regexp_to_dir' ) )
+{
+
+function pake_replace_regexp_to_dir($arg, $src_dir, $target_dir, $regexps)
+{
+    $files = pakeFinder::get_files_from_argument($arg, $src_dir, true);
+
+    foreach ($files as $file)
+    {
+        $replaced = false;
+        $content = pake_read_file($src_dir.'/'.$file);
+        foreach ($regexps as $key => $value)
+        {
+            $content = preg_replace($key, $value, $content, -1, $count);
+            if ($count) $replaced = true;
+        }
+
+        pake_echo_action('regexp', $target_dir.DIRECTORY_SEPARATOR.$file);
+
+        file_put_contents($target_dir.DIRECTORY_SEPARATOR.$file, $content);
+    }
+}
+
+function pake_replace_regexp($arg, $target_dir, $regexps)
+{
+    pake_replace_regexp_to_dir($arg, $target_dir, $target_dir, $regexps);
+}
+
+}
 
 // *** Live code starts here ***
 
@@ -791,6 +822,8 @@ if ( !function_exists( 'pake_desc' ) )
 
         // force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
         register_ezc_autoload();
+
+        // add our own cli options
 
         $pake = pakeApp::get_instance();
         $pake->run();

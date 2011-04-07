@@ -14,6 +14,8 @@
 
 . add some detailed documentation of expected coding/file layouts standards / existing tasks undertakings
 
+. investigate proper usage of phar archives instead of using crazy bottstrap/upgrade processes
+
 
 # new tasks
 

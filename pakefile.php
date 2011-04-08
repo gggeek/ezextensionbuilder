@@ -570,7 +570,7 @@ class eZExtBuilder
     /// @bug this only works as long as all defaults are 2 leles deep
     static function loadConfiguration ( $infile='pake/options.yaml', $extname='' )
     {
-        $mandatory_opts = array( 'extension' => array( 'name' ), 'version' => array( 'major', 'minor', 'release' ) );
+        $mandatory_opts = array( /*'extension' => array( 'name' ),*/ 'version' => array( 'major', 'minor', 'release' ) );
         $default_opts = array(
             'build' => array( 'dir' => 'build' ),
             'dist' => array( 'dir' => 'dist' ),
@@ -590,7 +590,11 @@ class eZExtBuilder
                 }
             }
         }
-        if ( !isset( $options['version']['alias'] ) )
+        if ( !isset( $options['extension']['name'] ) || $options['extension']['name'] == '' )
+        {
+            $options['extension']['name'] = $extname;
+        }
+        if ( !isset( $options['version']['alias'] ) || $options['version']['alias'] == '' )
         {
             $options['version']['alias'] = $options['version']['major'] . '.' . $options['version']['minor'];
         }

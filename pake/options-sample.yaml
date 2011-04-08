@@ -2,27 +2,32 @@
 ### to be saved in $rootdir/pake-$extension.yaml
 
 extension:
+    # if not set, extension name is taken from file name
     name: myextension
 
-# extension properties
 version:
+    # the version number is mandatory
     major: 1
     minor: 0
     release: 0alpha
 
+    # if not set, defaults to 'GNU General Public License v2.0'
     license:  GNU General Public License v2.0
 
 create:
+    # whether to create a .tar.gz file of the extension during the build
+    # if not set, defaults to no
     tarball: yes
 
-# ezpublish properties: required version
 ezp:
+    # ezpublish required version: this string is used in documentation files
+    # and for building packages
     version:
         major: 4
         minor: 5
         release: 0beta2
 
-# Subversion url
+# Subversion url for the source code
 svn:
     url: http://svn.projects.ez.no/myexetension/trunk/extension/myexetension
 
@@ -31,19 +36,22 @@ git:
     url: http://svn.projects.ez.no/myexetension/trunk/extension/myexetension
     branch:
 
-# working directories
+files:
+    # list of files where tokens will be replaced
+    to_parse:
+
+    # files that will be excluded from the build
+    to_exclude:
+
+
+# misc stuff that you normally do not change
+
+# working directories (relative to script execution dir)
 build:
     dir: build
 dist:
     dir: dist
 
-# misc stuff
+# separator char used between vaersion minor and release numbers. Defaults to '-' if unspecified
 releasenr:
     separator: .
-
-files:
-    # list of files where tokens will be replaced
-    to_parse:
-    
-    # files that will be excluded from the build
-    to_exclude:

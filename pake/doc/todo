@@ -1,6 +1,8 @@
+. test: tar archive not working?
+
 . test .gitignore file
 
-. add auto-update task to std build task, except when using --skip-upgrade-check option
+. add auto-update task to std build task, except when using --skip-upgrade-check option (?)
 
 . allow to build many extensions in a single call
 
@@ -27,6 +29,7 @@
   - validity of php files
   - proper php opening tag for ini files, absence of charset tag (or only utf8 recommended)
   - proper naming of ini files
+  - php coding style
 
 . add support for building packages?
 
@@ -52,3 +55,5 @@
 . sql file check: more flexible naming of sql files (how?)
 
 . show properties: show all of them, not just two
+
+. dist task: allow to specify output format (zip, tar.gz, tar.bz2)

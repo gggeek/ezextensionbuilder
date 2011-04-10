@@ -53,6 +53,9 @@ To build your extension run::
 NB: every time the extension is built, a fresh version is retrieved from its
 svn/github repository. The local copy is not used at all.
 
+NB: The Zeta Components library must be available in your php include_path. If it
+is not, you can set the environment variable PHP_CLASSPATH to make it available
+to the script.
 
 More information
 ================

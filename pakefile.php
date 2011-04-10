@@ -73,6 +73,11 @@ function run_show_properties( $task=null, $args=array(), $opts=array() )
 */
 function run_init( $task=null, $args=array(), $opts=array() )
 {
+    if ( @$opts['skip-init'] )
+    {
+        return;
+    }
+
     $opts = eZExtBuilder::getOpts( @$args[0] );
     pake_mkdirs( $opts['build']['dir'] );
 
@@ -92,16 +97,24 @@ function run_init( $task=null, $args=array(), $opts=array() )
             pakeGit::checkout_repo( $destdir, @$opts['git']['branch'] );
         }
     }
+    else if ( @$opts['file']['url'] != '' )
+    {
+        pake_echo( 'Fetching code from local repository' );
+        /// @todo exlude stuff we know we're going to delete immediately afterwards
+        $files = pakeFinder::type( 'any' )->in( $opts['file']['url'] );
+        pake_mirror( $files, $opts['file']['url'], $destdir );
+    }
     else
     {
-        throw new pakeException( "Missing source repo option: either svn:url or git:url" );
+        throw new pakeException( "Missing source repo option: either svn:url, git:url or file:url" );
     }
 
     // remove files
 
     // known files/dirs not to be packed / md5'ed
     /// @todo !important shall we make this configurable?
-    $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php', '.svn', '.git', '.gitignore' );
+    /// @todo 'build' & 'dist' we should take from options
+    $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php', '.svn', '.git', '.gitignore', 'build', 'dist' );
     // files from user configuration
     $files = array_merge( $files, $opts['files']['to_exclude'] );
 
@@ -122,22 +135,6 @@ function run_init( $task=null, $args=array(), $opts=array() )
 
 function run_build( $task=null, $args=array(), $opts=array() )
 {
-    /// @todo shall we pass via some pakeApp call?
-    if ( !@$opts['skip-init'] )
-    {
-        run_init( $task, $args, $opts );
-    }
-    run_update_ezinfo( $task, $args, $opts );
-    run_update_license_headers( $task, $args, $opts );
-    run_update_extra_files( $task, $args, $opts );
-    run_generate_documentation( $task, $args, $opts );
-    run_generate_md5sums( $task, $args, $opts );
-    run_check_sql_files( $task, $args, $opts );
-    run_check_gnu_files( $task, $args, $opts );
-    //run_eznetwork_certify();
-    run_update_package_xml( $task, $args, $opts );
-    //run_generate_ezpackage_xml_definition( $task, $args, $opts );
-    //run_create_package_tarballs( $task, $args, $opts );
 }
 
 function run_clean( $task=null, $args=array(), $opts=array() )
@@ -146,40 +143,64 @@ function run_clean( $task=null, $args=array(), $opts=array() )
     pake_remove_dir( $opts['build']['dir'] );
 }
 
-function run_clean_all( $task=null, $args=array(), $opts=array() )
-{
-    /// @todo shall we pass via some pakeApp call?
-    run_clean( $task, $args, $opts );
-    run_dist_clean( $task, $args, $opts );
-}
-
 function run_dist( $task=null, $args=array(), $opts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    if ( $opts['create']['tarball'] )
+    if ( $opts['create']['tarball'] || $opts['create']['zip'] )
     {
         if ( !class_exists( 'ezcArchive' ) )
         {
             throw new pakeException( "Missing Zeta Components: cannot generate tar file. Use the environment var PHP_CLASSPATH" );
         }
         pake_mkdirs( $opts['dist']['dir'] );
-        $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
         // get absolute path to build dir
         $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
         $rootpath = dirname( $rootpath[0] );
-        $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar';
-        // we do not rely on this, not to depend on phar extension and also because it's slightly buggy if there are dots in archive file name
-        //pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
-        $tar = ezcArchive::open( $target, ezcArchive::TAR );
-        $tar->appendToCurrent( $files, $rootpath );
-        $tar->close();
-        $fp = fopen( 'compress.zlib://' . $target . '.gz', 'wb9' );
-        /// @todo read file by small chunks to avoid memory exhaustion
-        fwrite( $fp, file_get_contents( $target ) );
-        fclose( $fp );
-        unlink( $target );
-        pake_echo_action( 'file+', $target . '.gz' );
+
+        if ( $opts['create']['tarball'] )
+        {
+            $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
+            $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar';
+            // we do not rely on this, not to depend on phar extension and also because it's slightly buggy if there are dots in archive file name
+            //pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
+            $tar = ezcArchive::open( $target, ezcArchive::TAR );
+            $tar->truncate();
+            $tar->append( $files, $rootpath );
+            $tar->close();
+            $fp = fopen( 'compress.zlib://' . $target . '.gz', 'wb9' );
+            /// @todo read file by small chunks to avoid memory exhaustion
+            fwrite( $fp, file_get_contents( $target ) );
+            fclose( $fp );
+            unlink( $target );
+            pake_echo_action( 'file+', $target . '.gz' );
+        }
+
+        if ( $opts['create']['zip'] )
+        {
+            $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
+            /// current ezc code does not like having folders in list of files to pack
+            /// unless they end in '/'
+            foreach( $files as $i => $f )
+            {
+                if ( is_dir( $f ) )
+                {
+                    $files[$i] = $files[$i] . '/';
+                }
+            }
+            $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.zip';
+            $tar = ezcArchive::open( $target, ezcArchive::ZIP );
+            $tar->truncate();
+            $tar->append( $files, $rootpath );
+            $tar->close();
+            pake_echo_action( 'file+', $target );
+        }
     }
+}
+
+function run_dist_clean( $task=null, $args=array(), $opts=array() )
+{
+    $opts = eZExtBuilder::getOpts( @$args[0] );
+    pake_remove_dir( $opts['dist']['dir'] );
 }
 
 function run_fat_dist( $task=null, $args=array(), $opts=array() )
@@ -210,16 +231,10 @@ function run_fat_dist( $task=null, $args=array(), $opts=array() )
 
 function run_all( $task=null, $args=array(), $opts=array() )
 {
-    /// @todo shall we pass via some pakeApp call?
-    run_build( $task, $args, $opts );
-    run_dist( $task, $args, $opts );
-    // run_build_dependencies();
 }
 
-function run_dist_clean( $task=null, $args=array(), $opts=array() )
+function run_clean_all( $task=null, $args=array(), $opts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
-    pake_remove_dir( $opts['dist']['dir'] );
 }
 
 function run_update_ezinfo( $task=null, $args=array(), $opts=array() )
@@ -286,6 +301,8 @@ function run_update_extra_files( $task=null, $args=array(), $opts=array() )
 * Builds an html file of all doc/*.rst files, and removes the source
 * @todo allow config file to specify doc dir
 * @todo parse any doxygen file found, too
+* @todo create api doc from php files
+*       example cli cmd: ${phpdocinstall}phpdoc -t ${phpdocdir}/html -ti 'eZ Publish' -pp -s -d lib/ezdb/classes,lib/ezdbschema/classes,lib/ezdiff/classes,lib/ezfile/classes,lib/ezi18n/classes,lib/ezimage/classes,lib/ezlocale/classes,lib/ezmath/classes,lib/ezpdf/classes,lib/ezsession/classes,lib/ezsoap/classes,lib/eztemplate/classes,lib/ezutils/classes,lib/ezxml/classes,kernel/classes,kernel/private/classes,kernel/common,cronjobs,update/common/scripts > ${phpdocdir}/generate.log
 */
 function run_generate_documentation( $task=null, $args=array(), $opts=array() )
 {
@@ -310,10 +327,11 @@ function run_generate_documentation( $task=null, $args=array(), $opts=array() )
     }
 
     /*
-       * A few extension have Makefiles to generate documentation
-       * We remove them as well as original .rst files
+    * A few extension have Makefiles to generate documentation
+    * We remove them as well as the original .rst files
+    * NB: this is not done anymore since version 0.1. Use files.to_exclude option instead
     */
-    pake_remove( pakeFinder::type( 'file' )->name( 'Makefile' )->in( $destdir ), '' );
+    //pake_remove( pakeFinder::type( 'file' )->name( 'Makefile' )->in( $destdir ), '' );
 
 }
 
@@ -574,7 +592,7 @@ class eZExtBuilder
         $default_opts = array(
             'build' => array( 'dir' => 'build' ),
             'dist' => array( 'dir' => 'dist' ),
-            'create' => array( 'tarball' => false ),
+            'create' => array( 'tarball' => false, 'zip' => false ),
             'version' => array( 'license' => 'GNU General Public License v2.0' ),
             'releasenr' => array( 'separator' => '-' ),
             'files' => array( 'to_parse' => array(), 'to_exclude' => array() ) );
@@ -860,29 +878,31 @@ pake_task( 'default' );
 pake_desc( 'Shows the properties for this build file' );
 pake_task( 'show-properties' );
 
-pake_desc( 'Prepares the extension to be built' );
+pake_desc( 'Downloads extension sources from svn/git and removes unwanted files' );
 pake_task( 'init' );
 
-pake_desc( 'Builds the extension' );
-pake_task( 'build' );
+pake_desc( 'Builds the extension. Options: --skip-init' );
+pake_task( 'build', 'init', 'update-ezinfo', 'update-license-headers', 'update-extra-files',
+     'generate-documentation', 'generate-md5sums', 'check-sql-files', 'check-gnu-files',
+     'update-package-xml' );
 
-pake_desc( 'Removes the entire build directory' );
+pake_desc( 'Removes the build/ directory' );
 pake_task( 'clean' );
-
-pake_desc( 'Removes the build/ and dist/ directories' );
-pake_task( 'clean-all' );
 
 pake_desc( 'Creates a tarball of the built extension' );
 pake_task( 'dist' );
 
+pake_desc( 'Removes the dist/ directory' );
+pake_task( 'dist-clean' );
+
+pake_desc( 'Builds the extension and generates the tarball' );
+pake_task( 'all', 'build', 'dist' ); // plus: build-dependencies
+
+pake_desc( 'Removes the build/ and dist/ directories' );
+pake_task( 'clean-all', 'clean', 'dist-clean' );
+
 pake_desc( 'Creates a tarball of all extensions in the build/ directory' );
 pake_task( 'fat-dist' );
-
-pake_desc( 'Build the extension and generate the tarball' );
-pake_task( 'all' );
-
-pake_desc( 'Removes the generated tarball' );
-pake_task( 'dist-clean' );
 
 pake_desc( 'Updates ezinfo.php and extension.xml with correct version numbers and licensing info' );
 pake_task( 'update-ezinfo' );
@@ -893,26 +913,26 @@ pake_task( 'update-license-headers' );
 pake_desc( 'Updates extra files with correct version numbers and licensing info' );
 pake_task( 'update-extra-files' );
 
-pake_desc( 'Generates the document of the extension, if created in RST' );
+pake_desc( 'Generates the documentation of the extension, if created in RST format' );
 pake_task( 'generate-documentation' );
 
 //pake_desc( 'Checks PHP code coding standard, requires PHPCodeSniffer' );
 //pake_task( 'coding-standards-check' );
 
-pake_desc( 'Generates an MD5 file with all md5 sums of source code files' );
+pake_desc( 'Generates a share/filelist.md5 file with md5 checksums of all source files' );
 pake_task( 'generate-md5sums' );
 
-pake_desc( 'Checks if a schema.sql / cleandata.sql is available for supported databases' );
+pake_desc( 'Checks if a schema.sql / cleandata.sql is available for all supported databases' );
 pake_task( 'check-sql-files' );
 
-pake_desc( 'Checks for LICENSE and README files' );
+pake_desc( 'Checks for presence of LICENSE and README files' );
 pake_task( 'check-gnu-files' );
 
 
 //pake_desc( 'Generates an XML definition for eZ Publish extension package types' );
 //pake_task( 'generate-ezpackage-xml-definition' );
 
-pake_desc( 'Updates version numbers in package.xml' );
+pake_desc( 'Updates version numbers in package.xml file' );
 pake_task( 'update-package-xml' );
 
 /*

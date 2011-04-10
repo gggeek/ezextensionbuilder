@@ -12,12 +12,14 @@ version:
     release: 0alpha
 
     # if not set, defaults to 'GNU General Public License v2.0'
-    license:  GNU General Public License v2.0
+    license: GNU General Public License v2.0
 
 create:
     # whether to create a .tar.gz file of the extension during the build
     # if not set, defaults to no
     tarball: yes
+    # if not set, defaults to no
+    zip: yes
 
 ezp:
     # ezpublish required version: this string is used in documentation files
@@ -35,6 +37,10 @@ svn:
 git:
     url: http://svn.projects.ez.no/myexetension/trunk/extension/myexetension
     branch:
+
+# If the source is on a local folder
+file:
+    url:
 
 files:
     # list of files where tokens will be replaced

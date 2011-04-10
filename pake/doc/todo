@@ -2,8 +2,6 @@
 
 . test .gitignore file
 
-. add auto-update task to std build task, except when using --skip-upgrade-check option (?)
-
 . allow to build many extensions in a single call
 
 . allow extension to build self
@@ -37,10 +35,14 @@
 
 . add support for launching testsuite tests
 
+. changelog generation task: if it's not there, build it from git/svn commit messages
+
 
 # improve tasks
 
-. init task that start with a dir copy / file untar
+. add auto-update task to std build task, except when using --skip-upgrade-check option (?)
+
+. init task that start with a file untar
 
 . allow better specification of files.to_parse and files.to_exclude:
   - allow a file in any dir or a file in a specific dir
@@ -56,4 +58,8 @@
 
 . show properties: show all of them, not just two
 
-. dist task: allow to specify output format (zip, tar.gz, tar.bz2)
+. dist task: allow to specify .tar.bz2 output format
+
+. bootstrap: download the ezc if needed
+
+. clean task: allow to only delete extension dir, not complete build dir

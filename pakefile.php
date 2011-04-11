@@ -251,8 +251,8 @@ function run_update_ezinfo( $task=null, $args=array(), $opts=array() )
     */
     /// @todo use a real php parser instead
     pake_replace_regexp( $files, $destdir, array(
-        '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+\x27)(.*)(\x27,?\r?\n?)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
-        '/^([\s]{1,25}\x27License\x27[\s]+=>[\s]+\x22)(.*)(\x22,?\r?\n?)/m' => '${1}' . $opts['version']['license'] . '$3' ) );
+        '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+[\x27\x22])(.*)([\x27\x22],?\r?\n?)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
+        '/^([\s]{1,25}\x27License\x27[\s]+=>[\s]+[\x27\x22])(.*)([\x27\x22],?\r?\n?)/m' => '${1}' . $opts['version']['license'] . '$3' ) );
 
     $files = pakeFinder::type( 'file' )->maxdepth( 0 )->name( 'extension.xml' )->in( $destdir );
     // here again, do not replace version of required extensions

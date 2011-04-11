@@ -386,7 +386,7 @@ function run_check_sql_files( $task=null, $args=array(), $opts=array() )
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
 
-    $schemafiles = array( 'share' => 'db_schema.dba', 'sql/mysql' => 'schema.sql', 'sql/oracle' => 'schema.sql', 'sql/postgres' => 'schema.sql' );
+    $schemafiles = array( 'share' => 'db_schema.dba', 'sql/mysql' => 'schema.sql', 'sql/oracle' => 'schema.sql', 'sql/postgresql' => 'schema.sql' );
     $count = 0;
     foreach( $schemafiles as $dir => $file )
     {
@@ -405,7 +405,7 @@ function run_check_sql_files( $task=null, $args=array(), $opts=array() )
         throw new pakeException( "Found some sql schema files but not all of them. Please fix" );
     }
 
-    $datafiles = array( 'share' => 'db_data.dba', 'sql/mysql' => 'cleandata.sql', 'sql/oracle' => 'cleandata.sql', 'sql/postgres' => 'cleandata.sql' );
+    $datafiles = array( 'share' => 'db_data.dba', 'sql/mysql' => 'cleandata.sql', 'sql/oracle' => 'cleandata.sql', 'sql/postgresql' => 'cleandata.sql' );
     $count = 0;
     foreach( $datafiles as $dir => $file )
     {

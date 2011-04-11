@@ -242,7 +242,7 @@ function run_update_ezinfo( $task=null, $args=array(), $opts=array() )
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
 
-    $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->maxdepth( 1 )->in( $destdir );
+    $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->maxdepth( 0 )->in( $destdir );
     /*
        * Uses a regular expression to search and replace the correct string
        * Within the file, please note there is a limit of 25 sets to indent 3rd party
@@ -254,7 +254,7 @@ function run_update_ezinfo( $task=null, $args=array(), $opts=array() )
         '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+\x27)(.*)(\x27,?\r?\n?)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
         '/^([\s]{1,25}\x27License\x27[\s]+=>[\s]+\x22)(.*)(\x22,?\r?\n?)/m' => '${1}' . $opts['version']['license'] . '$3' ) );
 
-    $files = pakeFinder::type( 'file' )->maxdepth( 1 )->name( 'extension.xml' )->in( $destdir );
+    $files = pakeFinder::type( 'file' )->maxdepth( 0 )->name( 'extension.xml' )->in( $destdir );
     // here again, do not replace version of required extensions
     /// @todo use a real xml parser instead
     pake_replace_regexp( $files, $destdir, array(
@@ -277,9 +277,9 @@ function run_update_license_headers( $task=null, $args=array(), $opts=array() )
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
     $files = pakeFinder::type( 'file' )->name( array( '*.php', '*.css', '*.js' ) )->in( $destdir );
     pake_replace_regexp( $files, $destdir, array(
-        '#// SOFTWARE RELEASE: (.*)#m' => '// SOFTWARE RELEASE: ' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] ) );
-    pake_replace_regexp( $files, $destdir, array(
-        '/Copyright \(C\) 1999-[\d]{4} eZ Systems AS/m' => 'Copyright (C) 1999-' . strftime( '%Y' ). ' eZ Systems AS' ) );
+        '#// SOFTWARE RELEASE: (.*)#m' => '// SOFTWARE RELEASE: ' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
+        '/Copyright \(C\) 1999-[\d]{4} eZ Systems AS/m' => 'Copyright (C) 1999-' . strftime( '%Y' ). ' eZ Systems AS',
+        '#(.*@version )//autogentag//(\r?\n?)#m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$2' ) );
 }
 
 /**
@@ -390,7 +390,7 @@ function run_check_sql_files( $task=null, $args=array(), $opts=array() )
     $count = 0;
     foreach( $schemafiles as $dir => $file )
     {
-        $files = pakeFinder::type( 'file' )->name( $file )->maxdepth( 1 )->in( $destdir . "/$dir" );
+        $files = pakeFinder::type( 'file' )->name( $file )->maxdepth( 0 )->in( $destdir . "/$dir" );
         if ( count( $files ) )
         {
             if ( filesize( $files[0] ) == 0 )
@@ -399,6 +399,7 @@ function run_check_sql_files( $task=null, $args=array(), $opts=array() )
             }
             $count++;
         }
+
     }
     if ( $count > 0 && $count < 4 )
     {
@@ -409,7 +410,7 @@ function run_check_sql_files( $task=null, $args=array(), $opts=array() )
     $count = 0;
     foreach( $datafiles as $dir => $file )
     {
-        $files = pakeFinder::type( 'file' )->name( $file )->maxdepth( 1 )->in( $destdir . "/$dir" );
+        $files = pakeFinder::type( 'file' )->name( $file )->maxdepth( 0 )->in( $destdir . "/$dir" );
         if ( count( $files ) )
         {
             if ( filesize( $files[0] ) == 0 )
@@ -429,10 +430,10 @@ function run_check_gnu_files( $task=null, $args=array(), $opts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
-    $files = pakeFinder::type( 'file' )->name( array( 'README', 'LICENSE' ) )->maxdepth( 1 )->in( $destdir );
+    $files = pakeFinder::type( 'file' )->name( array( 'README', 'LICENSE' ) )->maxdepth( 0 )->in( $destdir );
     if ( count( $files ) != 2 )
     {
-        throw new pakeException( "README and/or INSTALL files missing. Please fix" );
+        throw new pakeException( "README and/or LICENSE files missing. Please fix" );
     }
 }
 

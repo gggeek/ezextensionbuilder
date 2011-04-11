@@ -251,7 +251,8 @@ function run_update_ezinfo( $task=null, $args=array(), $opts=array() )
     */
     /// @todo use a real php parser instead
     pake_replace_regexp( $files, $destdir, array(
-        '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+\x27)(.*)(\x27,\r?\n?)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3' ) );
+        '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+\x27)(.*)(\x27,?\r?\n?)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
+        '/^([\s]{1,25}\x27License\x27[\s]+=>[\s]+\x22)(.*)(\x22,?\r?\n?)/m' => '${1}' . $opts['version']['license'] . '$3' ) );
 
     $files = pakeFinder::type( 'file' )->maxdepth( 1 )->name( 'extension.xml' )->in( $destdir );
     // here again, do not replace version of required extensions
@@ -342,6 +343,8 @@ function run_generate_md5sums( $task=null, $args=array(), $opts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    // make sure we do not add to checksum file the file itself
+    @unlink( $destdir . '/share/filelist.md5'  );
     $files = pakeFinder::type( 'file' )->in( $destdir );
     $out = array();
     $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );

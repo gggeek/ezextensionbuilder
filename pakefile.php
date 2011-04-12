@@ -461,7 +461,11 @@ function run_update_package_xml( $task=null, $args=array(), $opts=array() )
 /// @todo allow user to specify extension name on the command line
 function run_convert_configuration( $task=null, $args=array(), $opts=array() )
 {
-    $extname = dirname( __FILE__ );
+    $extname = @$opts['extension'];
+    if ( $extname == '' )
+    {
+        $extname = dirname( __FILE__ );
+    }
     while ( !is_file( "ant/$extname.properties" ) )
     {
         $extname = pake_input( 'What is the name of the current extension?' );
@@ -474,7 +478,7 @@ function run_convert_configuration( $task=null, $args=array(), $opts=array() )
     eZExtBuilder::convertPropertyFileToYamlFile(
         "ant/$extname.properties",
         "pake/options-$extname.yaml",
-        array( $extname => '' ),
+        array( $extname => '', 'external' => 'dependencies', 'dependency' => 'extensions', 'repository' => array( 'svn', 'url' ) ),
         "extension:\n    name: $extname\n\n" );
 
     foreach( array( 'files.to.parse.txt' => 'to_parse', 'files.to.exclude.txt' => 'to_exclude' ) as $file => $option )
@@ -599,7 +603,8 @@ class eZExtBuilder
             'create' => array( 'tarball' => false, 'zip' => false ),
             'version' => array( 'license' => 'GNU General Public License v2.0' ),
             'releasenr' => array( 'separator' => '-' ),
-            'files' => array( 'to_parse' => array(), 'to_exclude' => array() ) );
+            'files' => array( 'to_parse' => array(), 'to_exclude' => array(),
+            'dependencies' => array( 'extensions' => array() )) );
         /// @todo !important: test i !file_exists give a nicer warning than what we get from loadFile()
         $options = pakeYaml::loadFile( $infile );
         foreach( $mandatory_opts as $key => $opts )
@@ -667,6 +672,10 @@ class eZExtBuilder
                             {
                                 unset( $path[$i] );
                             }
+                            else if ( is_array( $dst ) )
+                            {
+                                array_splice( $path, $i, 1, $dst );
+                            }
                             else
                             {
                                 $path[$i] = $dst;
@@ -674,19 +683,36 @@ class eZExtBuilder
                         }
                     }
                 }
+                // elements index can have holes here, cannot trust them => reorder
+                $path = array_values( $path );
+
                 $value = $line[1];
                 $token = array_pop( $path );
+
                 if ( $path != $current )
                 {
-                    // elements index can have holes here, cannot trust them => reorder
-                    foreach( array_values(  $path ) as $j => $element )
+                    $skip = 0;
+                    foreach( $path as $j => $element )
+                    {
+                        if ( $element == @$current[$j] )
+                        {
+                            $skip++;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    for( $j = $skip; $j < count( $path ); $j++ )
+                    //foreach( $path as $j => $element )
                     {
                         $line = '';
                         for ( $i = 0; $i < $j; $i++ )
                         {
                             $line .= '    ';
                         }
-                        $line .= $element . ':';
+                        $line .= $path[$j] . ':';
                         $out[] = $line;
                     }
                 }
@@ -707,7 +733,11 @@ class eZExtBuilder
         pake_mkdirs( 'pake' );
         // ask confirmation if file exists
         $ok = !file_exists( $outfile ) || ( pake_input( "Destionation file $outfile exists. Overwrite? [y/n]", 'n' ) == 'y' );
-        $ok && file_put_contents( $outfile, $prepend . implode( $out, "\n" ) );
+        if ( $ok )
+        {
+            file_put_contents( $outfile, $prepend . implode( $out, "\n" ) );
+            pake_echo_action( 'file+', $outfile );
+        }
     }
 
     /**
@@ -947,7 +977,7 @@ pake_desc( 'Creates tarballs for ezpackages.' );
 pake_task( 'create-package-tarballs' );
 */
 
-pake_desc( 'Converts an existing ant properties file in its corresponding yaml version' );
+pake_desc( 'Converts an existing ant properties file in its corresponding yaml version. Options: --extension=$extname' );
 pake_task( 'convert-configuration' );
 
 pake_desc( 'Checks if a newer version of the tool is available online' );

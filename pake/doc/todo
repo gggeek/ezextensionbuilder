@@ -1,4 +1,4 @@
-. test: tar archive not working?
+. add a warning: tar archive not working on windows with ezc version <= xxx
 
 . test .gitignore file
 

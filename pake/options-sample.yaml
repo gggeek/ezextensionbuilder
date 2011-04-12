@@ -44,10 +44,18 @@ file:
 
 files:
     # list of files where tokens will be replaced
-    to_parse:
+    to_parse: []
 
     # files that will be excluded from the build
-    to_exclude:
+    to_exclude: []
+
+# List of extensions that will be built as dependency
+# For each one, an svn:url, git:url or fil:url is needed
+#dependencies:
+#    extensions:
+#        yourextension:
+#            git:
+#                url:
 
 
 # misc stuff that you normally do not change

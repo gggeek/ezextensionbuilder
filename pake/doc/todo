@@ -1,8 +1,7 @@
 . add a warning: tar archive not working on windows with ezc version <= xxx
 
-. test .gitignore file
-
 . allow to build many extensions in a single call
+  (workaround: use extension dependencies with a fake 'root' extension)
 
 . allow extension to build self
 
@@ -21,7 +20,7 @@
 
 . add a task to generate .sql files from .dba
 
-. add translation checking task (see checks done in ez 4.5 cli script)
+. add translation checking task (see eg. checks done in ez 4.5 cli script)
 
 . add some code quality checks (possibly from other extensions)
   - validity of php files
@@ -29,9 +28,9 @@
   - proper naming of ini files
   - php coding style
 
-. add support for building packages?
+. add metrics-generating task (via appropriate php tool)
 
-. add support for building dependent extensions
+. add support for building packages?
 
 . add support for launching testsuite tests
 
@@ -42,7 +41,7 @@
 
 . add auto-update task to std build task, except when using --skip-upgrade-check option (?)
 
-. init task that start with a file untar
+. init task that starts with a file untar
 
 . allow better specification of files.to_parse and files.to_exclude:
   - allow a file in any dir or a file in a specific dir
@@ -50,8 +49,8 @@
 . upgrade task can only upgrade pakefile itself, not all of the tool. Fix this
 
 . add support for generating more docs:
-  . manual from doxygen
-  . api docs from phpdocumentor
+  . manual from docbook
+  . api docs from doxygen / phpdocumentor
   . rst docs in other dirs?
 
 . sql file check: more flexible naming of sql files (how?)
@@ -60,6 +59,6 @@
 
 . dist task: allow to specify .tar.bz2 output format
 
-. bootstrap: download the ezc if needed
+. bootstrap: download+install the ezc lib if needed
 
 . clean task: allow to only delete extension dir, not complete build dir

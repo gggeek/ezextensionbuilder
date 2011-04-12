@@ -13,8 +13,10 @@ Advantages, compared to the ant version:
 
 Other changes:
 . the package.xml file is updated the same way as ezinfo.php is
-. Makefile files are not removed automatically (use the file.to_remove option to have them deleted)
+. Makefile files are not removed automatically (use the files.to_remove option to have them deleted)
 . Beside the ant directory, .git, build, dist and pake dirs are also excluded from the build
-. No support for building packages or dependent extensions yet
+. No support for building packages extensions yet
 . A zip file can be built beside a tarball
 . Source repo can be a local folder, besides git and svn
+. Configuration file is now pake/options-$ext.yaml instead of ant/$ext.properties.
+  A build task is available to automatically convert the old format to the new one

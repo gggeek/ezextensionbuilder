@@ -13,10 +13,10 @@
 *
 * @todo move all known paths/names/... to class constants
 *
-* @todo add to php include dir a custom dir for our own pake tasks / register custom pake tasks
+* @todo register custom pake tasks in classes to trim down this file
 *
-* @bug at least on win, after using svn to checkout a project, the script does
-*      not have enough rights to remove the checkout dir...
+* @bug at least on win, after using svn/git to checkout a project, the script does
+*      not have enough rights to remove the .svn/.git & checkout dirs...
 */
 
 // too smart for your own good: allow this script to be gotten off web servers in source form
@@ -69,70 +69,81 @@ function run_show_properties( $task=null, $args=array(), $opts=array() )
 
 /**
 * Downloads the extension from its source repository, removes files not to be built
-* @todo add a dependency on a check-updates task that updates script itself
+* @todo add a dependency on a check-updates task that updates script itself?
+* @todo split this in two tasks and avoid this unsightly mess of options?
 */
 function run_init( $task=null, $args=array(), $opts=array() )
 {
-    if ( @$opts['skip-init'] )
+    $skip_init = @$opts['skip-init'];
+    $skip_init_fetch = @$opts['skip-init-fetch'] || $skip_init;
+    $skip_init_clean = @$opts['skip-init-clean'] || $skip_init;
+
+    if ( !$skip_init )
     {
-        return;
+        $opts = eZExtBuilder::getOpts( @$args[0] );
+        pake_mkdirs( $opts['build']['dir'] );
+
+        $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
     }
 
-    $opts = eZExtBuilder::getOpts( @$args[0] );
-    pake_mkdirs( $opts['build']['dir'] );
-
-    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
-    if ( @$opts['svn']['url'] != '' )
+    if ( ! $skip_init_fetch )
     {
-        pake_echo( 'Fetching code from SVN repository' );
-        pakeSubversion::checkout( $opts['svn']['url'], $destdir );
-    }
-    else if ( @$opts['git']['url'] != '' )
-    {
-        pake_echo( 'Fetching code from GIT repository' );
-        pakeGit::clone_repository( $opts['git']['url'], $destdir );
-        if ( @$opts['git']['branch'] != '' )
+        if ( @$opts['svn']['url'] != '' )
         {
-            /// @todo allow to check out a specific branch
-            pakeGit::checkout_repo( $destdir, @$opts['git']['branch'] );
+            pake_echo( 'Fetching code from SVN repository' );
+            pakeSubversion::checkout( $opts['svn']['url'], $destdir );
+        }
+        else if ( @$opts['git']['url'] != '' )
+        {
+            pake_echo( 'Fetching code from GIT repository' );
+            pakeGit::clone_repository( $opts['git']['url'], $destdir );
+            if ( @$opts['git']['branch'] != '' )
+            {
+                /// @todo allow to check out a specific branch
+                pakeGit::checkout_repo( $destdir, @$opts['git']['branch'] );
+            }
+        }
+        else if ( @$opts['file']['url'] != '' )
+        {
+            pake_echo( 'Fetching code from local repository' );
+            /// @todo exlude stuff we know we're going to delete immediately afterwards
+            $files = pakeFinder::type( 'any' )->in( $opts['file']['url'] );
+            pake_mirror( $files, $opts['file']['url'], $destdir );
+        }
+        else
+        {
+            throw new pakeException( "Missing source repo option: either svn:url, git:url or file:url" );
         }
     }
-    else if ( @$opts['file']['url'] != '' )
-    {
-        pake_echo( 'Fetching code from local repository' );
-        /// @todo exlude stuff we know we're going to delete immediately afterwards
-        $files = pakeFinder::type( 'any' )->in( $opts['file']['url'] );
-        pake_mirror( $files, $opts['file']['url'], $destdir );
-    }
-    else
-    {
-        throw new pakeException( "Missing source repo option: either svn:url, git:url or file:url" );
-    }
+
 
     // remove files
-
-    // known files/dirs not to be packed / md5'ed
-    /// @todo !important shall we make this configurable?
-    /// @todo 'build' & 'dist' we should take from options
-    $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php', '.svn', '.git', '.gitignore', 'build', 'dist' );
-    // files from user configuration
-    $files = array_merge( $files, $opts['files']['to_exclude'] );
-
-    /// @todo figure a way to allow user to speficy both:
-    ///       files in a spefici subdir
-    ///       files to be removed globally (ie. from any subdir)
-    $files = pakeFinder::type( 'any' )->name( $files )->in( $destdir );
-    foreach( $files as $key => $file )
+    if ( ! $skip_init_clean )
     {
-        if ( is_dir( $file ) )
+        // known files/dirs not to be packed / md5'ed
+        /// @todo !important shall we make this configurable?
+        /// @todo 'build' & 'dist' we should take from options
+        $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php', '.svn', '.git', '.gitignore', 'build', 'dist' );
+        // files from user configuration
+        $files = array_merge( $files, $opts['files']['to_exclude'] );
+
+        /// @todo figure a way to allow user to speficy both:
+        ///       files in a spefici subdir
+        ///       files to be removed globally (ie. from any subdir)
+        $files = pakeFinder::type( 'any' )->name( $files )->in( $destdir );
+        foreach( $files as $key => $file )
         {
-            pake_remove_dir( $file );
-            unset( $files[$key] );
+            if ( is_dir( $file ) )
+            {
+                pake_remove_dir( $file );
+                unset( $files[$key] );
+            }
         }
+        pake_remove( $files, '' );
     }
-    pake_remove( $files, '' );
 }
 
+/// We rely on the pake dependency system here to do real stuff
 function run_build( $task=null, $args=array(), $opts=array() )
 {
 }
@@ -201,6 +212,58 @@ function run_dist_clean( $task=null, $args=array(), $opts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     pake_remove_dir( $opts['dist']['dir'] );
+}
+
+function run_build_dependencies( $task=null, $args=array(), $opts=array() )
+{
+    $current = @$args[0];
+    $opts = eZExtBuilder::getOpts( $current );
+    foreach( $opts['dependencies']['extensions'] as $ext => $source )
+    {
+        // avoid loops
+        if ( $ext != $current )
+        {
+            // create a temporary config file to drive the init task
+            // this could be done better in memory...
+            foreach( $source as $type => $def )
+            {
+                break;
+            }
+            $tempconf = array( 'extension' => array( 'name' => $ext ),  'version' => array( 'major' => 0, 'minor' => 0, 'release' => 0 ), $type => $def );
+            $tempconffile = "pake/options-tmp_$ext.yaml";
+            pakeYaml::emitfile( $tempconf, $tempconffile );
+
+            // download remote extension
+            // nb: we can not run the init task here via invoke() because of already_invoked status,
+            // so we use execute(). NB: this is fine as long as init has no prerequisites
+            $task = pakeTask::get( 'init' );
+            $task->execute( array( "tmp_$ext" ), array_merge( $opts, array( 'skip-init' => false, 'skip-init-fetch' => false, 'skip-init-clean' => true ) ) );
+
+            // copy config file from ext dir to current config dir
+            if ( is_file( $opts['build']['dir'] . "/$ext/pake/options-$ext.yaml" ) )
+            {
+                pake_copy( $opts['build']['dir'] . "/$ext/pake/options-$ext.yaml", "pake/options-$ext.yaml" );
+            }
+            else
+            {
+                throw new pakeException( "Missing spake/options.yaml extension in dependent extension $ext" );
+            }
+
+            // finish the init-task
+            $task->execute( array( "tmp_$ext" ), array_merge( $opts, array( 'skip-init' => false, 'skip-init-fetch' => true, 'skip-init-clean' => false ) ) );
+            pake_remove( $tempconffile, '' );
+
+            // and build it. Here again we cannot use 'invoke', but we know 'build' has prerequisites
+            // so we execute them one by one
+            $task = pakeTask::get( 'build' );
+            foreach( $task->get_prerequisites() as $pretask )
+            {
+                $pretask = pakeTask::get( $pretask );
+                $pretask->execute( array( $ext ), array_merge( $opts, array( 'skip-init' => true ) ) );
+            }
+            $task->execute( array( $ext ), array_merge( $opts, array( 'skip-init' => true ) ) );
+        }
+    }
 }
 
 function run_fat_dist( $task=null, $args=array(), $opts=array() )
@@ -586,7 +649,7 @@ class eZExtBuilder
             $extname = self::getDefaultExtName();
             //self::$defaultext = $extname;
         }
-        if ( !is_array( self::$options[$extname] ) )
+        if ( !isset( self::$options[$extname] ) || !is_array( self::$options[$extname] ) )
         {
             self::loadConfiguration( "pake/options-$extname.yaml", $extname );
         }
@@ -642,7 +705,12 @@ class eZExtBuilder
         return true;
     }
 
-    /// @todo move to a separate class to slim down base class?
+    /**
+    * Converts a property file into a yaml file
+    * @param array $transform an array of transformation rules such as eg. 'sourcetag' => 'desttag' (desttag can be empty for tag removal or an array for tag expansion)
+    * @todo move to a separate class to slim down base class?
+    * @todo make it capable to remove complete $ext.version.alias property
+    */
     static function convertPropertyFileToYamlFile( $infile, $outfile='pake/options.yaml', $transform = array(), $prepend='' )
     {
         $current = array();
@@ -674,7 +742,7 @@ class eZExtBuilder
                             }
                             else if ( is_array( $dst ) )
                             {
-                                array_splice( $path, $i, 1, $dst );
+                                array_splice( $path, $i-1, 1, $dst );
                             }
                             else
                             {
@@ -930,7 +998,7 @@ pake_desc( 'Removes the dist/ directory' );
 pake_task( 'dist-clean' );
 
 pake_desc( 'Builds the extension and generates the tarball' );
-pake_task( 'all', 'build', 'dist' ); // plus: build-dependencies
+pake_task( 'all', 'build', 'dist', 'build-dependencies' );
 
 pake_desc( 'Removes the build/ and dist/ directories' );
 pake_task( 'clean-all', 'clean', 'dist-clean' );
@@ -969,10 +1037,11 @@ pake_task( 'check-gnu-files' );
 pake_desc( 'Updates version numbers in package.xml file' );
 pake_task( 'update-package-xml' );
 
-/*
+
 pake_desc( 'Build dependent extensions' );
 pake_task( 'build-dependencies' );
 
+/*
 pake_desc( 'Creates tarballs for ezpackages.' );
 pake_task( 'create-package-tarballs' );
 */

@@ -16,3 +16,6 @@ files:
 create:
     tarball: yes
     filelist_md5: no
+
+releasenr:
+    separator: .

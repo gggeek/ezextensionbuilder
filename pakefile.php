@@ -60,7 +60,7 @@ function run_default()
     pake_echo ( "eZ Extension Builder ver." . eZExtBuilder::$version . "\nSyntax: php pakefile.php [--\$general-options] \$task [\$extension] [--\$task-options].\n  If no extension name is provided, a default configuration file will be searched for.\n  Run: php pakefile.php --tasks to learn more about available tasks." );
 }
 
-function run_show_properties( $task=null, $args=array(), $opts=array() )
+function run_show_properties( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     pake_echo ( 'Build dir: ' . $opts['build']['dir'] );
@@ -72,13 +72,13 @@ function run_show_properties( $task=null, $args=array(), $opts=array() )
 * @todo add a dependency on a check-updates task that updates script itself?
 * @todo split this in two tasks and avoid this unsightly mess of options?
 */
-function run_init( $task=null, $args=array(), $opts=array() )
+function run_init( $task=null, $args=array(), $cliopts=array() )
 {
-    $skip_init = @$opts['skip-init'];
-    $skip_init_fetch = @$opts['skip-init-fetch'] || $skip_init;
-    $skip_init_clean = @$opts['skip-init-clean'] || $skip_init;
+    $skip_init = @$cliopts['skip-init'];
+    $skip_init_fetch = @$cliopts['skip-init-fetch'] || $skip_init;
+    $skip_init_clean = @$cliopts['skip-init-clean'] || $skip_init;
 
-    if ( !$skip_init )
+    if ( ! $skip_init )
     {
         $opts = eZExtBuilder::getOpts( @$args[0] );
         pake_mkdirs( $opts['build']['dir'] );
@@ -122,8 +122,12 @@ function run_init( $task=null, $args=array(), $opts=array() )
     {
         // known files/dirs not to be packed / md5'ed
         /// @todo !important shall we make this configurable?
-        /// @todo 'build' & 'dist' we should take from options
+        /// @todo 'build' & 'dist' we should probably take from options
         $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php', '.svn', '.git', '.gitignore', 'build', 'dist' );
+        if ( false )
+        {
+
+        }
         // files from user configuration
         $files = array_merge( $files, $opts['files']['to_exclude'] );
 
@@ -144,17 +148,17 @@ function run_init( $task=null, $args=array(), $opts=array() )
 }
 
 /// We rely on the pake dependency system here to do real stuff
-function run_build( $task=null, $args=array(), $opts=array() )
+function run_build( $task=null, $args=array(), $cliopts=array() )
 {
 }
 
-function run_clean( $task=null, $args=array(), $opts=array() )
+function run_clean( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     pake_remove_dir( $opts['build']['dir'] );
 }
 
-function run_dist( $task=null, $args=array(), $opts=array() )
+function run_dist( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     if ( $opts['create']['tarball'] || $opts['create']['zip'] )
@@ -208,16 +212,16 @@ function run_dist( $task=null, $args=array(), $opts=array() )
     }
 }
 
-function run_dist_clean( $task=null, $args=array(), $opts=array() )
+function run_dist_clean( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     pake_remove_dir( $opts['dist']['dir'] );
 }
 
-function run_build_dependencies( $task=null, $args=array(), $opts=array() )
+function run_build_dependencies( $task=null, $args=array(), $cliopts=array() )
 {
-    $current = @$args[0];
-    $opts = eZExtBuilder::getOpts( $current );
+    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $current = $opts['extension']['name'];
     foreach( $opts['dependencies']['extensions'] as $ext => $source )
     {
         // avoid loops
@@ -237,7 +241,7 @@ function run_build_dependencies( $task=null, $args=array(), $opts=array() )
             // nb: we can not run the init task here via invoke() because of already_invoked status,
             // so we use execute(). NB: this is fine as long as init has no prerequisites
             $task = pakeTask::get( 'init' );
-            $task->execute( array( "tmp_$ext" ), array_merge( $opts, array( 'skip-init' => false, 'skip-init-fetch' => false, 'skip-init-clean' => true ) ) );
+            $task->execute( array( "tmp_$ext" ), array_merge( $cliopts, array( 'skip-init' => false, 'skip-init-fetch' => false, 'skip-init-clean' => true ) ) );
 
             // copy config file from ext dir to current config dir
             if ( is_file( $opts['build']['dir'] . "/$ext/pake/options-$ext.yaml" ) )
@@ -250,7 +254,7 @@ function run_build_dependencies( $task=null, $args=array(), $opts=array() )
             }
 
             // finish the init-task
-            $task->execute( array( "tmp_$ext" ), array_merge( $opts, array( 'skip-init' => false, 'skip-init-fetch' => true, 'skip-init-clean' => false ) ) );
+            $task->execute( array( "tmp_$ext" ), array_merge( $cliopts, array( 'skip-init' => false, 'skip-init-fetch' => true, 'skip-init-clean' => false ) ) );
             pake_remove( $tempconffile, '' );
 
             // and build it. Here again we cannot use 'invoke', but we know 'build' has prerequisites
@@ -266,7 +270,7 @@ function run_build_dependencies( $task=null, $args=array(), $opts=array() )
     }
 }
 
-function run_fat_dist( $task=null, $args=array(), $opts=array() )
+function run_fat_dist( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     if ( !class_exists( 'ezcArchive' ) )
@@ -292,15 +296,15 @@ function run_fat_dist( $task=null, $args=array(), $opts=array() )
     pake_echo_action( 'file+', $target . '.gz' );
 }
 
-function run_all( $task=null, $args=array(), $opts=array() )
+function run_all( $task=null, $args=array(), $cliopts=array() )
 {
 }
 
-function run_clean_all( $task=null, $args=array(), $opts=array() )
+function run_clean_all( $task=null, $args=array(), $cliopts=array() )
 {
 }
 
-function run_update_ezinfo( $task=null, $args=array(), $opts=array() )
+function run_update_ezinfo( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
@@ -334,7 +338,7 @@ function run_update_ezinfo( $task=null, $args=array(), $opts=array() )
 * @todo parse tpl files too?
 * @todo use other strings than these, since it's gonna be community extensions?
 */
-function run_update_license_headers( $task=null, $args=array(), $opts=array() )
+function run_update_license_headers( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
@@ -349,7 +353,7 @@ function run_update_license_headers( $task=null, $args=array(), $opts=array() )
 * Updates all files specified in user configuration,
 * replacing the tokens [EXTENSION_VERSION], [EXTENSION_PUBLISH_VERSION] and [EXTENSION_LICENSE]
 */
-function run_update_extra_files( $task=null, $args=array(), $opts=array() )
+function run_update_extra_files( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
@@ -368,7 +372,7 @@ function run_update_extra_files( $task=null, $args=array(), $opts=array() )
 * @todo create api doc from php files
 *       example cli cmd: ${phpdocinstall}phpdoc -t ${phpdocdir}/html -ti 'eZ Publish' -pp -s -d lib/ezdb/classes,lib/ezdbschema/classes,lib/ezdiff/classes,lib/ezfile/classes,lib/ezi18n/classes,lib/ezimage/classes,lib/ezlocale/classes,lib/ezmath/classes,lib/ezpdf/classes,lib/ezsession/classes,lib/ezsoap/classes,lib/eztemplate/classes,lib/ezutils/classes,lib/ezxml/classes,kernel/classes,kernel/private/classes,kernel/common,cronjobs,update/common/scripts > ${phpdocdir}/generate.log
 */
-function run_generate_documentation( $task=null, $args=array(), $opts=array() )
+function run_generate_documentation( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
@@ -402,7 +406,7 @@ function run_generate_documentation( $task=null, $args=array(), $opts=array() )
 /**
 * Creates a share/filelist.md5 file, with the checksul of all files in the build
 */
-function run_generate_md5sums( $task=null, $args=array(), $opts=array() )
+function run_generate_md5sums( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
@@ -444,7 +448,7 @@ function run_generate_md5sums( $task=null, $args=array(), $opts=array() )
  * NB: there are NOT a lot of extensions currently following this schema.
  * Alternativate used are: sql/mysql/mysql.sql, sql/mysql/random.sql
  */
-function run_check_sql_files( $task=null, $args=array(), $opts=array() )
+function run_check_sql_files( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
@@ -489,7 +493,7 @@ function run_check_sql_files( $task=null, $args=array(), $opts=array() )
     }
 }
 
-function run_check_gnu_files( $task=null, $args=array(), $opts=array() )
+function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
@@ -500,7 +504,7 @@ function run_check_gnu_files( $task=null, $args=array(), $opts=array() )
     }
 }
 
-function run_update_package_xml( $task=null, $args=array(), $opts=array() )
+function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
@@ -522,9 +526,9 @@ function run_update_package_xml( $task=null, $args=array(), $opts=array() )
 }
 
 /// @todo allow user to specify extension name on the command line
-function run_convert_configuration( $task=null, $args=array(), $opts=array() )
+function run_convert_configuration( $task=null, $args=array(), $cliopts=array() )
 {
-    $extname = @$opts['extension'];
+    $extname = @$args[0];
     if ( $extname == '' )
     {
         $extname = dirname( __FILE__ );
@@ -561,7 +565,7 @@ function run_convert_configuration( $task=null, $args=array(), $opts=array() )
     }
 }
 
-function run_tool_upgrade_check( $task=null, $args=array(), $opts=array() )
+function run_tool_upgrade_check( $task=null, $args=array(), $cliopts=array() )
 {
     $latest = eZExtBuilder::latestVersion();
     if ( $latest == false )
@@ -593,7 +597,7 @@ function run_tool_upgrade_check( $task=null, $args=array(), $opts=array() )
 }
 
 /// @todo add a backup enable/disable option
-function run_tool_upgrade( $task=null, $args=array(), $opts=array() )
+function run_tool_upgrade( $task=null, $args=array(), $cliopts=array() )
 {
     $latest = eZExtBuilder::latestVersion( true );
     if ( $latest == false )
@@ -1046,7 +1050,7 @@ pake_desc( 'Creates tarballs for ezpackages.' );
 pake_task( 'create-package-tarballs' );
 */
 
-pake_desc( 'Converts an existing ant properties file in its corresponding yaml version. Options: --extension=$extname' );
+pake_desc( 'Converts an existing ant properties file in its corresponding yaml version' );
 pake_task( 'convert-configuration' );
 
 pake_desc( 'Checks if a newer version of the tool is available online' );

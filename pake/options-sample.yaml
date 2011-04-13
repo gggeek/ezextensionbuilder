@@ -29,6 +29,11 @@ create:
     # if not set, defaults to yes
     filelist_md5: yes
 
+    # whether to create a php API doc (in doc/api/) during the 'generate-documentation' task with doxygen
+    # nb: if doxygen is not in your PATH, use the --doxygen=/path/to/doxygen option on the command line
+    # if not set, defaults to no
+    doxygen_doc: yes
+
 ezp:
     # ezpublish required version: this string is used in documentation files
     # and for building packages. Can be left empty / undefined

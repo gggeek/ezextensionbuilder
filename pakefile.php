@@ -99,14 +99,14 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
             pakeGit::clone_repository( $opts['git']['url'], $destdir );
             if ( @$opts['git']['branch'] != '' )
             {
-                /// @todo allow to check out a specific branch
-                pakeGit::checkout_repo( $destdir, @$opts['git']['branch'] );
+                /// @todo test checking out a specific branch
+                pakeGit::checkout_repo( $destdir, $opts['git']['branch'] );
             }
         }
         else if ( @$opts['file']['url'] != '' )
         {
             pake_echo( 'Fetching code from local repository' );
-            /// @todo exlude stuff we know we're going to delete immediately afterwards
+            /// @todo (!important) exclude stuff we know we're going to delete immediately afterwards
             $files = pakeFinder::type( 'any' )->in( $opts['file']['url'] );
             pake_mirror( $files, $opts['file']['url'], $destdir );
         }
@@ -122,7 +122,7 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
     {
         // known files/dirs not to be packed / md5'ed
         /// @todo !important shall we make this configurable?
-        /// @todo 'build' & 'dist' we should probably take from options
+        /// @bug 'build' & 'dist' we should probably take from options
         $files = array( 'ant/', 'build.xml', '**/.svn', '.git/', 'build/', 'dist/' );
         // hack! when packing ourself, we need to keep this stuff
         if ( $opts['extension']['name'] != 'ezextensionbuilder' )
@@ -378,8 +378,8 @@ function run_update_extra_files( $task=null, $args=array(), $cliopts=array() )
 /**
 * Builds an html file of all doc/*.rst files, and removes the source
 * @todo allow config file to specify doc dir
-* @todo parse any doxygen file found, too
-* @todo create api doc from php files
+* @todo use local doxygen file if found, instead of std one
+* @todo create api doc from php files using phpdoc too
 *       example cli cmd: ${phpdocinstall}phpdoc -t ${phpdocdir}/html -ti 'eZ Publish' -pp -s -d lib/ezdb/classes,lib/ezdbschema/classes,lib/ezdiff/classes,lib/ezfile/classes,lib/ezi18n/classes,lib/ezimage/classes,lib/ezlocale/classes,lib/ezmath/classes,lib/ezpdf/classes,lib/ezsession/classes,lib/ezsoap/classes,lib/eztemplate/classes,lib/ezutils/classes,lib/ezxml/classes,kernel/classes,kernel/private/classes,kernel/common,cronjobs,update/common/scripts > ${phpdocdir}/generate.log
 */
 function run_generate_documentation( $task=null, $args=array(), $cliopts=array() )
@@ -411,6 +411,29 @@ function run_generate_documentation( $task=null, $args=array(), $cliopts=array()
     */
     //pake_remove( pakeFinder::type( 'file' )->name( 'Makefile' )->in( $destdir ), '' );
 
+    // doxygen
+    if ( $opts['create']['doxygen_doc'] )
+    {
+        $doxygen = escapeshellarg( @$cliopts['doxygen'] );
+        if ( $doxygen == '' )
+        {
+            $doxygen = 'doxygen';
+        }
+        $doxyfile = $destdir . '/doxyfile';
+        pake_copy( 'pake/doxyfile_master', $doxyfile, array( 'override' => true ) );
+        file_put_contents( $doxyfile,
+            "\nPROJECT_NAME = " . $opts['extension']['name'] .
+            "\nPROJECT_NUMBER = " . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] .
+            "\nOUTPUT_DIRECTORY = " . $docdir . '/api' .
+            "\nINPUT = " . $destdir .
+            "\nEXCLUDE = " . $destdir . '/settings' .
+            "\nSTRIP_FROM_PATH = " . $destdir, FILE_APPEND );
+        $out = pake_sh( $doxygen . ' ' . escapeshellarg( $doxyfile ) );
+        pake_remove( $doxyfile, '' );
+        // cleanup leftover files, just in case dot tool is not found
+        $files = pakeFinder::type( 'file' )->name( array( '*.dot', '*.md5', '*.map', 'installdox' ) )->in( $docdir . '/api' );
+        pake_remove( $files, '' );
+    }
 }
 
 /**
@@ -542,7 +565,6 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
     }
 }
 
-/// @todo allow user to specify extension name on the command line
 function run_convert_configuration( $task=null, $args=array(), $cliopts=array() )
 {
     $extname = @$args[0];
@@ -684,7 +706,7 @@ class eZExtBuilder
         $default_opts = array(
             'build' => array( 'dir' => 'build' ),
             'dist' => array( 'dir' => 'dist' ),
-            'create' => array( 'tarball' => false, 'zip' => false, 'filelist_md5' => true ),
+            'create' => array( 'tarball' => false, 'zip' => false, 'filelist_md5' => true, 'doxygen_doc' => false ),
             'version' => array( 'license' => 'GNU General Public License v2.0' ),
             'releasenr' => array( 'separator' => '-' ),
             'files' => array( 'to_parse' => array(), 'to_exclude' => array(), 'gnu_dir' => '' ),
@@ -886,7 +908,7 @@ class eZExtBuilder
     static function latestVersion( $getfile=false )
     {
         $src = self::$installurl.'/pakefile.php?show=source';
-        /// @todo test using curl for allow_url-fopen off
+        /// @todo test using curl for allow_url_fopen off
         if ( $source = pake_read_file( $src ) )
         {
             if ( $getfile )
@@ -1109,7 +1131,7 @@ pake_task( 'update-license-headers' );
 pake_desc( 'Updates extra files with correct version numbers and licensing info' );
 pake_task( 'update-extra-files' );
 
-pake_desc( 'Generates the documentation of the extension, if created in RST format' );
+pake_desc( 'Generates the documentation of the extension, if created in RST format in the doc/ folder, plus optionally API docs via doxygen. Options: --doxygen=/path/to/doxygen' );
 pake_task( 'generate-documentation' );
 
 //pake_desc( 'Checks PHP code coding standard, requires PHPCodeSniffer' );

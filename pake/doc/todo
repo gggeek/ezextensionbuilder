@@ -1,14 +1,11 @@
-. add a warning: tar archive not working on windows with ezc version <= xxx
+# general
 
 . allow to build many extensions in a single call
   (workaround: use extension dependencies with a fake 'root' extension)
 
-. allow extension to build self
-  - allow to exclude from token replacement some subdirs/files (eg. pakefile.php and pake/src/)
-
 . add support for different dir schemas for extensions providing packages? nb: better if we can do it without that...
 
-. add some detailed documentation of expected coding/file layouts standards / existing tasks undertakings
+. add more detailed documentation of expected coding/file layouts standards / existing tasks undertakings
 
 . investigate proper usage of phar archives instead of using crazy bootstrap/upgrade processes
 
@@ -44,7 +41,7 @@
 
 . add support for generating more docs:
   . manual from docbook
-  . api docs from doxygen / phpdocumentor
+  . api docs from phpdocumentor besides doxygen
   . rst docs in other dirs?
 
 . check-sql-files task: more flexible naming of sql files (how?)

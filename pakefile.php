@@ -506,6 +506,10 @@ function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    if ( $opts['files']['gnu_dir'] )
+    {
+        $destdir .= '/' . $opts['files']['gnu_dir'];
+    }
     $files = pakeFinder::type( 'file' )->name( array( 'README', 'LICENSE' ) )->maxdepth( 0 )->in( $destdir );
     if ( count( $files ) != 2 )
     {
@@ -679,8 +683,8 @@ class eZExtBuilder
             'create' => array( 'tarball' => false, 'zip' => false, 'filelist_md5' => true ),
             'version' => array( 'license' => 'GNU General Public License v2.0' ),
             'releasenr' => array( 'separator' => '-' ),
-            'files' => array( 'to_parse' => array(), 'to_exclude' => array(),
-            'dependencies' => array( 'extensions' => array() )) );
+            'files' => array( 'to_parse' => array(), 'to_exclude' => array(), 'gnu_dir' => '' ),
+            'dependencies' => array( 'extensions' => array() ) );
         /// @todo !important: test i !file_exists give a nicer warning than what we get from loadFile()
         $options = pakeYaml::loadFile( $infile );
         foreach( $mandatory_opts as $key => $opts )

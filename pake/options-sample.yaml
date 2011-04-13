@@ -1,8 +1,8 @@
-### sample configuration file for ezextensionbuilder
+### sample (complete) configuration file for ezextensionbuilder
 ### to be saved in $rootdir/pake-$extension.yaml
 
 extension:
-    # if not set, extension name is taken from command line
+    # if not set, extension name is taken from command line parameters
     name: myextension
 
 version:
@@ -11,6 +11,9 @@ version:
     minor: 0
     release: 0alpha
 
+    # if not set, defaults to $major.$minor
+    alias:
+
     # if not set, defaults to 'GNU General Public License v2.0'
     license: GNU General Public License v2.0
 
@@ -18,8 +21,10 @@ create:
     # whether to create a .tar.gz file of the extension during the 'dist' task
     # if not set, defaults to no
     tarball: yes
+
     # if not set, defaults to no
     zip: yes
+
     # whether to create a share/filelist.md5 file during the 'build' task
     # if not set, defaults to yes
     filelist_md5: yes
@@ -38,7 +43,7 @@ svn:
 
 # Git url and branch (leave empty for master)
 git:
-    url: http://svn.projects.ez.no/myexetension/trunk/extension/myexetension
+    url:
     branch:
 
 # If the source is on a local folder
@@ -51,6 +56,10 @@ files:
 
     # files that will be excluded from the build
     to_exclude: []
+
+    # where the INSTALL and README files will be looked for.
+    # Leave empty for extension root dir - where those files should be btw...
+    gnu_dir:
 
 # List of extensions that will be built as dependency
 # For each one, an svn:url, git:url or fil:url is needed

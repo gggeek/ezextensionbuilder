@@ -123,19 +123,20 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
         // known files/dirs not to be packed / md5'ed
         /// @todo !important shall we make this configurable?
         /// @todo 'build' & 'dist' we should probably take from options
-        $files = array( 'ant', 'build.xml', '.svn', '.git', 'build', 'dist' );
+        $files = array( 'ant/', 'build.xml', '**/.svn', '.git/', 'build/', 'dist/' );
         // hack! when packing ourself, we need to keep this stuff
         if ( $opts['extension']['name'] != 'ezextensionbuilder' )
         {
-            $files = array_merge( $files, array( 'pake', 'pakefile.php', '.gitignore' ) );
+            $files = array_merge( $files, array( 'pake/', 'pakefile.php', '**/.gitignore' ) );
         }
         // files from user configuration
         $files = array_merge( $files, $opts['files']['to_exclude'] );
 
-        /// @todo figure a way to allow user to speficy both:
-        ///       files in a spefic subdir
+        /// we figured a way to allow user to speficy both:
+        ///       files in a specific subdir
         ///       files to be removed globally (ie. from any subdir)
-        $files = pakeFinder::type( 'any' )->name( $files )->in( $destdir );
+        //pakeFinder::type( 'any' )->name( $files )->in( $destdir );
+        $files = pake_antpattern( $files, $destdir );
         foreach( $files as $key => $file )
         {
             if ( is_dir( $file ) )
@@ -361,12 +362,15 @@ function run_update_extra_files( $task=null, $args=array(), $cliopts=array() )
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
     $extrafiles = $opts['files']['to_parse'];
-    $files = pakeFinder::type( 'file' )->name( $extrafiles )->in( $destdir );
-    $tokens = array( 'EXTENSION_VERSION' => $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
+    //$files = pakeFinder::type( 'file' )->name( $extrafiles )->in( $destdir );
+    /// @todo shall we make sure we only retrieve files, not directories?
+    $files = pake_antpattern( $extrafiles, $destdir );
+    $tokens = array(
+        'EXTENSION_VERSION' => $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
         'EXTENSION_LICENSE' => $opts['version']['license'] );
     if ( @$opts['ezp']['version']['major'] )
     {
-                $tokens['EXTENSION_PUBLISH_VERSION'] = $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'];
+        $tokens['EXTENSION_PUBLISH_VERSION'] = $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'];
     }
     pake_replace_tokens( $files, $destdir, '[', ']', $tokens );
 }
@@ -685,7 +689,7 @@ class eZExtBuilder
             'releasenr' => array( 'separator' => '-' ),
             'files' => array( 'to_parse' => array(), 'to_exclude' => array(), 'gnu_dir' => '' ),
             'dependencies' => array( 'extensions' => array() ) );
-        /// @todo !important: test i !file_exists give a nicer warning than what we get from loadFile()
+        /// @todo !important: test if !file_exists give a nicer warning than what we get from loadFile()
         $options = pakeYaml::loadFile( $infile );
         foreach( $mandatory_opts as $key => $opts )
         {
@@ -707,8 +711,7 @@ class eZExtBuilder
         }
         foreach( $default_opts as $key => $opts )
         {
-
-            if ( isset($options[$key] ) && is_array( $options[$key] ) )
+            if ( isset( $options[$key] ) && is_array( $options[$key] ) )
             {
                 $options[$key] = array_merge( $opts, $options[$key] );
             }
@@ -929,6 +932,80 @@ function pake_replace_regexp_to_dir($arg, $src_dir, $target_dir, $regexps, $limi
 function pake_replace_regexp($arg, $target_dir, $regexps, $limit=-1)
 {
     pake_replace_regexp_to_dir($arg, $target_dir, $target_dir, $regexps, $limit);
+}
+
+}
+
+if ( !function_exists( 'pake_antpattern' ) )
+{
+
+/**
+* Mimics ant pattern matching
+* @see http://ant.apache.org/manual/dirtasks.html#patterns
+* @todo more complete testing
+* @bug looking for " d i r / * * / " will return subdirs but not dir itself
+*/
+function pake_antpattern( $files, $rootdir )
+{
+    $results = array();
+    foreach( $files as $file )
+    {
+        //echo " Beginning with $file in dir $rootdir\n";
+
+        // safety measure: try to avoid multiple scans
+        $file = str_replace( '/**/**/', '/**/', $file );
+
+        $type = 'any';
+        // if user set '/ 'as last char: we look for directories only
+        if ( substr( $file, -1 ) == '/' )
+        {
+            $type = 'dir';
+            $file = substr( $file, 0, -1 );
+        }
+        // managing 'any subdir or file' as last item: trick!
+        if ( strlen( $file ) >= 3 && substr( $file, -3 ) == '/**' )
+        {
+            $file .= '/*';
+        }
+
+        $dir = dirname( $file );
+        $file = basename( $file );
+        if ( strpos( $dir, '**' ) !== false )
+        {
+            $split = explode( '/', $dir );
+            $path = '';
+            foreach( $split as $i => $part )
+            {
+                if ( $part != '**' )
+                {
+                    $path .= "/$part";
+                }
+                else
+                {
+                    //echo "  Looking for subdirs in dir $rootdir{$path}\n";
+                    $newfile = implode( '/', array_slice( $split, $i + 1 ) ) . "/$file" . ( $type == 'dir'? '/' : '' );
+                    $dirs = pakeFinder::type( 'dir' )->in( $rootdir . $path );
+                    // also cater for the case '** matches 0 subdirs'
+                    $dirs[] = $rootdir . $path;
+                    foreach( $dirs as $newdir )
+                    {
+                        //echo "  Iterating in $newdir, looking for $newfile\n";
+                        $found = pake_antpattern( array( $newfile ), $newdir );
+                        $results = array_merge( $results, $found );
+                    }
+                    break;
+                }
+            }
+        }
+        else
+        {
+            //echo "  Looking for $type $file in dir $rootdir/$dir\n";
+            $found = pakeFinder::type( $type )->name( $file )->maxdepth( 0 )->in( $rootdir . '/' . $dir );
+            //echo "  Found: " . count( $found ) . "\n";
+            $results = array_merge( $results, $found );
+        }
+    }
+    return $results;
 }
 
 }

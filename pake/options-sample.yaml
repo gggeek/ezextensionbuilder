@@ -52,9 +52,22 @@ file:
 
 files:
     # list of files where tokens will be replaced
+    #
+    # current tokens are [EXTENSION_VERSION], [EXTENSION_PUBLISH_VERSION] and [EXTENSION_LICENSE]
+    #
+    # uses the ANT pattern syntax (see http://ant.apache.org/manual/dirtasks.html#patterns)
+    # examples:
+    # myfile.txt will match only one file at the root dir of the extension
+    # *.txt will match all text files at the root dir of the extension
+    # firstlevel/myfile.txt will match only in one specific dir
+    # firstlevel/secondlevel/ will only match a directory, not a file (nb: trailing slash is key)
+    # firstlevel/*/thirdlevel/myfile.txt will match regardless of the name of 2nd level dir
+    # **/myfile.txt will match in any dir
+    # firstlevel/**/myfile.txt will match in any subdir of 'firstlevel'
     to_parse: []
 
     # files that will be excluded from the build
+    # same syntax as above
     to_exclude: []
 
     # where the INSTALL and README files will be looked for.

@@ -6,10 +6,6 @@
 . allow extension to build self
   - allow to exclude from token replacement some subdirs/files (eg. pakefile.php and pake/src/)
 
-. switch to an ini-file based configuration instead of yaml? advantages:
-  - easier options parsing, everything is on 2 levels
-  - pake code holds options instead of our class
-
 . add support for different dir schemas for extensions providing packages? nb: better if we can do it without that...
 
 . add some detailed documentation of expected coding/file layouts standards / existing tasks undertakings
@@ -31,7 +27,7 @@
 
 . add metrics-generating task (via appropriate php tool)
 
-. add support for building packages?
+. add support for building packages (?)
 
 . add support for launching testsuite tests
 
@@ -44,19 +40,16 @@
 
 . init task that starts with a file untar
 
-. allow better specification of files.to_parse and files.to_exclude:
-  - allow a file in any dir or a file in a specific dir
-
-. upgrade task can only upgrade pakefile itself, not all of the tool. Fix this
+. tool-upgrade task can only upgrade pakefile itself, not all of the tool. To be fixed
 
 . add support for generating more docs:
   . manual from docbook
   . api docs from doxygen / phpdocumentor
   . rst docs in other dirs?
 
-. sql file check: more flexible naming of sql files (how?)
+. check-sql-files task: more flexible naming of sql files (how?)
 
-. show properties: show all of them, not just two
+. show-properties task: show all of them, not just two
 
 . dist task: allow to specify .tar.bz2 output format
 

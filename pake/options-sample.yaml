@@ -2,7 +2,7 @@
 ### to be saved in $rootdir/pake-$extension.yaml
 
 extension:
-    # if not set, extension name is taken from file name
+    # if not set, extension name is taken from command line
     name: myextension
 
 version:
@@ -15,11 +15,14 @@ version:
     license: GNU General Public License v2.0
 
 create:
-    # whether to create a .tar.gz file of the extension during the build
+    # whether to create a .tar.gz file of the extension during the 'dist' task
     # if not set, defaults to no
     tarball: yes
     # if not set, defaults to no
     zip: yes
+    # whether to create a share/filelist.md5 file during the 'build' task
+    # if not set, defaults to yes
+    filelist_md5: yes
 
 ezp:
     # ezpublish required version: this string is used in documentation files

@@ -415,19 +415,22 @@ function run_generate_documentation( $task=null, $args=array(), $cliopts=array()
 function run_generate_md5sums( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
-    // make sure we do not add to checksum file the file itself
-    @unlink( $destdir . '/share/filelist.md5'  );
-    $files = pakeFinder::type( 'file' )->in( $destdir );
-    $out = array();
-    $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
-    foreach( $files as $file )
+    if ( $opts['create']['filelist_md5'] )
     {
-        $out[] = md5_file( $file ) . '  ' . ltrim( str_replace( array( $rootpath[0], '\\' ), array( '', '/' ), $file ), '/' );
+        $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+        // make sure we do not add to checksum file the file itself
+        @unlink( $destdir . '/share/filelist.md5'  );
+        $files = pakeFinder::type( 'file' )->in( $destdir );
+        $out = array();
+        $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
+        foreach( $files as $file )
+        {
+            $out[] = md5_file( $file ) . '  ' . ltrim( str_replace( array( $rootpath[0], '\\' ), array( '', '/' ), $file ), '/' );
+        }
+        pake_mkdirs( $destdir . '/share' );
+        file_put_contents( $destdir . '/share/filelist.md5', implode( "\n", $out ) );
+        pake_echo_action('file+', $destdir . '/share/filelist.md5' );
     }
-    pake_mkdirs( $destdir . '/share' );
-    file_put_contents( $destdir . '/share/filelist.md5', implode( "\n", $out ) );
-    pake_echo_action('file+', $destdir . '/share/filelist.md5' );
 }
 
 /**
@@ -673,7 +676,7 @@ class eZExtBuilder
         $default_opts = array(
             'build' => array( 'dir' => 'build' ),
             'dist' => array( 'dir' => 'dist' ),
-            'create' => array( 'tarball' => false, 'zip' => false ),
+            'create' => array( 'tarball' => false, 'zip' => false, 'filelist_md5' => true ),
             'version' => array( 'license' => 'GNU General Public License v2.0' ),
             'releasenr' => array( 'separator' => '-' ),
             'files' => array( 'to_parse' => array(), 'to_exclude' => array(),

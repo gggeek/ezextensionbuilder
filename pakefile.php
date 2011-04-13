@@ -133,7 +133,7 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
         $files = array_merge( $files, $opts['files']['to_exclude'] );
 
         /// @todo figure a way to allow user to speficy both:
-        ///       files in a spefici subdir
+        ///       files in a spefic subdir
         ///       files to be removed globally (ie. from any subdir)
         $files = pakeFinder::type( 'any' )->name( $files )->in( $destdir );
         foreach( $files as $key => $file )
@@ -312,25 +312,27 @@ function run_update_ezinfo( $task=null, $args=array(), $cliopts=array() )
 
     $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->maxdepth( 0 )->in( $destdir );
     /*
-       * Uses a regular expression to search and replace the correct string
-       * Within the file, please note there is a limit of 25 sets to indent 3rd party
-       * lib version numbers, if you use more than 25 spaces the version number will
-       * not be updated correctly
+    * Uses a regular expression to search and replace the correct string
+    * Within the file, please note there is a limit of 25 sets to indent 3rd party
+    * lib version numbers, if you use more than 25 spaces the version number will
+    * not be updated correctly.
+    * Also we set a limit of 1 replacement, to avoid fixing 3rd party lib versions
     */
     /// @todo use a real php parser instead
     pake_replace_regexp( $files, $destdir, array(
         '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+[\x27\x22])(.*)([\x27\x22],?\r?\n?)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
-        '/^([\s]{1,25}\x27License\x27[\s]+=>[\s]+[\x27\x22])(.*)([\x27\x22],?\r?\n?)/m' => '${1}' . $opts['version']['license'] . '$3' ) );
+        '/^([\s]{1,25}\x27License\x27[\s]+=>[\s]+[\x27\x22])(.*)([\x27\x22],?\r?\n?)/m' => '${1}' . $opts['version']['license'] . '$3' ),
+        1 );
 
     $files = pakeFinder::type( 'file' )->maxdepth( 0 )->name( 'extension.xml' )->in( $destdir );
     // here again, do not replace version of required extensions
     /// @todo use a real xml parser instead
     pake_replace_regexp( $files, $destdir, array(
-        '#^([\s]{1,8}<version>)([^<]*)(</version>\r?\n?)#m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3' ) );
-    /// @bug we should use a better xml escaping here
-    pake_replace_regexp( $files, $destdir, array(
+        '#^([\s]{1,8}<version>)([^<]*)(</version>\r?\n?)#m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
+        /// @bug we should use a better xml escaping here
         '#^([\s]{1,8}<license>)([^<]*)(</license>\r?\n?)#m' => '${1}' . htmlspecialchars( $opts['version']['license'] ) . '$3',
-        '#^([\s]{1,8}<copyright>)Copyright \(C\) 1999-[\d]{4} eZ Systems AS(</copyright>\r?\n?)#m' => '${1}' . 'Copyright (C) 1999-' . strftime( '%Y' ). ' eZ Systems AS' . '$2' ) );
+        '#^([\s]{1,8}<copyright>)Copyright \(C\) 1999-[\d]{4} eZ Systems AS(</copyright>\r?\n?)#m' => '${1}' . 'Copyright (C) 1999-' . strftime( '%Y' ). ' eZ Systems AS' . '$2' ),
+        1 );
 }
 
 /**
@@ -897,7 +899,7 @@ class eZExtBuilder
 if ( !function_exists( 'pake_replace_regexp_to_dir' ) )
 {
 
-function pake_replace_regexp_to_dir($arg, $src_dir, $target_dir, $regexps)
+function pake_replace_regexp_to_dir($arg, $src_dir, $target_dir, $regexps, $limit=-1)
 {
     $files = pakeFinder::get_files_from_argument($arg, $src_dir, true);
 
@@ -907,7 +909,7 @@ function pake_replace_regexp_to_dir($arg, $src_dir, $target_dir, $regexps)
         $content = pake_read_file($src_dir.'/'.$file);
         foreach ($regexps as $key => $value)
         {
-            $content = preg_replace($key, $value, $content, -1, $count);
+            $content = preg_replace($key, $value, $content, $limit, $count);
             if ($count) $replaced = true;
         }
 
@@ -917,9 +919,9 @@ function pake_replace_regexp_to_dir($arg, $src_dir, $target_dir, $regexps)
     }
 }
 
-function pake_replace_regexp($arg, $target_dir, $regexps)
+function pake_replace_regexp($arg, $target_dir, $regexps, $limit=-1)
 {
-    pake_replace_regexp_to_dir($arg, $target_dir, $target_dir, $regexps);
+    pake_replace_regexp_to_dir($arg, $target_dir, $target_dir, $regexps, $limit);
 }
 
 }

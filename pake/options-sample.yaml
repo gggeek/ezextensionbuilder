@@ -23,7 +23,7 @@ create:
 
 ezp:
     # ezpublish required version: this string is used in documentation files
-    # and for building packages
+    # and for building packages. Can be left empty / undefined
     version:
         major: 4
         minor: 5

@@ -123,10 +123,11 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
         // known files/dirs not to be packed / md5'ed
         /// @todo !important shall we make this configurable?
         /// @todo 'build' & 'dist' we should probably take from options
-        $files = array( 'ant', 'build.xml', 'pake', 'pakefile.php', '.svn', '.git', '.gitignore', 'build', 'dist' );
-        if ( false )
+        $files = array( 'ant', 'build.xml', '.svn', '.git', 'build', 'dist' );
+        // hack! when packing ourself, we need to keep this stuff
+        if ( $opts['extension']['name'] != 'ezextensionbuilder' )
         {
-
+            $files = array_merge( $files, array( 'pake', 'pakefile.php', '.gitignore' ) );
         }
         // files from user configuration
         $files = array_merge( $files, $opts['files']['to_exclude'] );

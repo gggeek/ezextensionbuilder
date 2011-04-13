@@ -4,6 +4,9 @@
   (workaround: use extension dependencies with a fake 'root' extension)
 
 . allow extension to build self
+  - allow not to build share/filelist
+  - allow to exclude from token replacement some subdirs/files (eg. pakefile.php and pake/src/)
+  - allow to look for LICENSE and INSTALL in subdirs
 
 . switch to an ini-file based configuration instead of yaml? advantages:
   - easier options parsing, everything is on 2 levels

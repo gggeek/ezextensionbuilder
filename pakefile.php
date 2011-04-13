@@ -360,10 +360,13 @@ function run_update_extra_files( $task=null, $args=array(), $cliopts=array() )
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
     $extrafiles = $opts['files']['to_parse'];
     $files = pakeFinder::type( 'file' )->name( $extrafiles )->in( $destdir );
-    pake_replace_tokens( $files, $destdir, '[', ']', array(
-        'EXTENSION_VERSION' => $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
-        'EXTENSION_PUBLISH_VERSION' => $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'],
-        'EXTENSION_LICENSE' => $opts['version']['license'] ) );
+    $tokens = array( 'EXTENSION_VERSION' => $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
+        'EXTENSION_LICENSE' => $opts['version']['license'] );
+    if ( @$opts['ezp']['version']['major'] )
+    {
+                $tokens['EXTENSION_PUBLISH_VERSION'] = $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'];
+    }
+    pake_replace_tokens( $files, $destdir, '[', ']', $tokens );
 }
 
 /**

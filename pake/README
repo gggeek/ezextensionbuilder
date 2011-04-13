@@ -22,7 +22,7 @@ or questions please contact info@ez.no
   You can get it either from https://github.com/indeyets/pake/wiki
   or as part of the extension itself, the first time you run the pakefile.php script
 - the Zeta Components php library (only for generating tarballs and html docs from rst)
-- command line tools: svn and/or git
+- command line tools: svn and/or git, doxygen
 
 4. Installing
 -------------
@@ -42,16 +42,17 @@ ROOT_DIR/
  |___build/myext  a copy of the extension myext will be downloaded here during the build
  |___dist/        tarballs produced by the build will be made available here
  `___pake/
-     |___doc/     more documentation, such as changelogs and todos
+     |___doc/     more documentation, such as changelogs, todos and known bugs
      |___src/     a complete copy of the pake tool
      |___README   this file
      |___INSTALL  installation instructions
      |___LICENSE  license file
+     |___doxyfile_master configuration file used when the generate-documentation task is set to create api docs via doxygen
+     |___options-ezextensionbuilder.yaml configuration file used to build this extension itself
      `___options-sample.yaml a sample configuration file
- 
+
 As you can see, we try to pollute as little as possible the ROOT_DIR: everything
 is neatly stowed away in the pake, build and dist subdirectories.
-
 
 FAQ
 ===
@@ -69,7 +70,7 @@ FAQ
 - Can I download a complete zip of the tool instead of doing the bootstrap?
     Yes. Come back later for a list of urls to use ;-)
 
-- Interaction with git/svn: which files to commit in my repo, which ones not.
+- Interaction with git/svn: which files to commit in my repo, which ones not?
     If you plan to build in the root dir of your extension, you can very easily
     add a single file to your versioned source code:
     ./pake/options-myextension.yaml

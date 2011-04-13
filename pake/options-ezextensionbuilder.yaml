@@ -1,0 +1,17 @@
+extension:
+    name: ezextensionbuilder
+
+version:
+    major: 0
+    minor: 1
+    release: 0
+
+svn:
+    url:  http://svn.projects.ez.no/ezextensionbuilder/branches/pake_based_rewrite/
+
+files:
+    gnu_dir: pake
+
+create:
+    tarball: yes
+    filelist_md5: no

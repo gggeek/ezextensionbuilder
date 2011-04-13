@@ -11,6 +11,7 @@ svn:
 
 files:
     gnu_dir: pake
+    to_parse: [ pake/LICENSE]
 
 create:
     tarball: yes

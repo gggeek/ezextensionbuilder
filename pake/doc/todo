@@ -53,3 +53,5 @@
 . bootstrap: download+install the ezc lib if needed
 
 . clean task: allow to only delete extension dir, not complete build dir
+
+. update-extra-files: also use EXTENSION_NAME and EXTENSION_COPYRIGHT tokens

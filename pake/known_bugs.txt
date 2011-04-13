@@ -1,0 +1,3 @@
+. tar archive not working on windows with ezc version <= 2009.2.1
+
+. problems on windows running init with tortoisegit and tortoisesvn (locked files/dirs cannot be deleted)

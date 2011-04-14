@@ -1,5 +1,7 @@
 # general
 
+. allow extension to build self (currently it replaces tokens within pakefile.php files)
+
 . allow to build many extensions in a single call
   (workaround: use extension dependencies with a fake 'root' extension)
 
@@ -30,6 +32,8 @@
 
 . changelog generation task: if it's not there, build it from git/svn commit messages
 
+. deployment task (eg. to upload extension to projects.ez.no)
+  - might need first some changes on projects.ez.no site
 
 # improve tasks
 
@@ -38,10 +42,11 @@
 . init task that starts with a file untar
 
 . tool-upgrade task can only upgrade pakefile itself, not all of the tool. To be fixed
+  - also upgrade task forces us to create a 2nd zip besides the main one. Remove the need for this (eg. put url to complete zip in source file and extract it to download full bundle instead of a customized bundle)
 
 . add support for generating more docs:
   . manual from docbook
-  . api docs from phpdocumentor besides doxygen
+  . api docs from phpdocumentor and/or docblox besides doxygen
   . rst docs in other dirs?
 
 . check-sql-files task: more flexible naming of sql files (how?)

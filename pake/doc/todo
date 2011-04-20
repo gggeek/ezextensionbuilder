@@ -23,6 +23,7 @@
   - proper php opening tag for ini files, absence of charset tag (or only utf8 recommended)
   - proper naming of ini files
   - php coding style
+  - css validation (via w3.org validator? see http://jigsaw.w3.org/css-validator/api.html)
 
 . add metrics-generating task (via appropriate php tool)
 
@@ -42,7 +43,8 @@
 . init task that starts with a file untar
 
 . tool-upgrade task can only upgrade pakefile itself, not all of the tool. To be fixed
-  - also upgrade task forces us to create a 2nd zip besides the main one. Remove the need for this (eg. put url to complete zip in source file and extract it to download full bundle instead of a customized bundle)
+  - also bootstrap task forces us to create a 2nd zip besides the main one. Remove the need for this (eg. put url to complete zip in source file and extract it to download full bundle instead of a customized bundle)
+  - also remove options-ezextensionbuilder.yaml from bootstrap zip, to make it easier to run the extension with no given target name
 
 . add support for generating more docs:
   . manual from docbook

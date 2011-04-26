@@ -172,11 +172,16 @@ function run_dist( $task=null, $args=array(), $cliopts=array() )
         pake_mkdirs( $opts['dist']['dir'] );
         // get absolute path to build dir
         $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
-        $rootpath = dirname( $rootpath[0] );
+        $rootpath = str_replace( '\\', '/', dirname( $rootpath[0] ) );
 
         if ( $opts['create']['tarball'] )
         {
             $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
+            // fix for win
+            foreach( $files as $i => $file )
+            {
+                $files[$i] = str_replace( '\\', '/', $file );
+            }
             $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar';
             // we do not rely on this, not to depend on phar extension and also because it's slightly buggy if there are dots in archive file name
             //pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
@@ -195,6 +200,11 @@ function run_dist( $task=null, $args=array(), $cliopts=array() )
         if ( $opts['create']['zip'] )
         {
             $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
+            // fix for win
+            foreach( $files as $i => $file )
+            {
+                $files[$i] = str_replace( '\\', '/', $file );
+            }
             /// current ezc code does not like having folders in list of files to pack
             /// unless they end in '/'
             foreach( $files as $i => $f )

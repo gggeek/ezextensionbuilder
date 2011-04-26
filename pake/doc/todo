@@ -11,12 +11,13 @@
 
 . investigate proper usage of phar archives instead of using crazy bootstrap/upgrade processes
 
+. add a 2nd "build env" config file, where paths to tools such as doxygen can be set
+  (keep this config file to the main "project" config file)
+
 
 # new tasks
 
 . add a task to generate .sql files from .dba
-
-. add translation checking task (see eg. checks done in ez 4.5 cli script)
 
 . add some code quality checks (possibly from other extensions)
   - validity of php files
@@ -24,10 +25,12 @@
   - proper naming of ini files
   - php coding style
   - css validation (via w3.org validator? see http://jigsaw.w3.org/css-validator/api.html)
+  - translation checking (see eg. checks done in ez 4.5 cli script)
 
 . add metrics-generating task (via appropriate php tool)
 
 . add support for building packages (?)
+  - probably needs incorporation of ezpxmlextfilelist.php script
 
 . add support for launching testsuite tests
 
@@ -35,6 +38,13 @@
 
 . deployment task (eg. to upload extension to projects.ez.no)
   - might need first some changes on projects.ez.no site
+
+. a task that checks for presence of update sql scripts (needs to have access to previous version sources too)
+
+. css/js minification task
+
+. add an apply-patch task to apply patch files
+
 
 # improve tasks
 
@@ -51,8 +61,6 @@
   . api docs from phpdocumentor and/or docblox besides doxygen
   . rst docs in other dirs?
 
-. check-sql-files task: more flexible naming of sql files (how?)
-
 . show-properties task: show all of them, not just two
 
 . dist task: allow to specify .tar.bz2 output format
@@ -62,3 +70,5 @@
 . clean task: allow to only delete extension dir, not complete build dir
 
 . update-extra-files: also use EXTENSION_NAME and EXTENSION_COPYRIGHT tokens
+
+. allow username/password for svn/git tasks

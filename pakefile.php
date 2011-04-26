@@ -414,11 +414,12 @@ function run_generate_documentation( $task=null, $args=array(), $cliopts=array()
     // doxygen
     if ( $opts['create']['doxygen_doc'] )
     {
-        $doxygen = escapeshellarg( @$cliopts['doxygen'] );
+        $doxygen = @$cliopts['doxygen'];
         if ( $doxygen == '' )
         {
             $doxygen = 'doxygen';
         }
+        $doxygen = escapeshellarg( $doxygen );
         $doxyfile = $destdir . '/doxyfile';
         pake_copy( 'pake/doxyfile_master', $doxyfile, array( 'override' => true ) );
         file_put_contents( $doxyfile,
@@ -489,7 +490,12 @@ function run_check_sql_files( $task=null, $args=array(), $cliopts=array() )
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
 
-    $schemafiles = array( 'share' => 'db_schema.dba', 'sql/mysql' => 'schema.sql', 'sql/oracle' => 'schema.sql', 'sql/postgresql' => 'schema.sql' );
+    $schemafile = $opts['files']['sql_files']['db_schema'];
+    $schemafiles = array( 'share' => 'db_schema.dba', 'sql/mysql' => $schemafile, 'sql/oracle' => $schemafile, 'sql/postgresql' => $schemafile );
+    if ( $schemafile == '$db.sql' )
+    {
+        $schemafiles = array( 'share' => 'db_schema.dba', 'sql/mysql' => 'mysql.sql', 'sql/oracle' => 'oracle.sql', 'sql/postgresql' => 'postgresql.sql' );
+    }
     $count = 0;
     foreach( $schemafiles as $dir => $file )
     {
@@ -509,7 +515,12 @@ function run_check_sql_files( $task=null, $args=array(), $cliopts=array() )
         throw new pakeException( "Found some sql schema files but not all of them. Please fix" );
     }
 
-    $datafiles = array( 'share' => 'db_data.dba', 'sql/mysql' => 'cleandata.sql', 'sql/oracle' => 'cleandata.sql', 'sql/postgresql' => 'cleandata.sql' );
+    $datafile = $opts['files']['sql_files']['db_data'];
+    $datafiles = array( 'share' => 'db_data.dba', 'sql/mysql' => $datafile, 'sql/oracle' => $datafile, 'sql/postgresql' => $datafile );
+    if ( $datafile == '$db.sql' )
+    {
+        $datafiles = array( 'share' => 'db_data.dba', 'sql/mysql' => 'mysql.sql', 'sql/oracle' => 'oracle.sql', 'sql/postgresql' => 'postgresql.sql' );
+    }
     $count = 0;
     foreach( $datafiles as $dir => $file )
     {
@@ -660,7 +671,7 @@ class eZExtBuilder
     static $options = null;
     static $defaultext = null;
     static $installurl = 'http://svn.projects.ez.no/ezextensionbuilder/stable/pake';
-    static $version = '0.1';
+    static $version = '0.2';
 
     static function getDefaultExtName()
     {
@@ -699,7 +710,7 @@ class eZExtBuilder
         return self::$options[$extname];
     }
 
-    /// @bug this only works as long as all defaults are 2 leles deep
+    /// @bug this only works as long as all defaults are 2 levels deep
     static function loadConfiguration ( $infile='pake/options.yaml', $extname='' )
     {
         $mandatory_opts = array( /*'extension' => array( 'name' ),*/ 'version' => array( 'major', 'minor', 'release' ) );
@@ -709,7 +720,7 @@ class eZExtBuilder
             'create' => array( 'tarball' => false, 'zip' => false, 'filelist_md5' => true, 'doxygen_doc' => false ),
             'version' => array( 'license' => 'GNU General Public License v2.0' ),
             'releasenr' => array( 'separator' => '-' ),
-            'files' => array( 'to_parse' => array(), 'to_exclude' => array(), 'gnu_dir' => '' ),
+            'files' => array( 'to_parse' => array(), 'to_exclude' => array(), 'gnu_dir' => '', 'sql_files' => array( 'db_schema' => 'schema.sql', 'db_data' => 'cleandata.sql' ) ),
             'dependencies' => array( 'extensions' => array() ) );
         /// @todo !important: test if !file_exists give a nicer warning than what we get from loadFile()
         $options = pakeYaml::loadFile( $infile );
@@ -1100,9 +1111,9 @@ pake_desc( 'Downloads extension sources from svn/git and removes unwanted files'
 pake_task( 'init' );
 
 pake_desc( 'Builds the extension. Options: --skip-init' );
-pake_task( 'build', 'init', 'update-ezinfo', 'update-license-headers', 'update-extra-files',
-     'generate-documentation', 'generate-md5sums', 'check-sql-files', 'check-gnu-files',
-     'update-package-xml' );
+pake_task( 'build', 'init', 'check-sql-files', 'check-gnu-files',
+    'update-ezinfo', 'update-license-headers', 'update-extra-files', 'update-package-xml',
+    'generate-documentation', 'generate-md5sums' );
 
 pake_desc( 'Removes the build/ directory' );
 pake_task( 'clean' );

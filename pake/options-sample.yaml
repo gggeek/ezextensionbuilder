@@ -79,6 +79,17 @@ files:
     # Leave empty for extension root dir - where those files should be btw...
     gnu_dir:
 
+    # the name of sql files that will be checked for presence iff the corresponding
+    # .dba file is found. Those files should be in directory sql/$db/ and default to:
+    # schema.sql (corresponding to db_schema.dba)
+    # cleandata.sql (corresponding to db_data.dba)
+    # nb: if your extension names the files the same as the db, use "db_schema: $db.sql"
+    # nb: either your extension must provide no sql/dba files at all, or both
+    #     the .dba file and the corresponding .sql for all 3 supported databases
+    sql_files:
+        db_schema: schema.sql
+        db_data: cleandata.sql
+
 # List of extensions that will be built as dependency
 # For each one, an svn:url, git:url or fil:url is needed
 #dependencies:

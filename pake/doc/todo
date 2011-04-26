@@ -14,6 +14,8 @@
 . add a 2nd "build env" config file, where paths to tools such as doxygen can be set
   (keep this config file to the main "project" config file)
 
+. move all the business logic in php classes outside of pakefile
+
 
 # new tasks
 
@@ -43,7 +45,7 @@
 
 . css/js minification task
 
-. add an apply-patch task to apply patch files
+. add an apply-patch task to apply patch files at build time
 
 
 # improve tasks

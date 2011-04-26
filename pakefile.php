@@ -682,6 +682,7 @@ class eZExtBuilder
     static $defaultext = null;
     static $installurl = 'http://svn.projects.ez.no/ezextensionbuilder/stable/pake';
     static $version = '0.2';
+    static $min_pake_version = '1.6.1';
 
     static function getDefaultExtName()
     {
@@ -983,7 +984,8 @@ if ( !function_exists( 'pake_antpattern' ) )
 {
 
 /**
-* Mimics ant pattern matching
+* Mimics ant pattern matching.
+* Waiting for pake 1.6.2 or later to provide this natively
 * @see http://ant.apache.org/manual/dirtasks.html#patterns
 * @todo more complete testing
 * @bug looking for " d i r / * * / " will return subdirs but not dir itself
@@ -1053,6 +1055,7 @@ function pake_antpattern( $files, $rootdir )
 
 }
 
+
 // *** Live code starts here ***
 
 // First off, test if user is running directly this script
@@ -1108,8 +1111,10 @@ else
 {
     // pake is loaded
 
-    // force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
-    register_ezc_autoload();
+// force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
+register_ezc_autoload();
+
+pake_require_version( eZExtBuilder::$min_pake_version );
 
 pake_desc( 'Shows help message' );
 pake_task( 'default' );

@@ -1,6 +1,9 @@
 # general
 
-. allow extension to build self (currently it replaces tokens within pakefile.php files)
+. allow extension to build self:
+  - currently it replaces tokens within pakefile.php files
+  - it should build the zip used on the website for auto-upgrades (besides the full zip), or
+  - improve upgrade task not to need a separate zip (see description later)  
 
 . allow to build many extensions in a single call
   (workaround: use extension dependencies with a fake 'root' extension)
@@ -50,13 +53,11 @@
 
 # improve tasks
 
-. add auto-update task to std build task, except when using --skip-upgrade-check option (?)
+. add auto-update task to std build tasks, except when using --skip-upgrade-check option (?)
 
 . init task that starts with a file untar
 
-. tool-upgrade task can only upgrade pakefile itself, not all of the tool. To be fixed
-  - also bootstrap task forces us to create a 2nd zip besides the main one. Remove the need for this (eg. put url to complete zip in source file and extract it to download full bundle instead of a customized bundle)
-  - also remove options-ezextensionbuilder.yaml from bootstrap zip, to make it easier to run the extension with no given target name
+. bootstrap task forces us to create a 2nd zip besides the main one. Remove the need for this (eg. put url to complete zip in source file and extract it to download full bundle instead of a customized bundle)
 
 . add support for generating more docs:
   . manual from docbook

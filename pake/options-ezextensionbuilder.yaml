@@ -12,6 +12,8 @@ svn:
 files:
     gnu_dir: pake
     to_parse: [ pake/LICENSE]
+#these could be excluded later
+#    to_exclude: pake/options-ezextensionbuilder.yaml
 
 create:
     tarball: yes

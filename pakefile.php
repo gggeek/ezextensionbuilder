@@ -170,56 +170,19 @@ function run_dist( $task=null, $args=array(), $cliopts=array() )
             throw new pakeException( "Missing Zeta Components: cannot generate tar file. Use the environment var PHP_CLASSPATH" );
         }
         pake_mkdirs( $opts['dist']['dir'] );
-        // get absolute path to build dir
-        $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
-        $rootpath = str_replace( '\\', '/', dirname( $rootpath[0] ) );
+        $rootpath = $opts['build']['dir'] . '/' . $opts['extension']['name'];
 
         if ( $opts['create']['tarball'] )
         {
-            $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
-            // fix for win
-            foreach( $files as $i => $file )
-            {
-                $files[$i] = str_replace( '\\', '/', $file );
-            }
-            $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar';
-            // we do not rely on this, not to depend on phar extension and also because it's slightly buggy if there are dots in archive file name
-            //pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
-            $tar = ezcArchive::open( $target, ezcArchive::TAR );
-            $tar->truncate();
-            $tar->append( $files, $rootpath );
-            $tar->close();
-            $fp = fopen( 'compress.zlib://' . $target . '.gz', 'wb9' );
-            /// @todo read file by small chunks to avoid memory exhaustion
-            fwrite( $fp, file_get_contents( $target ) );
-            fclose( $fp );
-            unlink( $target );
-            pake_echo_action( 'file+', $target . '.gz' );
+            $rootpath = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+            $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar.gz';
+            eZExtBuilder::archiveDir( $rootpath, $target, ezcArchive::TAR );
         }
 
         if ( $opts['create']['zip'] )
         {
-            $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
-            // fix for win
-            foreach( $files as $i => $file )
-            {
-                $files[$i] = str_replace( '\\', '/', $file );
-            }
-            /// current ezc code does not like having folders in list of files to pack
-            /// unless they end in '/'
-            foreach( $files as $i => $f )
-            {
-                if ( is_dir( $f ) )
-                {
-                    $files[$i] = $files[$i] . '/';
-                }
-            }
             $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.zip';
-            $tar = ezcArchive::open( $target, ezcArchive::ZIP );
-            $tar->truncate();
-            $tar->append( $files, $rootpath );
-            $tar->close();
-            pake_echo_action( 'file+', $target );
+            eZExtBuilder::archiveDir( $rootpath, $target, ezcArchive::ZIP );
         }
     }
 }
@@ -647,10 +610,10 @@ function run_tool_upgrade_check( $task=null, $args=array(), $cliopts=array() )
         else
         {
             pake_echo ( "A newer version is available online: $latest (you are running $current)" );
-            $ok = pake_select_input( "Do you want to upgrade? ", array( 'y', 'n' ), 'n' );
+            $ok = pake_input( "Do you want to upgrade? [y/n]", 'n' );
             if ( $ok == 'y' )
             {
-                run_tool_upgrade(  $task, $args, $opts );
+                run_tool_upgrade(  $task, $args, $cliopts );
             }
         }
     }
@@ -666,6 +629,15 @@ function run_tool_upgrade( $task=null, $args=array(), $cliopts=array() )
     }
     else
     {
+        // 1st get the whole 'pake' dir contents, making a backup copy
+        $tmpzipfile = tempnam( "tmp", "zip" );
+        $zipfile = dirname( __FILE__ ) . '/pake/pakedir-' . eZExtBuilder::$version . '.zip';
+        eZExtBuilder::archiveDir( dirname( __FILE__ ) . '/pake', $tmpzipfile, ezcArchive::ZIP );
+        @unlink( $zipfile ); // otherwise pake_rename might complain
+        pake_rename( $tmpzipfile, $zipfile );
+        eZExtBuilder::bootstrap();
+
+        // then update the pakefile itself, making a backup copy
         pake_copy( __FILE__, dirname( __FILE__ ) . '/pake/pakefile-' . eZExtBuilder::$version . '.php', array( 'override' => true ) );
         /// @todo test: does this work on windows?
         file_put_contents( __FILE__, $latest );
@@ -690,7 +662,7 @@ class eZExtBuilder
         {
             return self::$defaultext;
         }
-        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->maxdepth( 1 )->in( 'pake' );
+        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->not_name( 'options-ezextensionbuilder.yaml' )->maxdepth( 1 )->in( 'pake' );
         if ( count( $files ) == 1 )
         {
             self::$defaultext = substr( basename( $files[0] ), 8, -5 );
@@ -944,6 +916,52 @@ class eZExtBuilder
         }
         return false;
     }
+
+    /**
+    * Creates an archive out of a directory
+    */
+    static function archiveDir( $sourcedir, $archivefile, $archivetype )
+    {
+        if ( substr( $archivefile, -3 ) == '.gz' )
+        {
+            $target = substr( $archivefile, 0, -3 );
+        }
+        else
+        {
+            $target = $archivefile;
+        }
+        $rootpath = str_replace( '\\', '/', realpath( dirname( $sourcedir ) ) );
+        $files = pakeFinder::type( 'any' )->in( $sourcedir );
+        // fix for win
+        foreach( $files as $i => $file )
+        {
+            $files[$i] = str_replace( '\\', '/', $file );
+        }
+        // current ezc code does not like having folders in list of files to pack
+        // unless they end in '/'
+        foreach( $files as $i => $f )
+        {
+            if ( is_dir( $f ) )
+            {
+                $files[$i] = $files[$i] . '/';
+            }
+        }
+        // we do not rely on this, not to depend on phar extension and also because it's slightly buggy if there are dots in archive file name
+        //pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
+        $tar = ezcArchive::open( $target, $archivetype );
+        $tar->truncate();
+        $tar->append( $files, $rootpath );
+        $tar->close();
+        if ( substr( $archivefile, -3 ) == '.gz' )
+        {
+            $fp = fopen( 'compress.zlib://' . $target . '.gz', 'wb9' );
+            /// @todo read file by small chunks to avoid memory exhaustion
+            fwrite( $fp, file_get_contents( $target ) );
+            fclose( $fp );
+            unlink( $target );
+        }
+        pake_echo_action( 'file+', $archivefile );
+    }
 }
 
 }
@@ -1070,7 +1088,7 @@ if ( !function_exists( 'pake_desc' ) )
         // force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
         register_ezc_autoload();
 
-        // add our own cli options
+        $GLOBALS['internal_pake'] = true;
 
         $pake = pakeApp::get_instance();
         $pake->run();
@@ -1114,7 +1132,17 @@ else
 // force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
 register_ezc_autoload();
 
-pake_require_version( eZExtBuilder::$min_pake_version );
+// this is unfortunately a necessary hack: version 0.1 of this extension
+// shipped with a faulty pake_version, so we cannot check for required version
+// when using the bundled pake.
+// To aggravate things, version 0.1 did not upgrade the bundled pake when
+// upgrading to a new script, so we can not be sure that, even if the end user
+// updates to a newer pakefile, the bundled pake will be upgraded
+// (it will only be when the user does two consecutive updates)
+if ( !( isset( $GLOBALS['internal_pake'] ) && $GLOBALS['internal_pake'] ) )
+{
+    pake_require_version( eZExtBuilder::$min_pake_version );
+}
 
 pake_desc( 'Shows help message' );
 pake_task( 'default' );

@@ -537,7 +537,7 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
     $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 1 )->in( $destdir );
     if ( count( $files ) == 1 )
     {
-        pake_replace_regexp( $files, $destdir, array(
+        /*pake_replace_regexp( $files, $destdir, array(
             // <version>xxx</version>
             '#^(    \074version\076)(.*)(\074/version\076\r?\n?)$#m' => '${1}' . $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'] . '$3',
             // <named-version>xxx</named-version>
@@ -547,7 +547,17 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
             // <number>xxxx</number>
             '#^(    \074number\076)(.*)(\074/number\076\r?\n?)$#m' => '${1}' . $opts['version']['alias'] . '$3',
             // <release>yyy</release>
-            '#^(    \074release\076)(.*)(\074/release\076\r?\n?)$#m' => '${1}' . $opts['version']['release'] . '$3' ) );
+            '#^(    \074release\076)(.*)(\074/release\076\r?\n?)$#m' => '${1}' . $opts['version']['release'] . '$3' ) );*/
+        pake_replace_tokens( $files, $destdir, '{', '}', array(
+            '{$fullversion}' => $opts['version']['major'] . '.' . $opts['version']['minor'] . $opts['releasenr']['separator'] . $opts['version']['release'],
+            '{$name}' => $opts['extension']['name'],
+            '{$packaging_timestamp}' => time(),
+            '{$packaging_host}' => gethostname(),
+            '{$version}' => $opts['version']['alias'],
+            '{$release}' => $opts['version']['release'],
+            '{$license}' => $opts['version']['license'],
+            '{$ezp_version}' => $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'],
+        ) );
     }
 }
 
@@ -1246,7 +1256,7 @@ pake_desc( 'Creates tarballs for ezpackages.' );
 pake_task( 'create-package-tarballs' );
 */
 
-pake_desc( 'Generates a sample package.xml to allow creation of extension package. NB: that file is to be completed by hand' );
+pake_desc( 'Generates a sample package.xml to allow creation of extension package. NB: that file is to be completed by hand (but do not replace values in curly brackets) then committed to source in the top dir of the extension' );
 pake_task( 'generate-package-xml' );
 
 pake_desc( 'Converts an existing ant properties file in its corresponding yaml version' );

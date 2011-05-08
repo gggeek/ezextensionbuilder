@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<package version="3.5.2"
+<package version="{$fullversion}"
          development="false"
          xmlns:ezpackage="http://ez.no/ezpackage"
          install_type="install">

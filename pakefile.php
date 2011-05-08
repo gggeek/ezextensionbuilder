@@ -683,7 +683,7 @@ class eZExtBuilder
     static $options = null;
     static $defaultext = null;
     static $installurl = 'http://svn.projects.ez.no/ezextensionbuilder/stable/pake';
-    static $version = '0.2';
+    static $version = '0.3';
     static $min_pake_version = '1.6.1';
 
     static function getDefaultExtName()

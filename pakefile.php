@@ -439,6 +439,52 @@ function run_generate_md5sums( $task=null, $args=array(), $cliopts=array() )
     }
 }
 
+function run_generate_package_filelist( $task=null, $args=array(), $cliopts=array() )
+{
+    $opts = eZExtBuilder::getOpts( @$args[0] );
+    if ( $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
+    {
+        $doc = new DOMDocument( '1.0', 'utf-8' );
+        $doc->formatOutput = true;
+
+        $packageRoot = $doc->createElement( 'extension' );
+        $packageRoot->setAttribute( 'name', $opts['extension']['name'] );
+
+        $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
+        $dirs =  pakeFinder::type( 'directory' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
+        foreach( $dirs as $dir )
+        {
+            $name = basename( $dir );
+            $path = dirname( $dir );
+            $path = str_replace( array( $rootpath[0], '\\' ), array( '', '/' ), $path );
+            $fileNode = $doc->createElement( 'file' );
+            $fileNode->setAttribute( 'name', $name );
+            if ( $path )
+                $fileNode->setAttribute( 'path', $path );
+            $fileNode->setAttribute( 'type', 'dir' );
+            $packageRoot->appendChild( $fileNode );
+        }
+        $files =  pakeFinder::type( 'file' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
+        foreach( $files as $file )
+        {
+            //$dir = ;
+            $name = basename( $file );
+            $path = dirname( $file );
+            $path = str_replace( array( $rootpath[0], '\\' ), array( '', '/' ), $path );
+            $fileNode = $doc->createElement( 'file' );
+            $fileNode->setAttribute( 'name', $name );
+            if ( $path )
+                $fileNode->setAttribute( 'path', $path );
+            $fileNode->setAttribute( 'md5sum', md5_file( $file ) );
+            $packageRoot->appendChild( $fileNode );
+        }
+        $doc->appendChild( $packageRoot );
+
+        $doc->save( $opts['build']['dir'] . '/extension-' . $opts['extension']['name'] . '.xml' );
+        pake_echo_action( 'file+', $opts['build']['dir'] . '/extension-' . $opts['extension']['name'] . '.xml' );
+    }
+}
+
 /**
  * Checks if a schema.sql file is present for
  * any supported database
@@ -585,7 +631,7 @@ function run_generate_sample_package_xml( $task=null, $args=array(), $cliopts=ar
     );
     //$files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 1 )->in( '.' );
     pake_replace_tokens( 'package.xml', '.', '{', '}', $tokens );
-    pake_echo ( "File package.xml generated. Please replace all tokens in square brackets in it." );
+    pake_echo ( "File package.xml generated. Please replace all tokens in square brackets in it (but do not replace values in curly brackets) then commit it to sources in the top dir of the extension" );
 }
 
 function run_convert_configuration( $task=null, $args=array(), $cliopts=array() )
@@ -1195,7 +1241,7 @@ pake_task( 'init' );
 pake_desc( 'Builds the extension. Options: --skip-init' );
 pake_task( 'build', 'init', 'check-sql-files', 'check-gnu-files',
     'update-ezinfo', 'update-license-headers', 'update-extra-files', 'update-package-xml',
-    'generate-documentation', 'generate-md5sums' );
+    'generate-documentation', 'generate-md5sums', 'generate-package-filelist' );
 
 pake_desc( 'Removes the build/ directory' );
 pake_task( 'clean' );
@@ -1239,13 +1285,11 @@ pake_task( 'check-sql-files' );
 pake_desc( 'Checks for presence of LICENSE and README files' );
 pake_task( 'check-gnu-files' );
 
+pake_desc( 'Generates an XML filelist definition for packaged extensions' );
+pake_task( 'generate-package-filelist' );
 
-//pake_desc( 'Generates an XML filelist definition for eZ Publish extension package types' );
-//pake_task( 'generate-package-filelist' );
-
-pake_desc( 'Updates version numbers in package.xml file' );
+pake_desc( 'Updates information in package.xml file used by packaged extensions' );
 pake_task( 'update-package-xml' );
-
 
 pake_desc( 'Build dependent extensions' );
 pake_task( 'build-dependencies' );
@@ -1255,7 +1299,7 @@ pake_desc( 'Creates an ezpackage tarball.' );
 pake_task( 'generate-package-tarball', 'update-package-xml', 'generate-package-filelist' );
 */
 
-pake_desc( 'Generates a sample package.xml to allow creation of extension package. NB: that file is to be completed by hand (but do not replace values in curly brackets) then committed to source in the top dir of the extension' );
+pake_desc( 'Generates a sample package.xml to allow creation of packaged extension. NB: that file is to be completed by hand' );
 pake_task( 'generate-sample-package-xml' );
 
 pake_desc( 'Converts an existing ant properties file in its corresponding yaml version' );

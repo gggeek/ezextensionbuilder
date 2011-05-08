@@ -163,7 +163,7 @@ function run_clean( $task=null, $args=array(), $cliopts=array() )
 function run_dist( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    if ( $opts['create']['tarball'] || $opts['create']['zip'] )
+    if ( $opts['create']['tarball'] || $opts['create']['zip'] || $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
     {
         if ( !class_exists( 'ezcArchive' ) )
         {
@@ -183,6 +183,11 @@ function run_dist( $task=null, $args=array(), $cliopts=array() )
         {
             $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.zip';
             eZExtBuilder::archiveDir( $rootpath, $target, ezcArchive::ZIP );
+        }
+
+        if ( $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
+        {
+            /// @todo ...
         }
     }
 }
@@ -561,7 +566,7 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
     }
 }
 
-function run_generate_package_xml( $task=null, $args=array(), $cliopts=array() )
+function run_generate_sample_package_xml( $task=null, $args=array(), $cliopts=array() )
 {
     pake_copy( 'pake/package_master.xml', 'package.xml' );
     // tokens not replaced here are replaced at build time
@@ -740,7 +745,7 @@ class eZExtBuilder
         $default_opts = array(
             'build' => array( 'dir' => 'build' ),
             'dist' => array( 'dir' => 'dist' ),
-            'create' => array( 'tarball' => false, 'zip' => false, 'filelist_md5' => true, 'doxygen_doc' => false ),
+            'create' => array( 'tarball' => false, 'zip' => false, 'filelist_md5' => true, 'doxygen_doc' => false, 'ezpackage' => false, 'pearpackage' => false ),
             'version' => array( 'license' => 'GNU General Public License v2.0' ),
             'releasenr' => array( 'separator' => '-' ),
             'files' => array( 'to_parse' => array(), 'to_exclude' => array(), 'gnu_dir' => '', 'sql_files' => array( 'db_schema' => 'schema.sql', 'db_data' => 'cleandata.sql' ) ),
@@ -1241,8 +1246,8 @@ pake_desc( 'Checks for presence of LICENSE and README files' );
 pake_task( 'check-gnu-files' );
 
 
-//pake_desc( 'Generates an XML definition for eZ Publish extension package types' );
-//pake_task( 'generate-ezpackage-xml-definition' );
+//pake_desc( 'Generates an XML filelist definition for eZ Publish extension package types' );
+//pake_task( 'generate-package-filelist' );
 
 pake_desc( 'Updates version numbers in package.xml file' );
 pake_task( 'update-package-xml' );
@@ -1252,12 +1257,12 @@ pake_desc( 'Build dependent extensions' );
 pake_task( 'build-dependencies' );
 
 /*
-pake_desc( 'Creates tarballs for ezpackages.' );
-pake_task( 'create-package-tarballs' );
+pake_desc( 'Creates an ezpackage tarball.' );
+pake_task( 'generate-package-tarball', 'update-package-xml', 'generate-package-filelist' );
 */
 
 pake_desc( 'Generates a sample package.xml to allow creation of extension package. NB: that file is to be completed by hand (but do not replace values in curly brackets) then committed to source in the top dir of the extension' );
-pake_task( 'generate-package-xml' );
+pake_task( 'generate-sample-package-xml' );
 
 pake_desc( 'Converts an existing ant properties file in its corresponding yaml version' );
 pake_task( 'convert-configuration' );

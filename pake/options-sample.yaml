@@ -34,6 +34,14 @@ create:
     # if not set, defaults to no
     doxygen_doc: yes
 
+    # whether to create an ezpackage out of the extension.
+    # NB: for this to work, a package.xml file needs to be present at the root of the extension
+    ezpackage: no
+
+    # whether to create a pear package out of the extension.
+    # NB: for this to work, the ezpackage must also have been built
+    pearpackage: no
+
 ezp:
     # ezpublish required version: this string is used in documentation files
     # and for building packages. Can be left empty / undefined

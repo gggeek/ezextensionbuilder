@@ -542,26 +542,27 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
     $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 1 )->in( $destdir );
     if ( count( $files ) == 1 )
     {
-        /*pake_replace_regexp( $files, $destdir, array(
+        // original format
+        pake_replace_regexp( $files, $destdir, array(
             // <version>xxx</version>
-            '#^(    \074version\076)(.*)(\074/version\076\r?\n?)$#m' => '${1}' . $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'] . '$3',
+            '#^( *\074version\076)(.*)(\074/version\076\r?\n?)$#m' => '${1}' . $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'] . '$3',
             // <named-version>xxx</named-version>
-            '#^(    \074named-version\076)(.*)(\074/named-version\076\r?\n?)$#m' => '${1}' . $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '$3',
+            '#^( *\074named-version\076)(.*)(\074/named-version\076\r?\n?)$#m' => '${1}' . $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '$3',
             // <package version="zzzz"
-            '#^(    \074version\076)(.*)(\074/version\076\r?\n?)$#m' => '${1}' . $opts['version']['major'] . '.' . $opts['version']['minor'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
+            '#^( *\074package +version=")(.*)("\r?\n?)$#m' => '${1}' . $opts['version']['major'] . '.' . $opts['version']['minor'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
             // <number>xxxx</number>
-            '#^(    \074number\076)(.*)(\074/number\076\r?\n?)$#m' => '${1}' . $opts['version']['alias'] . '$3',
+            '#^( *\074number\076)(.*)(\074/number\076\r?\n?)$#m' => '${1}' . $opts['version']['alias'] . '$3',
             // <release>yyy</release>
-            '#^(    \074release\076)(.*)(\074/release\076\r?\n?)$#m' => '${1}' . $opts['version']['release'] . '$3' ) );*/
+            '#^( *\074release\076)(.*)(\074/release\076\r?\n?)$#m' => '${1}' . $opts['version']['release'] . '$3',
+
+            '#^( *\074timestamp\076)(.*)(\074/timestamp\076\r?\n?)$#m' => '${1}' . time() . '$3',
+            '#^( *\074host\076)(.*)(\074/host\076\r?\n?)$#m' => '${1}' . gethostname() . '$3',
+            '#^( *\074licence\076)(.*)(\074/licence\076\r?\n?)$#m' => '${1}' . $opts['version']['license'] . '$3',
+            ) );
         pake_replace_tokens( $files, $destdir, '{', '}', array(
-            '{$fullversion}' => $opts['version']['major'] . '.' . $opts['version']['minor'] . $opts['releasenr']['separator'] . $opts['version']['release'],
-            '{$name}' => $opts['extension']['name'],
-            '{$packaging_timestamp}' => time(),
-            '{$packaging_host}' => gethostname(),
-            '{$version}' => $opts['version']['alias'],
-            '{$release}' => $opts['version']['release'],
-            '{$license}' => $opts['version']['license'],
-            '{$ezp_version}' => $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'],
+            '$name' => $opts['extension']['name'],
+            '$version' => $opts['version']['alias'],
+            '$ezp_version' => $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release']
         ) );
     }
 }
@@ -580,14 +581,7 @@ function run_generate_sample_package_xml( $task=null, $args=array(), $cliopts=ar
         '$changelog' => '',
         '$simple-files' => '',
         '$state' => '[State]',
-        '' => '',
-        '' => '',
-        '' => '',
-        '' => '',
-        '' => '',
-        '' => '',
-        '' => '',
-        '' => '',
+        '$requires' => ''
     );
     //$files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 1 )->in( '.' );
     pake_replace_tokens( 'package.xml', '.', '{', '}', $tokens );

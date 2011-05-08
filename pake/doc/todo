@@ -75,3 +75,5 @@
 . update-extra-files: also use EXTENSION_NAME and EXTENSION_COPYRIGHT tokens
 
 . allow username/password for svn/git tasks
+
+. do not package package.xml file in zip/tgz

@@ -530,6 +530,8 @@ function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
 
 function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
 {
+    /// @todo replace hostname, build time
+
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
     $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 1 )->in( $destdir );
@@ -547,6 +549,34 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
             // <release>yyy</release>
             '#^(    \074release\076)(.*)(\074/release\076\r?\n?)$#m' => '${1}' . $opts['version']['release'] . '$3' ) );
     }
+}
+
+function run_generate_package_xml( $task=null, $args=array(), $cliopts=array() )
+{
+    pake_copy( 'pake/package_master.xml', 'package.xml' );
+    // tokens not replaced here are replaced at build time
+    // tokens in square brackets are supposed to be edited by the developer
+    $tokens = array(
+        '$summary' => '[Summary]',
+        '$description' => '[Description]',
+        '$vendor' => '',
+        '$maintainers' => '',
+        '$documents' => '',
+        '$changelog' => '',
+        '$simple-files' => '',
+        '$state' => '[State]',
+        '' => '',
+        '' => '',
+        '' => '',
+        '' => '',
+        '' => '',
+        '' => '',
+        '' => '',
+        '' => '',
+    );
+    //$files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 1 )->in( '.' );
+    pake_replace_tokens( 'package.xml', '.', '{', '}', $tokens );
+    pake_echo ( "File package.xml generated. Please replace all tokens in square brackets in it." );
 }
 
 function run_convert_configuration( $task=null, $args=array(), $cliopts=array() )
@@ -1215,6 +1245,9 @@ pake_task( 'build-dependencies' );
 pake_desc( 'Creates tarballs for ezpackages.' );
 pake_task( 'create-package-tarballs' );
 */
+
+pake_desc( 'Generates a sample package.xml to allow creation of extension package. NB: that file is to be completed by hand' );
+pake_task( 'generate-package-xml' );
 
 pake_desc( 'Converts an existing ant properties file in its corresponding yaml version' );
 pake_task( 'convert-configuration' );

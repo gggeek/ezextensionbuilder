@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version="3.5.2"
+         development="false"
+         xmlns:ezpackage="http://ez.no/ezpackage"
+         install_type="install">
+  <name>{$name}</name>
+  <summary>{$summary}</summary>
+  <description>{$description}</description>
+  <!--<vendor>eZ Systems</vendor>-->
+  {$vendor}
+  <type value="extension"/>
+  <ezpublish>
+    <version>{$ezpublish_build_version}</version>
+    <named-version>{$ezpublish_build_named-version}</named-version>
+  </ezpublish>
+  <!--<maintainers>
+    <maintainer>
+      <name>eZ Systems</name>
+      <email>info@ez.no</email>
+      <role>lead</role>
+    </maintainer>
+  </maintainers>-->
+  {$maintainers}
+  <packaging>
+    <timestamp>{$packaging_timestamp}</timestamp>
+    <host>{$packaging_host}</host>
+  </packaging>
+  <documents>
+    <document mime-type="text/plain" name="README" />
+    <document mime-type="text/plain" name="LICENSE" />
+    {$documents}
+  </documents>
+  <!--<changelog>
+    <entry timestamp="1086168206" person="eZ Systems" email="info@ez.no" release="1">
+      <change>Creation of package.</change>
+    </entry>
+  </changelog>-->
+  {$changelog}
+  <!--<simple-files/>-->
+  {$simple-files}
+  <version>
+    <number>{$version}</number>
+    <release>{$release}</release>
+  </version>
+  <licence>{$license}</licence>
+  <state>{$state}</state>
+  <dependencies>
+    <provides>
+      <provide type="ezextension"
+               name="{$name}"
+               value="{$version}" />
+    </provides>
+    <requires>
+      <require type="ezpublish"
+               name="version"
+               value="{$ezp_version}" />
+       {$requires}
+    </requires>
+    <obsoletes />
+    <conflicts />
+  </dependencies>
+  <instal>
+    <item type="ezextension" filename="extension-{$name}" sub-directory="ezextension" />
+  </install>
+  <uninstall>
+    <item type="ezextension" filename="extension-{$name}" sub-directory="ezextension" />
+  </uninstall>
+</package>

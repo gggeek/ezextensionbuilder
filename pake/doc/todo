@@ -34,8 +34,7 @@
 
 . add metrics-generating task (via appropriate php tool)
 
-. add support for building packages (?)
-  - probably needs incorporation of ezpxmlextfilelist.php script
+. add support for building packages (both ez and pear)
 
 . add support for launching testsuite tests
 
@@ -50,6 +49,7 @@
 
 . add an apply-patch task to apply patch files at build time
 
+. add tasks to generate sample ezinfo.php and extension.xml files
 
 # improve tasks
 
@@ -77,3 +77,5 @@
 . allow username/password for svn/git tasks
 
 . do not package package.xml file in zip/tgz
+
+. when updating package.xml, update changelog entries from changelog files in the extension

@@ -63,7 +63,7 @@ function run_default()
 function run_show_properties( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    pake_echo ( 'Build dir: ' . $opts['build']['dir'] );
+    pake_echo ( 'Build dir: ' . eZExtBuilder::getBuildDir( $opts ) );
     pake_echo ( 'Extension name: ' . $opts['extension']['name'] );
 }
 
@@ -81,9 +81,9 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
     if ( ! $skip_init )
     {
         $opts = eZExtBuilder::getOpts( @$args[0] );
-        pake_mkdirs( $opts['build']['dir'] );
+        pake_mkdirs( eZExtBuilder::getBuildDir( $opts ) );
 
-        $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+        $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
     }
 
     if ( ! $skip_init_fetch )
@@ -157,7 +157,7 @@ function run_build( $task=null, $args=array(), $cliopts=array() )
 function run_clean( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    pake_remove_dir( $opts['build']['dir'] );
+    pake_remove_dir( eZExtBuilder::getBuildDir( $opts ) ); /// @todo remove one level above if packaging
 }
 
 function run_dist( $task=null, $args=array(), $cliopts=array() )
@@ -170,11 +170,10 @@ function run_dist( $task=null, $args=array(), $cliopts=array() )
             throw new pakeException( "Missing Zeta Components: cannot generate tar file. Use the environment var PHP_CLASSPATH" );
         }
         pake_mkdirs( $opts['dist']['dir'] );
-        $rootpath = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+        $rootpath = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
 
         if ( $opts['create']['tarball'] )
         {
-            $rootpath = $opts['build']['dir'] . '/' . $opts['extension']['name'];
             $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar.gz';
             eZExtBuilder::archiveDir( $rootpath, $target, ezcArchive::TAR );
         }
@@ -187,7 +186,53 @@ function run_dist( $task=null, $args=array(), $cliopts=array() )
 
         if ( $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
         {
-            /// @todo ...
+            $toppath = $opts['build']['dir'];
+
+            // check if package.xml file is there
+            $file = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 0 )->in( $rootpath );
+            if ( !count( $file ) )
+            {
+                pake_echo_error( "File 'package.xml' missing in build dir $rootpath. Cannot create package(s)" );
+                return;
+            }
+
+            // cleanup if extra files/dirs found
+            $dirs = array();
+            $dirs = pakeFinder::type( 'directory' )->not_name( array( 'documents', 'ezextension' ) )->maxdepth( 0 )->in( $toppath );
+            $files = pakeFinder::type( 'file' )->not_name( 'package.xml' )->maxdepth( 0 )->in( $toppath );
+            /// @todo also check for subdirs of $toppath . '/documents'
+            $files = array_merge( $files, pakeFinder::type( 'file' )->in( $toppath . '/documents' ) );
+            if ( count( $dirs ) || count( $files ) )
+            {
+                pake_echo( "Extra files/dirs found in build dir. Must remove them to continue:\n  " . implode( "\n  ", $dirs ) . "  ". implode( "\n  ", $files ) );
+                $ok = pake_input( "Do you want to delete them? [y/n]", 'n' );
+                if ( $ok != 'y' )
+                {
+                    return;
+                }
+                foreach( $files as $file )
+                {
+                    pake_remove( $file, '' );
+                }
+                foreach( $dirs as $dir )
+                {
+                    pake_remove_dir( $dir );
+                }
+            }
+            // prepare missing folders/files
+            /// @todo we should not blindly copy LICENSE and README, but inspect actual package.xml file
+            ///       and copy any files mentioned there
+            pake_copy( $rootpath . '/LICENSE', $toppath . '/documents/LICENSE' );
+            pake_copy( $rootpath . '/README', $toppath . '/documents/README' );
+            pake_copy( $rootpath . '/package.xml', $toppath . '/package.xml' );
+            $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '_extension.ezpkg';
+            eZExtBuilder::archiveDir( $toppath, $target, ezcArchive::TAR, true );
+
+            if ( $opts['create']['pearpackage'] )
+            {
+                /// @todo ...
+                pake_echo_error( "PEAR package creation not yet implemented" );
+            }
         }
     }
 }
@@ -224,9 +269,9 @@ function run_build_dependencies( $task=null, $args=array(), $cliopts=array() )
             $task->execute( array( "tmp_$ext" ), array_merge( $cliopts, array( 'skip-init' => false, 'skip-init-fetch' => false, 'skip-init-clean' => true ) ) );
 
             // copy config file from ext dir to current config dir
-            if ( is_file( $opts['build']['dir'] . "/$ext/pake/options-$ext.yaml" ) )
+            if ( is_file( eZExtBuilder::getBuildDir( $opts ) . "/$ext/pake/options-$ext.yaml" ) )
             {
-                pake_copy( $opts['build']['dir'] . "/$ext/pake/options-$ext.yaml", "pake/options-$ext.yaml" );
+                pake_copy( eZExtBuilder::getBuildDir( $opts ) . "/$ext/pake/options-$ext.yaml", "pake/options-$ext.yaml" );
             }
             else
             {
@@ -258,9 +303,9 @@ function run_fat_dist( $task=null, $args=array(), $cliopts=array() )
         throw new pakeException( "Missing Zeta Components: cannot generate tar file. Use the environment var PHP_CLASSPATH" );
     }
     pake_mkdirs( $opts['dist']['dir'] );
-    $files = pakeFinder::type( 'any' )->in( $opts['build']['dir'] );
+    $files = pakeFinder::type( 'any' )->in( eZExtBuilder::getBuildDir( $opts ) );
     // get absolute path to build dir
-    $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
+    $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( eZExtBuilder::getBuildDir( $opts ) );
     $rootpath = dirname( $rootpath[0] );
     $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '-bundle.tar';
     // we do not rely on this, not to depend on phar extension and also because it's slightly buggy if there are dots in archive file name
@@ -287,7 +332,7 @@ function run_clean_all( $task=null, $args=array(), $cliopts=array() )
 function run_update_ezinfo( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
 
     $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->maxdepth( 0 )->in( $destdir );
     /*
@@ -323,7 +368,7 @@ function run_update_ezinfo( $task=null, $args=array(), $cliopts=array() )
 function run_update_license_headers( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
     $files = pakeFinder::type( 'file' )->name( array( '*.php', '*.css', '*.js' ) )->in( $destdir );
     pake_replace_regexp( $files, $destdir, array(
         '#// SOFTWARE RELEASE: (.*)#m' => '// SOFTWARE RELEASE: ' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
@@ -338,7 +383,7 @@ function run_update_license_headers( $task=null, $args=array(), $cliopts=array()
 function run_update_extra_files( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
     $extrafiles = $opts['files']['to_parse'];
     //$files = pakeFinder::type( 'file' )->name( $extrafiles )->in( $destdir );
     /// @todo shall we make sure we only retrieve files, not directories?
@@ -363,7 +408,7 @@ function run_update_extra_files( $task=null, $args=array(), $cliopts=array() )
 function run_generate_documentation( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
     $docdir = $destdir . '/doc';
     $files = pakeFinder::type( 'file' )->name( '*.rst' )->in( $docdir );
     foreach ( $files as $i => $file )
@@ -423,12 +468,12 @@ function run_generate_md5sums( $task=null, $args=array(), $cliopts=array() )
     $opts = eZExtBuilder::getOpts( @$args[0] );
     if ( $opts['create']['filelist_md5'] )
     {
-        $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+        $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
         // make sure we do not add to checksum file the file itself
         @unlink( $destdir . '/share/filelist.md5'  );
         $files = pakeFinder::type( 'file' )->in( $destdir );
         $out = array();
-        $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
+        $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( eZExtBuilder::getBuildDir( $opts ) );
         foreach( $files as $file )
         {
             $out[] = md5_file( $file ) . '  ' . ltrim( str_replace( array( $rootpath[0], '\\' ), array( '', '/' ), $file ), '/' );
@@ -450,8 +495,8 @@ function run_generate_package_filelist( $task=null, $args=array(), $cliopts=arra
         $packageRoot = $doc->createElement( 'extension' );
         $packageRoot->setAttribute( 'name', $opts['extension']['name'] );
 
-        $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( $opts['build']['dir'] );
-        $dirs =  pakeFinder::type( 'directory' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
+        $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( eZExtBuilder::getBuildDir( $opts ) );
+        $dirs =  pakeFinder::type( 'directory' )->in( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] );
         foreach( $dirs as $dir )
         {
             $name = basename( $dir );
@@ -464,7 +509,7 @@ function run_generate_package_filelist( $task=null, $args=array(), $cliopts=arra
             $fileNode->setAttribute( 'type', 'dir' );
             $packageRoot->appendChild( $fileNode );
         }
-        $files =  pakeFinder::type( 'file' )->in( $opts['build']['dir'] . '/' . $opts['extension']['name'] );
+        $files =  pakeFinder::type( 'file' )->in( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] );
         foreach( $files as $file )
         {
             //$dir = ;
@@ -480,8 +525,8 @@ function run_generate_package_filelist( $task=null, $args=array(), $cliopts=arra
         }
         $doc->appendChild( $packageRoot );
 
-        $doc->save( $opts['build']['dir'] . '/extension-' . $opts['extension']['name'] . '.xml' );
-        pake_echo_action( 'file+', $opts['build']['dir'] . '/extension-' . $opts['extension']['name'] . '.xml' );
+        $doc->save( eZExtBuilder::getBuildDir( $opts ) . '/extension-' . $opts['extension']['name'] . '.xml' );
+        pake_echo_action( 'file+', eZExtBuilder::getBuildDir( $opts ) . '/extension-' . $opts['extension']['name'] . '.xml' );
     }
 }
 
@@ -512,7 +557,7 @@ function run_generate_package_filelist( $task=null, $args=array(), $cliopts=arra
 function run_check_sql_files( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
 
     $schemafile = $opts['files']['sql_files']['db_schema'];
     $schemafiles = array( 'share' => 'db_schema.dba', 'sql/mysql' => $schemafile, 'sql/oracle' => $schemafile, 'sql/postgresql' => $schemafile );
@@ -567,7 +612,7 @@ function run_check_sql_files( $task=null, $args=array(), $cliopts=array() )
 function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
+    $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
     if ( $opts['files']['gnu_dir'] )
     {
         $destdir .= '/' . $opts['files']['gnu_dir'];
@@ -584,8 +629,8 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
     /// @todo replace hostname, build time
 
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    $destdir = $opts['build']['dir'] . '/' . $opts['extension']['name'];
-    $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 1 )->in( $destdir );
+    $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
+    $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 0 )->in( $destdir );
     if ( count( $files ) == 1 )
     {
         // original format
@@ -629,7 +674,7 @@ function run_generate_sample_package_xml( $task=null, $args=array(), $cliopts=ar
         '$state' => '[State]',
         '$requires' => ''
     );
-    //$files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 1 )->in( '.' );
+    //$files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 0 )->in( '.' );
     pake_replace_tokens( 'package.xml', '.', '{', '}', $tokens );
     pake_echo ( "File package.xml generated. Please replace all tokens in square brackets in it (but do not replace values in curly brackets) then commit it to sources in the top dir of the extension" );
 }
@@ -741,13 +786,23 @@ class eZExtBuilder
     static $version = '0.3';
     static $min_pake_version = '1.6.1';
 
+    static function getBuildDir( $opts )
+    {
+        $dir = $opts['build']['dir'];
+        if ( $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
+        {
+            $dir .= '/ezextension';
+        }
+        return $dir;
+    }
+
     static function getDefaultExtName()
     {
         if ( self::$defaultext != null )
         {
             return self::$defaultext;
         }
-        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->not_name( 'options-ezextensionbuilder.yaml' )->maxdepth( 1 )->in( 'pake' );
+        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->not_name( 'options-ezextensionbuilder.yaml' )->maxdepth( 0 )->in( 'pake' );
         if ( count( $files ) == 1 )
         {
             self::$defaultext = substr( basename( $files[0] ), 8, -5 );
@@ -1005,17 +1060,24 @@ class eZExtBuilder
     /**
     * Creates an archive out of a directory
     */
-    static function archiveDir( $sourcedir, $archivefile, $archivetype )
+    static function archiveDir( $sourcedir, $archivefile, $archivetype, $no_top_dir=false )
     {
         if ( substr( $archivefile, -3 ) == '.gz' )
         {
+            $zipext = 'gz';
             $target = substr( $archivefile, 0, -3 );
+        }
+        else if ( substr( $archivefile, -5 ) == '.ezpkg' )
+        {
+            $zipext = 'ezpkg';
+            $target = substr( $archivefile, 0, -5 ) . '.tar';
         }
         else
         {
+            $zipext = false;
             $target = $archivefile;
         }
-        $rootpath = str_replace( '\\', '/', realpath( dirname( $sourcedir ) ) );
+        $rootpath = str_replace( '\\', '/', realpath( $no_top_dir ? $sourcedir : dirname( $sourcedir ) ) );
         $files = pakeFinder::type( 'any' )->in( $sourcedir );
         // fix for win
         foreach( $files as $i => $file )
@@ -1037,9 +1099,9 @@ class eZExtBuilder
         $tar->truncate();
         $tar->append( $files, $rootpath );
         $tar->close();
-        if ( substr( $archivefile, -3 ) == '.gz' )
+        if ( $zipext )
         {
-            $fp = fopen( 'compress.zlib://' . $target . '.gz', 'wb9' );
+            $fp = fopen( 'compress.zlib://' . $target . ".$zipext", 'wb9' );
             /// @todo read file by small chunks to avoid memory exhaustion
             fwrite( $fp, file_get_contents( $target ) );
             fclose( $fp );

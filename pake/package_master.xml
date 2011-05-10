@@ -3,7 +3,7 @@
          development="false"
          xmlns:ezpackage="http://ez.no/ezpackage"
          install_type="install">
-  <name>{$name}</name>
+  <name>{$name}_extension</name>
   <summary>{$summary}</summary>
   <description>{$description}</description>
   <!--<vendor>eZ Systems</vendor>-->

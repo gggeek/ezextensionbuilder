@@ -88,3 +88,13 @@ FAQ
     You should configure git / svn to ignore all other files in the pake/
     directory, as well as the complete ./build/ and ./dist/ directories, and the
     ./pakefile.php file
+
+- Help. After building the extension my eZ Publish is not working anymore!
+    This is a very rare situation. It might happen if
+    . you build the extension within a live eZ Publish installation,
+    . you do not clean up the build directory after the build, and
+    . you regenerate autoload configuration (eg. by activating or deactivanting an extension)
+    What is happening is that the autoload configuration is pointing to php
+    classes in files inside the build directory instead of the files in the
+    extension itself.
+    The fix: just clean up the build dir and regenerate the autoload configuration

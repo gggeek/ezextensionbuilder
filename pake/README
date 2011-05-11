@@ -4,8 +4,15 @@ Introduction
 1. What is the eZ Extension Builder?
 ------------------------------------
 
-A set of php files and tools to build eZ Publish extensions and deliverables.
+A set of php files and tools to "build" eZ Publish extensions and deliverables.
 It is based on the Pake tool.
+
+Since eZ Publish extensions are not compiled programs, the build process consists
+of steps such as:
+- checking for some files to be in place (eg. licensing info, or db structure creation scripts)
+- replacing some token strings inside some specific files (eg. version nr.)
+- generating end-user documentation form documentation sources (eg.html from rst files)
+- creating tarballs of the extension
 
 2. License
 ----------
@@ -40,6 +47,8 @@ it can in fact be anywhere else.::
 ROOT_DIR/
  |___pakefile.php this is the script driving the build
  |___build/myext  a copy of the extension myext will be downloaded here during the build
+ |                (if you plan to produce an ezpackage out of the extension,
+ |                this dircetory will change to build/ezextension/myextension)
  |___dist/        tarballs produced by the build will be made available here
  `___pake/
      |___doc/     more documentation, such as changelogs, todos and known bugs
@@ -49,10 +58,12 @@ ROOT_DIR/
      |___LICENSE  license file
      |___doxyfile_master configuration file used when the generate-documentation task is set to create api docs via doxygen
      |___options-ezextensionbuilder.yaml configuration file used to build this extension itself
-     `___options-sample.yaml a sample configuration file
+     |___options-sample.yaml a sample configuration file
+     `___package_master.tpl template file used by the generate-sample-package-file task
 
 As you can see, we try to pollute as little as possible the ROOT_DIR: everything
 is neatly stowed away in the pake, build and dist subdirectories.
+
 
 FAQ
 ===
@@ -75,5 +86,5 @@ FAQ
     add a single file to your versioned source code:
     ./pake/options-myextension.yaml
     You should configure git / svn to ignore all other files in the pake/
-    directory, as well as the complete build/ and dist/ directories, and the
+    directory, as well as the complete ./build/ and ./dist/ directories, and the
     ./pakefile.php file

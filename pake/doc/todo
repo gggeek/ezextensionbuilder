@@ -3,7 +3,7 @@
 . allow extension to build self:
   - currently it replaces tokens within pakefile.php files
   - it should build the zip used on the website for auto-upgrades (besides the full zip), or
-  - improve upgrade task not to need a separate zip (see description later)  
+  - improve upgrade task not to need a separate zip (see description later)
 
 . allow to build many extensions in a single call
   (workaround: use extension dependencies with a fake 'root' extension)
@@ -15,7 +15,7 @@
 . investigate proper usage of phar archives instead of using crazy bootstrap/upgrade processes
 
 . add a 2nd "build env" config file, where paths to tools such as doxygen can be set
-  (keep this config file to the main "project" config file)
+  (keep this config file separate from the main "project" config file)
 
 . move all the business logic in php classes outside of pakefile
 
@@ -34,11 +34,12 @@
 
 . add metrics-generating task (via appropriate php tool)
 
-. add support for building packages (both ez and pear)
+. add support for building pear packages
 
 . add support for launching testsuite tests
 
 . changelog generation task: if it's not there, build it from git/svn commit messages
+  (also update ez/pear package with that info)
 
 . deployment task (eg. to upload extension to projects.ez.no)
   - might need first some changes on projects.ez.no site
@@ -77,5 +78,3 @@
 . allow username/password for svn/git tasks
 
 . do not package package.xml file in zip/tgz
-
-. when updating package.xml, update changelog entries from changelog files in the extension

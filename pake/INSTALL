@@ -3,13 +3,13 @@ Requirements
 
 - the php cli
 - the Zeta Components php library (only for generating tarballs and html docs from rst)
-- command line tools: svn and/or git
+- command line tools: svn and/or git, doxygen
 
 
 How to install and use eZ Extension Builder
 ===========================================
 
-This is a 4 steps tutorial.
+This is a 5 steps tutorial.
 
 
 1. Download the pakefile script
@@ -57,6 +57,13 @@ svn/github repository. The local copy is not used at all.
 NB: The Zeta Components library must be available in your php include_path. If it
 is not, you can set the environment variable PHP_CLASSPATH to make it available
 to the script.
+
+
+5. Creating a packaged version of the extension
+-----------------------------------------------
+
+...
+
 
 More information
 ================

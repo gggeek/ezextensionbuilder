@@ -59,7 +59,7 @@
     <obsoletes />
     <conflicts />
   </dependencies>
-  <instal>
+  <install>
     <item type="ezextension" filename="extension-{$name}" sub-directory="ezextension" />
   </install>
   <uninstall>

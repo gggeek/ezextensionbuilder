@@ -92,6 +92,10 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
         {
             pake_echo( 'Fetching code from SVN repository' );
             pakeSubversion::checkout( $opts['svn']['url'], $destdir );
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
+            {
+                sleep( 3 );
+            }
         }
         else if ( @$opts['git']['url'] != '' )
         {
@@ -101,6 +105,10 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
             {
                 /// @todo test checking out a specific branch
                 pakeGit::checkout_repo( $destdir, $opts['git']['branch'] );
+            }
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
+            {
+                sleep( 3 );
             }
         }
         else if ( @$opts['file']['url'] != '' )
@@ -147,6 +155,23 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
         }
         pake_remove( $files, '' );
     }
+
+    if ( ! $skip_init )
+    {
+        // move package file where it has to be
+        $file = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 0 )->in( $destdir );
+        if ( count( $file ) )
+        {
+            if ( $opts['create']['tarball'] || $opts['create']['zip'] )
+            {
+                pake_rename( $destdir . '/package.xml', $destdir . '/../../package.xml' );
+            }
+            else
+            {
+                pake_remove( $file, '' );
+            }
+        }
+    }
 }
 
 /// We rely on the pake dependency system here to do real stuff
@@ -157,7 +182,7 @@ function run_build( $task=null, $args=array(), $cliopts=array() )
 function run_clean( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    pake_remove_dir( eZExtBuilder::getBuildDir( $opts ) ); /// @todo remove one level above if packaging
+    pake_remove_dir( $opts['build']['dir'] );
 }
 
 function run_dist( $task=null, $args=array(), $cliopts=array() )
@@ -172,13 +197,24 @@ function run_dist( $task=null, $args=array(), $cliopts=array() )
         pake_mkdirs( $opts['dist']['dir'] );
         $rootpath = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
 
-        // create first packages that depend on 'package.xml', as we remove it later on
+        if ( $opts['create']['tarball'] )
+        {
+            $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar.gz';
+            eZExtBuilder::archiveDir( $rootpath, $target, ezcArchive::TAR );
+        }
+
+        if ( $opts['create']['zip'] )
+        {
+            $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.zip';
+            eZExtBuilder::archiveDir( $rootpath, $target, ezcArchive::ZIP );
+        }
+
         if ( $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
         {
             $toppath = $opts['build']['dir'];
 
             // check if package.xml file is there
-            $file = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 0 )->in( $rootpath );
+            $file = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 0 )->in( $toppath );
             if ( !count( $file ) )
             {
                 pake_echo_error( "File 'package.xml' missing in build dir $rootpath. Cannot create package(s)" );
@@ -215,7 +251,6 @@ function run_dist( $task=null, $args=array(), $cliopts=array() )
             ///       and copy any files mentioned there
             pake_copy( $rootpath . '/' . $opts['files']['gnu_dir'] . '/LICENSE', $toppath . '/documents/LICENSE' );
             pake_copy( $rootpath . '/' . $opts['files']['gnu_dir'] . '/README', $toppath . '/documents/README' );
-            pake_copy( $rootpath . '/package.xml', $toppath . '/package.xml' );
             $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '_extension.ezpkg';
             eZExtBuilder::archiveDir( $toppath, $target, ezcArchive::TAR, true );
 
@@ -226,19 +261,6 @@ function run_dist( $task=null, $args=array(), $cliopts=array() )
             }
         }
 
-        /// @todo remove package.xml file from zips
-
-        if ( $opts['create']['tarball'] )
-        {
-            $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar.gz';
-            eZExtBuilder::archiveDir( $rootpath, $target, ezcArchive::TAR );
-        }
-
-        if ( $opts['create']['zip'] )
-        {
-            $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.zip';
-            eZExtBuilder::archiveDir( $rootpath, $target, ezcArchive::ZIP );
-        }
     }
 }
 
@@ -635,18 +657,20 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
     /// @todo replace hostname, build time
 
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
+    $destdir = $opts['build']['dir'];
     $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 0 )->in( $destdir );
     if ( count( $files ) == 1 )
     {
         // original format
         pake_replace_regexp( $files, $destdir, array(
+            // <name>xxx</name>
+            '#^( *\074name\076)(.*)(\074/name\076\r?\n?)$#m' => '${1}' . $opts['extension']['name'] . '_extension' . '$3',
             // <version>xxx</version>
             '#^( *\074version\076)(.*)(\074/version\076\r?\n?)$#m' => '${1}' . $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'] . '$3',
             // <named-version>xxx</named-version>
             '#^( *\074named-version\076)(.*)(\074/named-version\076\r?\n?)$#m' => '${1}' . $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '$3',
             // <package version="zzzz"
-            '#^( *\074package +version=")(.*)("\r?\n?)$#m' => '${1}' . $opts['version']['major'] . '.' . $opts['version']['minor'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
+            //'#^( *\074package +version=")(.*)("\r?\n?)$#m' => '${1}' . $opts['version']['major'] . '.' . $opts['version']['minor'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
             // <number>xxxx</number>
             '#^( *\074number\076)(.*)(\074/number\076\r?\n?)$#m' => '${1}' . $opts['version']['alias'] . '$3',
             // <release>yyy</release>
@@ -656,6 +680,12 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
             '#^( *\074host\076)(.*)(\074/host\076\r?\n?)$#m' => '${1}' . gethostname() . '$3',
             '#^( *\074licence\076)(.*)(\074/licence\076\r?\n?)$#m' => '${1}' . $opts['version']['license'] . '$3',
             ) );
+        // replacing a token based on its value instead of its location (text immediately before and after,
+        // as done above) has a disadvantage: we cannot execute the substitution many
+        // times on the same text, as the 1st substitution will remove the token's
+        // value. This means we have to reinit the build to get a 100% updated
+        // package file. Unfortunately hunting for xml attributes not based on
+        // token values needs a real xml parser, simplistic regexps are not enough...
         pake_replace_tokens( $files, $destdir, '{', '}', array(
             '$name' => $opts['extension']['name'],
             '$version' => $opts['version']['alias'],
@@ -1107,7 +1137,7 @@ class eZExtBuilder
         $tar->close();
         if ( $zipext )
         {
-            $fp = fopen( 'compress.zlib://' . $target . ".$zipext", 'wb9' );
+            $fp = fopen( 'compress.zlib://' . ( $zipext == 'ezpkg' ? substr( $target, 0, -4 ) : $target ) . ".$zipext", 'wb9' );
             /// @todo read file by small chunks to avoid memory exhaustion
             fwrite( $fp, file_get_contents( $target ) );
             fclose( $fp );

@@ -77,4 +77,6 @@
 
 . allow username/password for svn/git tasks
 
-. do not package package.xml file in zip/tgz
+. do not package package.xml file in zip/tgz & package itself
+
+. allow more files to be put in package besides LICENSE & README

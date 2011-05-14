@@ -7,11 +7,11 @@ Introduction
 A set of php files and tools to "build" eZ Publish extensions and deliverables.
 It is based on the Pake tool.
 
-Since eZ Publish extensions are not compiled programs, the build process consists
-of steps such as:
-- checking for some files to be in place (eg. licensing info, or db structure creation scripts)
-- replacing some token strings inside some specific files (eg. version nr.)
-- generating end-user documentation form documentation sources (eg.html from rst files)
+The build process consists of the following steps:
+- getting a copy of the latest versions of the source code from the svn/git repository
+- executing a series of conformity checks (eg. licensing info files must be in place)
+- replacing some token strings inside some specific files (eg. version nr. and licensing info)
+- generating end-user documentation from documentation sources (eg.html from rst files)
 - creating tarballs of the extension
 
 2. License
@@ -34,7 +34,7 @@ or questions please contact info@ez.no
 4. Installing
 -------------
 
-Read the INSTALL file to get started
+Read the INSTALL file to get started and for usage instructions
 
 
 Directory structure
@@ -46,10 +46,13 @@ it can in fact be anywhere else.::
 
 ROOT_DIR/
  |___pakefile.php this is the script driving the build
+ |
  |___build/myext  a copy of the extension myext will be downloaded here during the build
- |                (if you plan to produce an ezpackage out of the extension,
- |                this dircetory will change to build/ezextension/myextension)
+ |                NB: if you plan to produce an ezpackage out of the extension,
+ |                this directory will change to build/ezextension/myextension
+ |
  |___dist/        tarballs produced by the build will be made available here
+ |
  `___pake/
      |___doc/     more documentation, such as changelogs, todos and known bugs
      |___src/     a complete copy of the pake tool

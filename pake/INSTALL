@@ -9,7 +9,7 @@ Requirements
 How to install and use eZ Extension Builder
 ===========================================
 
-This is a 5 steps tutorial.
+This is a 4 steps tutorial. The fifth step is optional ;-)
 
 
 1. Download the pakefile script
@@ -62,7 +62,29 @@ to the script.
 5. Creating a packaged version of the extension
 -----------------------------------------------
 
-...
+An ezpackage is a file with the .ezpkg extension, that can contain different
+types of eZ Publish contents and structures, and even complete extensions.
+Packages can be used to easily share those things between different eZ Publish
+installations, or for eg. backup purposes.
+
+To create a packaged version of an extension, you only need to
+1. produce an xml 'manifest' file describing your extension
+2. tell to the ezextensionbuilder script to create the package
+
+Step 1:
+The xml manifest file must be named 'package.xml' and be avaialble in the root
+directory of the extension.
+NB: some of the tags in this file will be automatically updated during the 'build'
+task, such as version number and licensing, so you do not need to worry about them.
+The easiest way to create a package.xml file is to run the 'generate-sample-package-xml'
+task, which will produce a sample file package.xml in the current directory, then
+copy it to the appropriate directory and edit with the appropriate values.
+
+Step 2:
+It is sufficient to add the following settings to the yaml configuration file to
+have the complete package built as part of the 'dist' task:
+create:
+    ezpackage: yes
 
 
 More information

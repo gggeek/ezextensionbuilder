@@ -82,5 +82,5 @@
 . packaging task:
   . allow more files to be put in package docs besides LICENSE & README
   . grab dependencies from extension.xml and put them into package file
-  . verify that package.xml is valid xml
+  . verify that package.xml is valid xml & comliant with the package schema
   . better regexps to always update package.xml even on iterated "build --skip-init" runs

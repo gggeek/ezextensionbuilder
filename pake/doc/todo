@@ -65,6 +65,8 @@
   . api docs from phpdocumentor and/or docblox besides doxygen
   . rst docs in other dirs?
 
+. do not try to replace tokens in doxygen-generated css
+
 . show-properties task: show all of them, not just two
 
 . dist task: allow to specify .tar.bz2 output format
@@ -77,6 +79,8 @@
 
 . allow username/password for svn/git tasks
 
-. do not package package.xml file in zip/tgz & package itself
-
-. allow more files to be put in package besides LICENSE & README
+. packaging task:
+  . allow more files to be put in package docs besides LICENSE & README
+  . grab dependencies from extension.xml and put them into package file
+  . verify that package.xml is valid xml
+  . better regexps to always update package.xml even on iterated "build --skip-init" runs

@@ -1103,6 +1103,11 @@ class eZExtBuilder
             $zipext = 'gz';
             $target = substr( $archivefile, 0, -3 );
         }
+        else if ( substr( $archivefile, -4 ) == '.bz2' )
+        {
+            $zipext = 'bz2';
+            $target = substr( $archivefile, 0, -4 );
+        }
         else if ( substr( $archivefile, -6 ) == '.ezpkg' )
         {
             $zipext = 'ezpkg';
@@ -1137,7 +1142,12 @@ class eZExtBuilder
         $tar->close();
         if ( $zipext )
         {
-            $fp = fopen( 'compress.zlib://' . ( $zipext == 'ezpkg' ? substr( $target, 0, -4 ) : $target ) . ".$zipext", 'wb9' );
+            $compress = 'zlib';
+            if ( $zipext == 'bz2' )
+            {
+                $compress = 'bzip2';
+            }
+            $fp = fopen( "compress.$compress://" . ( $zipext == 'ezpkg' ? substr( $target, 0, -4 ) : $target ) . ".$zipext", 'wb9' );
             /// @todo read file by small chunks to avoid memory exhaustion
             fwrite( $fp, file_get_contents( $target ) );
             fclose( $fp );

@@ -5,12 +5,14 @@
   - it should build the zip used on the website for auto-upgrades (besides the full zip), or
   - improve upgrade task not to need a separate zip (see description later)
 
+. upgrade bundled pake to version 1.6.3
+
 . allow to build many extensions in a single call
   (workaround: use extension dependencies with a fake 'root' extension)
 
 . add support for different dir schemas for extensions providing packages? nb: better if we can do it without that...
 
-. add more detailed documentation of expected coding/file layouts standards / existing tasks undertakings
+. add more detailed documentation of expected coding/file layouts standards
 
 . investigate proper usage of phar archives instead of using crazy bootstrap/upgrade processes
 
@@ -82,5 +84,5 @@
 . packaging task:
   . allow more files to be put in package docs besides LICENSE & README
   . grab dependencies from extension.xml and put them into package file
-  . verify that package.xml is valid xml & comliant with the package schema
+  . verify that package.xml is valid xml & compliant with the package schema
   . better regexps to always update package.xml even on iterated "build --skip-init" runs

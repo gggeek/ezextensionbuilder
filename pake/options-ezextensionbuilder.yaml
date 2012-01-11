@@ -3,17 +3,16 @@ extension:
 
 version:
     major: 0
-    minor: 2
-    release: 0
+    minor: 4
+    release: 0-dev
 
 svn:
     url:  http://svn.projects.ez.no/ezextensionbuilder/branches/pake_based_rewrite/
 
 files:
     gnu_dir: pake
-    to_parse: [ pake/LICENSE]
-#these could be excluded later
-#    to_exclude: pake/options-ezextensionbuilder.yaml
+    to_parse: [pake/LICENSE]
+    to_exclude: [.gitignore]
 
 create:
     tarball: yes

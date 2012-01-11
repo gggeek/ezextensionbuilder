@@ -7,7 +7,7 @@ Introduction
 A set of php files and tools to "build" eZ Publish extensions and deliverables.
 It is based on the Pake tool.
 
-The build process consists of the following steps:
+The build process consists currently of the following steps:
 - getting a copy of the latest versions of the source code from the svn/git repository
 - executing a series of conformity checks (eg. licensing info files must be in place)
 - replacing some token strings inside some specific files (eg. version nr. and licensing info)
@@ -49,7 +49,7 @@ ROOT_DIR/
  |
  |___build/myext  a copy of the extension myext will be downloaded here during the build
  |                NB: if you plan to produce an ezpackage out of the extension,
- |                this directory will change to build/ezextension/myextension
+ |                this directory will change to build/ezextension/<myextension>
  |
  |___dist/        tarballs produced by the build will be made available here
  |

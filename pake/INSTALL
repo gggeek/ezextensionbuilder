@@ -12,36 +12,38 @@ How to install and use eZ Extension Builder
 This is a 4 steps tutorial. The fifth step is optional ;-)
 
 
-1. Download the pakefile script
--------------------------------
+1. Download the pakefile script (once)
+--------------------------------------
 
 Usually you would run the build script in root directory of your extension,
 but that is not a strict prerequisite. ::
 
+    cd <myextension_directory>
     wget http://svn.projects.ez.no/ezextensionbuilder/stable/pake/pakefile.php
 
 
-2. Launch the pakefile script for the first time
-------------------------------------------------
+2. Launch the pakefile script for the first time (once)
+-------------------------------------------------------
 
 The script is able to bootstrap, ie. to download all missing components the
 first time that you run it: ::
 
     php pakefile.php
 
-This will create a directory ./pake/ and download all needed stuff into it from http://svn.projects.ez.no/ezextensionbuilder.
+This will create a directory ./pake/ and download into it all needed stuff from http://svn.projects.ez.no/ezextensionbuilder.
 
 
-3. Edit the configuration file
-------------------------------
+3. Edit the configuration file (for every build)
+------------------------------------------------
 
 A sample configuration file is provided by the extension: ./pake/options-sample.yaml
-You should copy it to ./pake/options-myextension.yaml and edit it to suit your needs.
+You should copy it to ./pake/options-<myextension>.yaml and edit it to suit your needs.
+
 Note that steps 1 to 3 have to be executed only once.
 
 
-4. Launch the final build
--------------------------
+4. Launch the final build (for every build)
+-------------------------------------------
 
 To get a list of all available tasks run::
 
@@ -59,8 +61,8 @@ is not, you can set the environment variable PHP_CLASSPATH to make it available
 to the script.
 
 
-5. Creating a packaged version of the extension
------------------------------------------------
+5. Creating a packaged version of the extension (optional)
+----------------------------------------------------------
 
 An ezpackage is a file with the .ezpkg extension, that can contain different
 types of eZ Publish contents and structures, and even complete extensions.

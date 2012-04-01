@@ -98,6 +98,7 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
         {
             pake_echo( 'Fetching code from SVN repository' );
             pakeSubversion::checkout( $opts['svn']['url'], $destdir );
+            /// @todo test that we got at least one file
             if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
             {
                 sleep( 3 );
@@ -111,6 +112,7 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
             {
                 /// @todo test checking out a specific branch
                 pakeGit::checkout_repo( $destdir, $opts['git']['branch'] );
+                /// @todo test that we got at least one file
             }
             if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
             {
@@ -127,7 +129,6 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
                 throw new pakeException( "Empty source repo option: no files found in {$opts['file']['url']}" );
             }
 
-//var_dump( $files );
             pake_mirror( $files, $opts['file']['url'], $destdir );
         }
         else
@@ -727,36 +728,75 @@ function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
 }
 
 /**
-* Checks for validity all template files
+* Checks for validity all template files - needs a working eZP install somewhere to get the tpl syntax checker script;
+* options: --php=path/to/php/executable (otherwise $PATH is searched for "php"),
+* --ezp=path/to/eZPublish/installation (if empty, it is assumed we are building from within an eZP installation)
 */
 function run_check_templates( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
+    $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
+    $files = pakeFinder::type( 'file' )->name( array( '*.tpl' ) )->maxdepth( 0 )->in( $destdir );
+    if ( count( $files ) )
+    {
+        $php = @$cliopts['php'];
+        if ( $php == '' )
+        {
+            $php = pake_which( 'php' );
+        }
+        if ( strpos( pake_sh( escapeshellarg( $php ) . " -v" ), 'PHP' ) === false )
+        {
+            throw new pakeException( "$php does not seem to be a valid php executable" );
+        }
+
+        $ezp = @$cliopts['ezp'];
+        if ( $ezp == '' )
+        {
+            // assume we're running inside an eZ installation
+            $ezp = '../..';
+        }
+        if ( !file_exists( $ezp . '/bin/php/eztemplatecheck.php' ) )
+        {
+            throw new pakeException( "$ezp does not seem to be a valid eZ Publish install" );
+        }
+
+        // get absolute path to build dir
+        $rootpath =  pakeFinder::type( 'directory' )->name( $opts['extension']['name'] )->in( eZExtBuilder::getBuildDir( $opts ) );
+        $rootpath = dirname( $rootpath[0] );
+        $out = pake_sh( "cd " . escapeshellarg( $ezp ) . " && " . escapeshellarg( $php ) . " bin/php/eztemplatecheck.php " . escapeshellarg( $rootpath ) );
+        if ( strpos( $out, 'Some templates did not validate' ) !== false )
+        {
+            throw new pakeException( $out );
+        }
+    }
 }
 
 /**
- * Checks for validity all template files
+ * Checks for validity all template files; options: --php=path/to/php/executable (otherwise $PATH is searched for "php")
  */
 function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
-
-    $php = @$cliopts['php'];
-    if ( $php == '' )
+    $files = pakeFinder::type( 'file' )->name( array( '*.php' ) )->maxdepth( 0 )->in( $destdir );
+    if ( count( $files ) )
     {
-        $php = pake_which( 'php' );
-    }
-    if ( strpos( pake_sh( escapeshellarg( $php ) . " -v" ), 'PHP' ) === false )
-    {
-        throw new pakeException( "$php does not seem to be a valid php executable" );
-    }
-
-    foreach ( pakeFinder::type( 'file' )->name( array( '*.php' ) )->maxdepth( 0 )->in( $destdir ) as $file )
-    {
-        if ( strpos( pake_sh( escapeshellarg( $php ) . " -l " . escapeshellarg( $file ) ), 'No syntax errors detected' ) === false )
+        $php = @$cliopts['php'];
+        if ( $php == '' )
         {
-            throw new pakeException( "$file does not seem to be a valid php file" );
+            $php = pake_which( 'php' );
+        }
+        if ( strpos( pake_sh( escapeshellarg( $php ) . " -v" ), 'PHP' ) === false )
+        {
+            throw new pakeException( "$php does not seem to be a valid php executable" );
+        }
+
+        foreach ( pakeFinder::type( 'file' )->name( array( '*.php' ) )->maxdepth( 0 )->in( $destdir ) as $file )
+        {
+            if ( strpos( pake_sh( escapeshellarg( $php ) . " -l " . escapeshellarg( $file ) ), 'No syntax errors detected' ) === false )
+            {
+                throw new pakeException( "$file does not seem to be a valid php file" );
+            }
         }
     }
 }
@@ -1446,7 +1486,7 @@ pake_task( 'show-properties' );
 
 pake_task( 'init' );
 
-pake_task( 'build', 'init', 'check-php-files', 'check-sql-files', 'check-gnu-files',
+pake_task( 'build', 'init', 'check-php-files', 'check-templates', 'check-sql-files', 'check-gnu-files',
     'update-ezinfo', 'update-license-headers', 'update-extra-files', 'update-package-xml',
     'generate-documentation', 'generate-md5sums', 'generate-package-filelist' );
 
@@ -1474,6 +1514,8 @@ pake_task( 'generate-documentation' );
 //pake_task( 'coding-standards-check' );
 
 pake_task( 'check-php-files' );
+
+pake_task( 'check-templates' );
 
 pake_task( 'generate-md5sums' );
 

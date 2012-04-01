@@ -122,6 +122,12 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
             pake_echo( 'Fetching code from local repository' );
             /// @todo (!important) exclude stuff we know we're going to delete immediately afterwards
             $files = pakeFinder::type( 'any' )->in( $opts['file']['url'] );
+            if ( count( $files ) == 0 )
+            {
+                throw new pakeException( "Empty source repo option: no files found in {$opts['file']['url']}" );
+            }
+
+//var_dump( $files );
             pake_mirror( $files, $opts['file']['url'], $destdir );
         }
         else
@@ -719,6 +725,42 @@ function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
         throw new pakeException( "README and/or LICENSE files missing. Please fix" );
     }
 }
+
+/**
+* Checks for validity all template files
+*/
+function run_check_templates( $task=null, $args=array(), $cliopts=array() )
+{
+    $opts = eZExtBuilder::getOpts( @$args[0] );
+}
+
+/**
+ * Checks for validity all template files
+ */
+function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
+{
+    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
+
+    $php = @$cliopts['php'];
+    if ( $php == '' )
+    {
+        $php = pake_which( 'php' );
+    }
+    if ( strpos( pake_sh( escapeshellarg( $php ) . " -v" ), 'PHP' ) === false )
+    {
+        throw new pakeException( "$php does not seem to be a valid php executable" );
+    }
+
+    foreach ( pakeFinder::type( 'file' )->name( array( '*.php' ) )->maxdepth( 0 )->in( $destdir ) as $file )
+    {
+        if ( strpos( pake_sh( escapeshellarg( $php ) . " -l " . escapeshellarg( $file ) ), 'No syntax errors detected' ) === false )
+        {
+            throw new pakeException( "$file does not seem to be a valid php file" );
+        }
+    }
+}
+
 /**
 * Updates information in package.xml file used by packaged extensions
 */
@@ -1404,7 +1446,7 @@ pake_task( 'show-properties' );
 
 pake_task( 'init' );
 
-pake_task( 'build', 'init', 'check-sql-files', 'check-gnu-files',
+pake_task( 'build', 'init', 'check-php-files', 'check-sql-files', 'check-gnu-files',
     'update-ezinfo', 'update-license-headers', 'update-extra-files', 'update-package-xml',
     'generate-documentation', 'generate-md5sums', 'generate-package-filelist' );
 
@@ -1430,6 +1472,8 @@ pake_task( 'generate-documentation' );
 
 //pake_desc( 'Checks PHP code coding standard, requires PHPCodeSniffer' );
 //pake_task( 'coding-standards-check' );
+
+pake_task( 'check-php-files' );
 
 pake_task( 'generate-md5sums' );
 

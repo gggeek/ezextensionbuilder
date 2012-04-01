@@ -5,8 +5,6 @@
   - it should build the zip used on the website for auto-upgrades (besides the full zip), or
   - improve upgrade task not to need a separate zip (see description later)
 
-. upgrade bundled pake to version 1.6.3
-
 . allow to build many extensions in a single call
   (workaround: use extension dependencies with a fake 'root' extension)
 

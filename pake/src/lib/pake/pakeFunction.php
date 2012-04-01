@@ -4,7 +4,7 @@
  * @package    pake
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @copyright  2004-2005 Fabien Potencier <fabien.potencier@symfony-project.com>
- * @copyright  2010 Alexey Zakhlestin <indeyets@gmail.com>
+ * @copyright  2010–2012 Alexey Zakhlestin <indeyets@gmail.com>
  * @license    see the LICENSE file included in the distribution
  */
 
@@ -59,6 +59,11 @@ function pake_alias($alias, $name)
 function pake_desc($comment)
 {
   pakeTask::define_comment($comment);
+}
+
+function pake_help($help)
+{
+    pakeTask::define_help($help);
 }
 
 function pake_properties($property_file)
@@ -262,6 +267,31 @@ function pake_replace_tokens($arg, $target_dir, $begin_token, $end_token, $token
     pake_replace_tokens_to_dir($arg, $target_dir, $target_dir, $begin_token, $end_token, $tokens);
 }
 
+function pake_replace_regexp_to_dir($arg, $src_dir, $target_dir, $regexps)
+{
+    $files = pakeFinder::get_files_from_argument($arg, $src_dir, true);
+
+    foreach ($files as $file)
+    {
+        $replaced = false;
+        $content = pake_read_file($src_dir.'/'.$file);
+        foreach ($regexps as $key => $value)
+        {
+            $content = preg_replace($key, $value, $content, -1, $count);
+            if ($count) $replaced = true;
+        }
+
+        pake_echo_action('tokens', $target_dir.DIRECTORY_SEPARATOR.$file);
+
+        file_put_contents($target_dir.DIRECTORY_SEPARATOR.$file, $content);
+    }
+}
+
+function pake_replace_regexp($arg, $target_dir, $regexps)
+{
+    pake_replace_regexp_to_dir($arg, $target_dir, $target_dir, $regexps);
+}
+
 function pake_symlink($origin_dir, $target_dir, $copy_on_windows = false)
 {
   if (!function_exists('symlink') && $copy_on_windows)
@@ -310,7 +340,17 @@ function pake_chmod($arg, $target_dir, $mode, $umask = 0000)
 function pake_which($cmd)
 {
     if (!isset($_SERVER['PATH']))
-        throw new pakeException('PATH environment variable is not set');
+    {
+        // win cli
+        if (!isset($_SERVER['Path']))
+        {
+            throw new pakeException('PATH environment variable is not set' );
+        }
+        else
+        {
+            $_SERVER['PATH'] = $_SERVER['Path'];
+        }
+    }
 
     $paths = explode(PATH_SEPARATOR, $_SERVER['PATH']);
 
@@ -320,9 +360,26 @@ function pake_which($cmd)
         }
 
         $test = $path.'/'.$cmd;
-        if (file_exists($test) and is_executable($test)) {
+        // nb: on win, executable bit does not need to be set
+        if (file_exists($test) and (is_executable($test) || strtolower(substr(PHP_OS, 0, 3)) == 'win')) {
             return $test;
         }
+        if ( strtolower(substr(PHP_OS, 0, 3)) == 'win') {
+            /// @todo we could probbaly get the list of known command suffixes from env, too
+            $test .= '.exe';
+            if (file_exists($test)) {
+                return $test;
+            }
+            $test = substr( $test, 0, -4 ) . '.cmd';
+            if (file_exists($test))  {
+                return $test;
+            }
+            $test = substr( $test, 0, -4 ) . '.bat';
+            if (file_exists($test)) {
+                return $test;
+            }
+        }
+
     }
 
     throw new pakeException('Can not find "'.$cmd.'" executable');

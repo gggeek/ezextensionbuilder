@@ -19,6 +19,8 @@
 
 . move all the business logic in php classes outside of pakefile
 
+. fix bootstrap process to also include upgrade self, or bootstrap could possibly leave install in unusable state
+
 
 # new tasks
 

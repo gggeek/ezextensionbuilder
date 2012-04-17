@@ -3,3 +3,5 @@
 . problems on windows running init with tortoisegit and tortoisesvn (locked files/dirs cannot be deleted)
 
 . the extension is not 100% able to build self (it will replace erroneous things in pakefile.php files)
+
+. if an old version of pakefile.php is used to bootstrap, it will download the latest version of the pake lib, but not upgrade self, which might result in a broken install (so broken that later task "upgrade" will not work). A bootstrap should always include an upgrade

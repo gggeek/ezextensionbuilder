@@ -939,6 +939,14 @@ function run_convert_configuration( $task=null, $args=array(), $cliopts=array() 
 }
 
 /**
+ * Displays current version nr
+ */
+function run_tool_version( $task=null, $args=array(), $cliopts=array() )
+{
+   pake_echo( "eZ Extension Builder ver." . eZExtBuilder::$version . "\nRunning on pake " . pakeApp::VERSION );
+}
+
+/**
  * Checks if a newer version of the tool is available online
  */
 function run_tool_upgrade_check( $task=null, $args=array(), $cliopts=array() )
@@ -1490,7 +1498,7 @@ if ( !function_exists( 'pake_desc' ) )
 
         echo
             "Succesfully downloaded sources\n" .
-            "  Next steps: copy pake/options-sample.yaml to pake/options.yaml, edit it\n" .
+            "  Next steps: copy pake/options-sample.yaml to pake/options-<yourextension>.yaml, edit it\n" .
             "  then run again this script.\n".
             "  Use the environment var PHP_CLASSPATH if needed for proper class autoloading of eg. Zeta Components";
         exit( 0 );
@@ -1575,6 +1583,8 @@ pake_task( 'generate-package-tarball', 'update-package-xml', 'generate-package-f
 pake_task( 'generate-sample-package-xml' );
 
 pake_task( 'convert-configuration' );
+
+pake_task( 'tool-version' );
 
 pake_task( 'tool-upgrade-check' );
 

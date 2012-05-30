@@ -21,8 +21,12 @@
 
 . fix bootstrap process to also include upgrade self, or bootstrap could possibly leave install in unusable state
 
+. copy task names from http://jenkins-php.org/ (as duplicate names for current tasks)
+
 
 # new tasks
+
+. pre-init task: get from scm url the pakefile.php of the extension
 
 . add a task to generate .sql files from .dba
 
@@ -54,6 +58,9 @@
 
 . add tasks to generate sample ezinfo.php and extension.xml files
 
+. add task that displays the tool's own changelog
+
+
 # improve tasks
 
 . add auto-update task to std build tasks, except when using --skip-upgrade-check option (?)
@@ -64,7 +71,7 @@
 
 . add support for generating more docs:
   . manual from docbook
-  . api docs from phpdocumentor and/or docblox besides doxygen
+  . api docs from docblox besides doxygen
   . rst docs in other dirs?
 
 . do not try to replace tokens in doxygen-generated css
@@ -86,3 +93,9 @@
   . grab dependencies from extension.xml and put them into package file
   . verify that package.xml is valid xml & compliant with the package schema
   . better regexps to always update package.xml even on iterated "build --skip-init" runs
+
+- new tasks:
+  phpmd
+  phpunit
+  codesniffer
+phpqatools.org

@@ -60,6 +60,25 @@ function run_default()
 }
 
 /**
+* Displays the lits of extensions which can be built (i.e. which have a config file available in the pake subdir)
+*/
+function run_list_extensions( $task=null, $args=array(), $cliopts=array() )
+{
+    $opts = eZExtBuilder::getAvailableExtNames();
+    switch( count( $opts ) )
+    {
+        case 0:
+            pake_echo ( 'Available extensions: -' );
+            break;
+        case 1:
+            pake_echo ( 'Available extensions: ' . $opts[0] . ' (default)' );
+            break;
+        default:
+            pake_echo ( 'Available extensions: ' . implode( ', ', $opts ) );
+    }
+}
+
+/**
 * Shows the properties for this build file
 * @todo show more properties
 */
@@ -1028,6 +1047,24 @@ class eZExtBuilder
         }
     }
 
+    /**
+     * Returns the list of extensions for which we have a config file available
+     * @return array
+     */
+    static function getAvailableExtNames()
+    {
+        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->not_name( 'options-ezextensionbuilder.yaml' )->maxdepth( 0 )->in( 'pake' );
+        foreach ( $files as $i => $file )
+        {
+            $files[$i] = substr( basename( $file ), 8, -5 );
+        }
+        return $files;
+    }
+
+    /**
+     * Loads, caches and returns the config options for a given extension
+     * @return array
+     */
     static function getOpts( $extname='' )
     {
         if ( $extname == '' )
@@ -1043,7 +1080,7 @@ class eZExtBuilder
     }
 
     /// @bug this only works as long as all defaults are 2 levels deep
-    static function loadConfiguration ( $infile='pake/options.yaml', $extname='' )
+    static protected function loadConfiguration ( $infile='pake/options.yaml', $extname='' )
     {
         $mandatory_opts = array( /*'extension' => array( 'name' ),*/ 'version' => array( 'major', 'minor', 'release' ) );
         $default_opts = array(
@@ -1479,8 +1516,9 @@ if ( !( isset( $GLOBALS['internal_pake'] ) && $GLOBALS['internal_pake'] ) )
     pake_require_version( eZExtBuilder::$min_pake_version );
 }
 
-//pake_desc( 'Shows help message' );
 pake_task( 'default' );
+
+pake_task( 'list-extensions' );
 
 pake_task( 'show-properties' );
 

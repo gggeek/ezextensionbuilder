@@ -60,7 +60,7 @@ function run_default()
 }
 
 /**
-* Displays the lits of extensions which can be built (i.e. which have a config file available in the pake subdir)
+* Displays the list of extensions which can be built (i.e. which have a config file available in the pake subdir)
 */
 function run_list_extensions( $task=null, $args=array(), $cliopts=array() )
 {

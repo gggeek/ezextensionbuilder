@@ -60,6 +60,154 @@ function run_default()
 }
 
 /**
+* Downloads the yaml file used to drive the build for a given extension from projects.ez.no/github.
+* This is mostly useful for the case of generic build servers.
+* Existing config files are overwritten.
+*/
+function run_download_extension_config( $task=null, $args=array(), $cliopts=array() )
+{
+    if ( count( $args ) == 0 )
+    {
+        throw new pakeException( "Missing extension name" );
+    }
+    $extname = $args[0];
+    if ( count( $args ) > 1 )
+    {
+        $exturl = $args[1];
+    }
+    else
+    {
+        /// @todo add support for custom branches
+
+        $page = pake_read_file( 'http://projects.ez.no/' . $extname );
+        if ( !preg_match( '#<a +href *= *"([^"]+)" [^>]+>Source</a>#', $page, $matches ) )
+        {
+            throw new pakeException( "Can not download or parse http://projects.ez.no/$extname" );
+        }
+        /// @todo we should test that $matches[1] is not an absolute url
+        $exturl = 'http://projects.ez.no' . $matches[1];
+        $extpage = pake_read_file( $exturl );
+        if ( preg_match( '#<code>svn checkout <a href="([^"]+)">#', $extpage, $matches ) )
+        {
+            $source = 'svn';
+            //$exturl = $matches[1];
+        }
+        else if ( preg_match( '#<a +href *= *"https://github.com/([^/]+)/([^"]+)"#', $extpage, $matches ) )
+        {
+            $source = 'github';
+            $username = $matches[1];
+            $gitext = rtrim( $matches[2], '/' );
+        }
+        else
+        {
+            throw new pakeException( "Can not download or parse $exturl" );
+        }
+
+        pake_echo ( "Scm system found: $source" );
+
+        $targetfile = "pake/options-$extname.yaml";
+        if ( $source == 'github' )
+        {
+            $branch = 'master';
+
+            $exturl = "https://github.com/$username/$gitext/raw/$branch/$targetfile";
+        }
+        elseif ( $source == 'svn' )
+        {
+            $extpage = pake_read_file( "http://svn.projects.ez.no/$extname" );
+            if ( preg_match( '#<li><a href="([tT]runk)">[tT]runk</a></li>>#', $extpage, $matches ) )
+            {
+                $branch = $matches[1];
+            }
+            else
+            {
+                /// @todo what if there is no 'trunk' but there are branches?
+                $branch = '';
+            }
+
+            pake_echo ( "Branch found: $branch" );
+
+            // for extensions still on projects.ez.no svn, try different possibilities
+            $exturl = "http://svn.projects.ez.no/$extname/$branch/extension/$extname/$targetfile";
+            if ( !file_exists( $exturl ) )
+            {
+                $exturl = "http://svn.projects.ez.no/$extname/$branch/$targetfile";
+            }
+            if ( !file_exists( $exturl ) )
+            {
+                $exturl = "http://svn.projects.ez.no/$extname/$branch/packages/{$extname}_extension/ezextension/$extname/$targetfile";
+            }
+            if ( !file_exists( $exturl ) )
+            {
+                throw new pakeException( "Can not download from $source build config file $targetfile" );
+            }
+        }
+        else
+        {
+            throw new pakeException( "Can not download from scm build config file for $extname" );
+        }
+    }
+
+    $extconf = pake_read_file( $exturl );
+    /// @todo check that $extconf is a valid yaml file with minimal params
+    pake_mkdirs( 'pake' );
+    pake_write_file( "pake/options-$extname.yaml", $extconf, true );
+}
+
+/**
+ * Creates the yaml config file for an extension
+ * This is mostly useful for the case of generic build servers.
+ */
+function run_create_ext_config( $task=null, $args=array(), $cliopts=array() )
+{
+    /// @todo ...
+}
+
+/**
+* Updates the yaml config file for an extension from its own scm url
+* This is mostly useful for the case of generic build servers.
+*/
+/*
+function run_update_ext_config( $task=null, $args=array(), $cliopts=array() )
+{
+    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $destfile = "pake/options-.yaml";
+    if ( @$opts['svn']['url'] != '' )
+    {
+        pake_echo( 'Updating yaml config from SVN repository' );
+        pakeSubversion::checkout( $opts['svn']['url'], $destfile );
+        /// @todo test that we got at least one file
+    }
+    else if ( @$opts['git']['url'] != '' )
+    {
+        pake_echo( 'Updating yaml config from GIT repository' );
+        pakeGit::clone_repository( $opts['git']['url'], $destfile );
+        if ( @$opts['git']['branch'] != '' )
+        {
+            /// @todo test checking out a specific branch
+            pakeGit::checkout_repo( $destdir, $opts['git']['branch'] );
+            /// @todo test that we got at least one file
+        }
+    }
+    else if ( @$opts['file']['url'] != '' )
+    {
+        pake_echo( 'Updating yaml config from local repository' );
+        /// @todo (!important) exclude stuff we know we're going to delete immediately afterwards
+        $files = pakeFinder::type( 'any' )->in( $opts['file']['url'] );
+        if ( count( $files ) == 0 )
+        {
+            throw new pakeException( "Empty source repo option: no files found in {$opts['file']['url']}" );
+        }
+
+        pake_mirror( $files, $opts['file']['url'], $destdir );
+    }
+    else
+    {
+        throw new pakeException( "Missing source repo option: either svn:url, git:url or file:url" );
+    }
+}*/
+
+/**
 * Displays the list of extensions which can be built (i.e. which have a config file available in the pake subdir)
 */
 function run_list_extensions( $task=null, $args=array(), $cliopts=array() )
@@ -1525,6 +1673,8 @@ if ( !( isset( $GLOBALS['internal_pake'] ) && $GLOBALS['internal_pake'] ) )
 }
 
 pake_task( 'default' );
+
+pake_task( 'download-extension-config' );
 
 pake_task( 'list-extensions' );
 

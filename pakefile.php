@@ -320,7 +320,7 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
         // files from user configuration
         $files = array_merge( $files, $opts['files']['to_exclude'] );
 
-        /// we figured a way to allow user to speficy both:
+        /// we figured a way to allow user to specify both:
         ///       files in a specific subdir
         ///       files to be removed globally (ie. from any subdir)
         //pakeFinder::type( 'any' )->name( $files )->in( $destdir );
@@ -703,7 +703,7 @@ function run_generate_documentation( $task=null, $args=array(), $cliopts=array()
         }
         $doxygen = escapeshellarg( $doxygen );
         $doxyfile = $destdir . '/doxyfile';
-        pake_copy( 'pake/doxyfile_master', $doxyfile, array( 'override' => true ) );
+        pake_copy( __DIR__ . 'pake/doxyfile_master', $doxyfile, array( 'override' => true ) );
         file_put_contents( $doxyfile,
             "\nPROJECT_NAME = " . $opts['extension']['name'] .
             "\nPROJECT_NUMBER = " . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] .
@@ -1019,7 +1019,7 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
 */
 function run_generate_sample_package_xml( $task=null, $args=array(), $cliopts=array() )
 {
-    pake_copy( 'pake/package_master.xml', 'package.xml' );
+    pake_copy( __DIR__ . 'pake/package_master.xml', 'package.xml' );
     // tokens not replaced here are replaced at build time
     // tokens in square brackets are supposed to be edited by the developer
     $tokens = array(
@@ -1144,14 +1144,14 @@ function run_tool_upgrade( $task=null, $args=array(), $cliopts=array() )
     {
         // 1st get the whole 'pake' dir contents, making a backup copy
         $tmpzipfile = tempnam( "tmp", "zip" );
-        $zipfile = dirname( __FILE__ ) . '/pake/pakedir-' . eZExtBuilder::$version . '.zip';
-        eZExtBuilder::archiveDir( dirname( __FILE__ ) . '/pake', $tmpzipfile, ezcArchive::ZIP );
+        $zipfile = __DIR__ . '/pake/pakedir-' . eZExtBuilder::$version . '.zip';
+        eZExtBuilder::archiveDir( __DIR__. '/pake', $tmpzipfile, ezcArchive::ZIP );
         @unlink( $zipfile ); // otherwise pake_rename might complain
         pake_rename( $tmpzipfile, $zipfile );
         eZExtBuilder::bootstrap();
 
         // then update the pakefile itself, making a backup copy
-        pake_copy( __FILE__, dirname( __FILE__ ) . '/pake/pakefile-' . eZExtBuilder::$version . '.php', array( 'override' => true ) );
+        pake_copy( __FILE__, __DIR__ . '/pake/pakefile-' . eZExtBuilder::$version . '.php', array( 'override' => true ) );
         /// @todo test: does this work on windows?
         file_put_contents( __FILE__, $latest );
     }
@@ -1609,9 +1609,10 @@ function pake_antpattern( $files, $rootdir )
 if ( !function_exists( 'pake_desc' ) )
 {
     // Running script directly. look if pake is found in the folder where this script installs it: ./pake/src
-    if ( file_exists( 'pake/src/bin/pake.php' ) )
+    if ( ( file_exists( 'pake/src/bin/pake.php' ) && $pakesrc = 'pake/src/bin/pake.php' ) ||
+        ( file_exists( 'vendor/pake/src/bin/pake.php' ) && $pakesrc = 'vendor/pake/src/bin/pake.php' )
     {
-        include( 'pake/src/bin/pake.php' );
+        include( $pakesrc );
 
         // force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
         register_ezc_autoload();

@@ -1610,7 +1610,7 @@ if ( !function_exists( 'pake_desc' ) )
 {
     // Running script directly. look if pake is found in the folder where this script installs it: ./pake/src
     if ( ( file_exists( 'pake/src/bin/pake.php' ) && $pakesrc = 'pake/src/bin/pake.php' ) ||
-        ( file_exists( 'vendor/pake/src/bin/pake.php' ) && $pakesrc = 'vendor/pake/src/bin/pake.php' )
+        ( file_exists( 'vendor/pake/src/bin/pake.php' ) && $pakesrc = 'vendor/pake/src/bin/pake.php' ) )
     {
         include( $pakesrc );
 

@@ -1168,7 +1168,7 @@ class eZExtBuilder
     static $defaultext = null;
     static $installurl = 'http://svn.projects.ez.no/ezextensionbuilder/stable/pake';
     static $version = '0.5.0-dev';
-    static $min_pake_version = '1.6.3';
+    static $min_pake_version = '1.7.4';
 
     static function getBuildDir( $opts )
     {
@@ -1610,7 +1610,7 @@ if ( !function_exists( 'pake_desc' ) )
 {
     // Running script directly. look if pake is found in the folder where this script installs it: ./pake/src
     if ( ( file_exists( 'pake/src/bin/pake.php' ) && $pakesrc = 'pake/src/bin/pake.php' ) ||
-        ( file_exists( 'vendor/pake/src/bin/pake.php' ) && $pakesrc = 'vendor/pake/src/bin/pake.php' ) )
+        ( file_exists( 'vendor/indeyets/pake/bin/pake.php' ) && $pakesrc = 'vendor/indeyets/pake/bin/pake.php' ) )
     {
         include( $pakesrc );
 

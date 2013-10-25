@@ -1,6 +1,6 @@
 {
     "name": "gggeek/ezextensionbuilder",
-    "description": "Provides tools to build (package) extensions for eZ Publish",
+    "description": "Provides tools to build (package) extensions for eZ Publish (4.x or Legacy Stack extensions only)",
     "license": "GNU General Public License v2.0",
     "require": {
         "php": ">=5.3",

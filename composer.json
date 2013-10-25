@@ -5,6 +5,6 @@
     "require": {
         "php": ">=5.3",
         "indeyets/pake": ">=1.7.4",
-        "zetacomponents/document": "*", 
+        "zetacomponents/document": "*"
     }
 }

@@ -4,6 +4,7 @@
     "license": "GNU General Public License v2.0",
     "require": {
         "php": ">=5.3",
-        "indeyets/pake": ">=1.7.4"
+        "indeyets/pake": ">=1.7.4",
+        "zetacomponents/document": "*", 
     }
 }

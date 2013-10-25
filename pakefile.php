@@ -79,7 +79,7 @@ function run_generate_extension_config( $task=null, $args=array(), $cliopts=arra
         }
     }
     pake_mkdirs( eZExtBuilder::getOptionsDir() );
-    pake_copy( __DIR__ . '/pake/options-sample.yaml', $configfile, array( 'override' => true ) );
+    pake_copy( __DIR__ . '/options-sample.yaml', $configfile, array( 'override' => true ) );
     pake_echo( "Created file $configfile, now go and edit it" );
 }
 
@@ -198,7 +198,7 @@ function run_download_extension_config( $task=null, $args=array(), $cliopts=arra
 function run_update_extension_config( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
-    $destfile = "pake/options-.yaml";
+    $destfile = eZExtBuilder::getOptionsDir() . "/options-.yaml";
     if ( @$opts['svn']['url'] != '' )
     {
         pake_echo( 'Updating yaml config from SVN repository' );
@@ -508,7 +508,7 @@ function run_build_dependencies( $task=null, $args=array(), $cliopts=array() )
                 break;
             }
             $tempconf = array( 'extension' => array( 'name' => $ext ),  'version' => array( 'major' => 0, 'minor' => 0, 'release' => 0 ), $type => $def );
-            $tempconffile = "pake/options-tmp_$ext.yaml";
+            $tempconffile = eZExtBuilder::getOptionsDir() . "/options-tmp_$ext.yaml";
             pakeYaml::emitfile( $tempconf, $tempconffile );
 
             // download remote extension
@@ -520,11 +520,11 @@ function run_build_dependencies( $task=null, $args=array(), $cliopts=array() )
             // copy config file from ext dir to current config dir
             if ( is_file( eZExtBuilder::getBuildDir( $opts ) . "/$ext/pake/options-$ext.yaml" ) )
             {
-                pake_copy( eZExtBuilder::getBuildDir( $opts ) . "/$ext/pake/options-$ext.yaml", "pake/options-$ext.yaml" );
+                pake_copy( eZExtBuilder::getBuildDir( $opts ) . "/$ext/pake/options-$ext.yaml", eZExtBuilder::getOptionsDir() . "/options-$ext.yaml" );
             }
             else
             {
-                throw new pakeException( "Missing spake/options.yaml extension in dependent extension $ext" );
+                throw new pakeException( "Missing pake/options.yaml extension in dependent extension $ext" );
             }
 
             // finish the init-task
@@ -729,7 +729,7 @@ function run_generate_documentation( $task=null, $args=array(), $cliopts=array()
             $doxygen = escapeshellarg( $doxygen );
         }
         $doxyfile = $destdir . '/doxyfile';
-        pake_copy( __DIR__ . 'pake/doxyfile_master', $doxyfile, array( 'override' => true ) );
+        pake_copy( __DIR__ . '/doxyfile_master', $doxyfile, array( 'override' => true ) );
         file_put_contents( $doxyfile,
             "\nPROJECT_NAME = " . $opts['extension']['name'] .
             "\nPROJECT_NUMBER = " . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] .
@@ -1057,7 +1057,7 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
 */
 function run_generate_sample_package_xml( $task=null, $args=array(), $cliopts=array() )
 {
-    pake_copy( __DIR__ . 'pake/package_master.xml', 'package.xml' );
+    pake_copy( __DIR__ . 'package_master.xml', 'package.xml' );
     // tokens not replaced here are replaced at build time
     // tokens in square brackets are supposed to be edited by the developer
     $tokens = array(
@@ -1103,14 +1103,13 @@ function run_convert_configuration( $task=null, $args=array(), $cliopts=array() 
 
     eZExtBuilder::convertPropertyFileToYamlFile(
         "ant/$extname.properties",
-        "pake/options-$extname.yaml",
+        eZExtBuilder::getConfigDir() . "/options-$extname.yaml",
         array( $extname => '', 'external' => 'dependencies', 'dependency' => 'extensions', 'repository' => array( 'svn', 'url' ) ),
         "extension:\n    name: $extname\n\n" );
 
     foreach( array( 'files.to.parse.txt' => 'to_parse', 'files.to.exclude.txt' => 'to_exclude' ) as $file => $option )
     {
         $src = "ant/$file";
-        //$dst = "pake/$file";
         if ( file_exists( $src ) )
         {
             //$ok = !file_exists( $dst ) || ( pake_input( "Destionation file $dst exists. Overwrite? [y/n]", 'n' ) == 'y' );
@@ -1118,7 +1117,7 @@ function run_convert_configuration( $task=null, $args=array(), $cliopts=array() 
             if ( count( $in = file( $src, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES ) ) )
             {
                 $in = "\n\nfiles:\n    $option: [" . implode( ', ', $in ) . "]\n";
-                file_put_contents( "pake/options-$extname.yaml", $in, FILE_APPEND );
+                file_put_contents( eZExtBuilder::getConfigDir() . "options-$extname.yaml", $in, FILE_APPEND );
             }
         }
     }

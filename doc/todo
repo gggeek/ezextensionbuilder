@@ -1,4 +1,13 @@
+# to fix
+
+. rewrite fat_dist task not to use eZComponents for creating the tarball
+
+
 # general
+
+. ezfind: should not pack manual in odf format => improve exclude list w. depth
+
+. allow config file to be in other directory than ./pake
 
 . allow extension to build self:
   - currently it replaces tokens within pakefile.php files
@@ -12,21 +21,12 @@
 
 . add more detailed documentation of expected coding/file layouts standards
 
-. investigate proper usage of phar archives instead of using crazy bootstrap/upgrade processes
-
-. add a 2nd "build env" config file, where paths to tools such as doxygen can be set
-  (keep this config file separate from the main "project" config file)
-
 . move all the business logic in php classes outside of pakefile
-
-. fix bootstrap process to also include upgrade self, or bootstrap could possibly leave install in unusable state
 
 . copy task names from http://jenkins-php.org/ (as duplicate names for current tasks)
 
 
 # new tasks
-
-. pre-init task: get from scm url the pakefile.php of the extension
 
 . add a task to generate .sql files from .dba
 
@@ -38,21 +38,22 @@
   - css validation (via w3.org validator? see http://jigsaw.w3.org/css-validator/api.html)
   - translation checking (see eg. checks done in ez 4.5 cli script)
 
-. add metrics-generating task (via appropriate php tool)
-
-. add support for building pear packages
+. add metrics-generating task. See:
+  - phpmd
+  - codesniffer
+  - phpqatools.org
 
 . add support for launching testsuite tests
 
 . changelog generation task: if it's not there, build it from git/svn commit messages
-  (also update ez/pear package with that info)
+  (also update ez package with that info)
 
-. deployment task (eg. to upload extension to projects.ez.no)
+. deployment task (eg. to upload extension to projects.ez.no or github)
   - might need first some changes on projects.ez.no site
 
 . a task that checks for presence of update sql scripts (needs to have access to previous version sources too)
 
-. css/js minification task
+. css/js minification task (not very important since we have ezjscore)
 
 . add an apply-patch task to apply patch files at build time
 
@@ -67,20 +68,14 @@
 
 . init task that starts with a file untar
 
-. bootstrap task forces us to create a 2nd zip besides the main one. Remove the need for this (eg. put url to complete zip in source file and extract it to download full bundle instead of a customized bundle)
-
 . add support for generating more docs:
   . manual from docbook
-  . api docs from docblox besides doxygen
+  . api docs from sami, phpdoc besides doxygen
   . rst docs in other dirs?
 
 . do not try to replace tokens in doxygen-generated css
 
-. show-properties task: show all of them, not just two
-
 . dist task: allow to specify .tar.bz2 output format
-
-. bootstrap: download+install the ezc lib if needed
 
 . clean task: allow to only delete extension dir, not complete build dir
 
@@ -93,9 +88,3 @@
   . grab dependencies from extension.xml and put them into package file
   . verify that package.xml is valid xml & compliant with the package schema
   . better regexps to always update package.xml even on iterated "build --skip-init" runs
-
-- new tasks:
-  phpmd
-  phpunit
-  codesniffer
-phpqatools.org

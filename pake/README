@@ -25,11 +25,11 @@ or questions please contact info@ez.no
 ---------------
 
 - the php cli
-- Pake version 1.6.1 or later.
+- Pake version 1.7.4 or later.
   You can get it either from https://github.com/indeyets/pake/wiki
-  or as part of the extension itself, the first time you run the pakefile.php script
+  or as part of the extension itself, using composer
 - the Zeta Components php library (only for generating tarballs and html docs from rst)
-- command line tools: svn and/or git, doxygen
+- command line tools: svn and/or git, doxygen, tar, zip
 
 4. Installing
 -------------
@@ -45,7 +45,9 @@ This directory will usually be the top-level directory of your extension, but
 it can in fact be anywhere else.::
 
 ROOT_DIR/
- |___pakefile.php this is the script driving the build
+ |___pake        the directory where the configuration file used for the build is expected to be
+ |   |
+ |   `___options-myext.yaml the configuration file
  |
  |___build/myext  a copy of the extension myext will be downloaded here during the build
  |                NB: if you plan to produce an ezpackage out of the extension,
@@ -53,19 +55,21 @@ ROOT_DIR/
  |
  |___dist/        tarballs produced by the build will be made available here
  |
- `___pake/
-     |___doc/     more documentation, such as changelogs, todos and known bugs
-     |___src/     a complete copy of the pake tool
-     |___README   this file
-     |___INSTALL  installation instructions
-     |___LICENSE  license file
-     |___doxyfile_master configuration file used when the generate-documentation task is set to create api docs via doxygen
-     |___options-ezextensionbuilder.yaml configuration file used to build this extension itself
-     |___options-sample.yaml a sample configuration file
-     `___package_master.tpl template file used by the generate-sample-package-file task
+ `___vendor/gggeek/ezextensionbuilder
+     |
+     `___pake/
+         |___doc/     more documentation, such as changelogs, todos and known bugs
+         |___src/     a complete copy of the pake tool
+         |___README   this file
+         |___INSTALL  installation instructions
+         |___LICENSE  license file
+         |___doxyfile_master configuration file used when the generate-documentation task is set to create api docs via doxygen
+         |___options-ezextensionbuilder.yaml configuration file used to build this extension itself
+         |___options-sample.yaml a sample configuration file
+         `___package_master.tpl template file used by the generate-sample-package-file task
 
 As you can see, we try to pollute as little as possible the ROOT_DIR: everything
-is neatly stowed away in the pake, build and dist subdirectories.
+is neatly stowed away in the vendor, pake, build and dist subdirectories.
 
 
 FAQ
@@ -73,7 +77,7 @@ FAQ
 
 - Can a standalone copy of pake be used with the pakefile instead of the bundled one?
     Yes: just use a different command line: ::
-    php pake.php build myext
+    php pake.php -f ./vendor/gggeek/ezextensionbuilder/pakefile.php build myext
 
 - Can multiple extensions be built in the same ROOT_DIR?
     Yes. Just create an option file for each
@@ -81,22 +85,20 @@ FAQ
 - Can the script use my previous configuration files used with the ant-based version?
     Yes. Use the convert-configuration task for converting them to the new format
 
-- Can I download a complete zip of the tool instead of doing the bootstrap?
-    Yes. Come back later for a list of urls to use ;-)
+- Can I download a complete zip of the tool instead of installing via composer?
+    Maybe. But you will have to test by yourself if all include_path and autoloading stuff works
 
 - Interaction with git/svn: which files to commit in my repo, which ones not?
     If you plan to build in the root dir of your extension, you can very easily
     add a single file to your versioned source code:
     ./pake/options-myextension.yaml
-    You should configure git / svn to ignore all other files in the pake/
-    directory, as well as the complete ./build/ and ./dist/ directories, and the
-    ./pakefile.php file
+    You should configure git / svn to ignore the complete ./vendor, ./build/ and ./dist/ directories
 
 - Help. After building the extension my eZ Publish is not working anymore!
     This is a very rare situation. It might happen if
     . you build the extension within a live eZ Publish installation,
     . you do not clean up the build directory after the build, and
-    . you regenerate autoload configuration (eg. by activating or deactivanting an extension)
+    . you regenerate the eZ Publish autoload configuration (eg. by activating or deactivanting an extension)
     What is happening is that the autoload configuration is pointing to php
     classes in files inside the build directory instead of the files in the
     extension itself.

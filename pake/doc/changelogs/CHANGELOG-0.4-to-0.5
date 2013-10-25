@@ -1,8 +1,18 @@
-Changes for version 0.5 - released 2012/xx/yy
+Changes for version 0.5 - released 2013/xx/yy
 
 *General:
+- upped requirements to php 5.3. Your extensions can still run on legacy php, please use a modern php on the build server
+- the preferred installation method of the tool itself is now via composer. No more self-update or bootstrap!
+  (this also means we rely on the standard pake, and do not bundle it anymore)
+  Note that the preferred directory layout has now changed. See the README file for more details
 - added 2 new tasks to check validity of any .tpl and .php file found. Active by default as part of "build" task
 - added a new task to list all extensions which can be built (because they have a config file avaiable): list-extensions
-- added a new task: tool-version. It displays complete version info
+- added a new task: tool-version. It displays complete version info for the tool itself
+- task show_properties now shows all the configured options, not just extension name and version
+- a local options file will be read if present: pake/options-$extension-user.yaml.
+  This makes it easier to keep config files with things specific to current build server separate from generic build options
+  which are generally commited to the source repository
+- all options from config file can now be overridden on command line, using --option.<name>.<suboption>.<etc>=value syntax
+- no more need for eZComponents for creation of standard tarballs. You need tar and zip cli tools installed
 
 *Bugfixes:

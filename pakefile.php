@@ -4,10 +4,12 @@
 * a script to build & package eZPublish extensions
 *
 * Needs the Pake tool to run: https://github.com/indeyets/pake/wiki
-* It can bootstrap, by downloading all required components from the web
+*
+* It can be installed from the web via composer - just declare
+* "require-dev": { "gggeek/ezextensionbuilder": "*" } in your main composer.json file
 *
 * @author    G. Giunta
-* @copyright (C) G. Giunta 2011-2012
+* @copyright (C) G. Giunta 2011-2013
 * @license   code licensed under the GNU GPL 2.0: see README file
 *
 * @todo move all known paths/names/... to class constants
@@ -18,16 +20,9 @@
 *      not have enough rights to remove the .svn/.git & checkout dirs...
 */
 
-// too smart for your own good: allow this script to be gotten off web servers in source form
-if ( isset( $_GET['show'] ) && $_GET['show'] == 'source' )
-{
-    echo file_get_contents( __FILE__ );
-    exit;
-}
-
 // *** function definition (live code at the end) ***/
 
-// Since this script might be included twice, we wrap any function in an ifdef
+// Since this script might be included twice, we wrap any function definition in an ifdef
 
 if ( !function_exists( 'register_ezc_autoload' ) )
 {
@@ -56,14 +51,44 @@ if ( !function_exists( 'run_default' ) )
 
 function run_default()
 {
-    pake_echo ( "eZ Extension Builder ver." . eZExtBuilder::$version . "\nSyntax: php pakefile.php [--\$general-options] \$task [\$extension] [--\$task-options].\n  If no extension name is provided, a default configuration file will be searched for.\n  Run: php pakefile.php --tasks to learn more about available tasks." );
+    pake_echo ( "eZ Extension Builder ver." . eZExtBuilder::$version .
+        "\nSyntax: php pakefile.php [--\$general-options] \$task [\$extension] [--\$task-options].\n" .
+        "  If no extension name is provided, a default configuration file will be searched for.\n" .
+        "  Run: php pakefile.php --tasks to learn more about available tasks." );
 }
 
 /**
-* Downloads the yaml file used to drive the build for a given extension from projects.ez.no/github.
-* This is mostly useful for the case of generic build servers.
-* Existing config files are overwritten.
-*/
+ * Creates a sample  yaml file used to drive the build for a given extension
+ * Existing config files are overwritten.
+ */
+function run_generate_extension_config( $task=null, $args=array(), $cliopts=array() )
+{
+    if ( count( $args ) == 0 )
+    {
+        throw new pakeException( "Missing extension name" );
+    }
+    $extname = $args[0];
+    $configfile = eZExtBuilder::getOptionsDir() . "/options-$extname.yaml";
+    if ( file_exists( $configfile ) )
+    {
+        pake_echo( "File $configfile already exists. Must overwrite it to continue" );
+        $ok = pake_input( "Do you want to overwrite it? [y/n]", 'n' );
+        if ( $ok != 'y' )
+        {
+            return;
+        }
+    }
+    pake_mkdirs( eZExtBuilder::getOptionsDir() );
+    pake_copy( __DIR__ . '/pake/options-sample.yaml', $configfile, array( 'override' => true ) );
+    pake_echo( "Created file $configfile, now go and edit it" );
+}
+
+/**
+ * Downloads the yaml file used to drive the build for a given extension, from projects.ez.no/github/some random url.
+ * This is mostly useful for the case of generic build servers.
+ * You have to provide the url to the config file as 2nd parameter, unless your extension is set up on projects.ez.no,
+ * in which case we try to figure it out automatically.
+ */
 function run_download_extension_config( $task=null, $args=array(), $cliopts=array() )
 {
     if ( count( $args ) == 0 )
@@ -105,7 +130,7 @@ function run_download_extension_config( $task=null, $args=array(), $cliopts=arra
 
         pake_echo ( "Scm system found: $source" );
 
-        $targetfile = "pake/options-$extname.yaml";
+        $targetfile = eZExtBuilder::getOptionsDir() . "/options-$extname.yaml";
         if ( $source == 'github' )
         {
             $branch = 'master';
@@ -148,19 +173,21 @@ function run_download_extension_config( $task=null, $args=array(), $cliopts=arra
         }
     }
 
-    $extconf = pake_read_file( $exturl );
     /// @todo check that $extconf is a valid yaml file with minimal params
-    pake_mkdirs( 'pake' );
-    pake_write_file( "pake/options-$extname.yaml", $extconf, true );
-}
+    $extconf = pake_read_file( $exturl );
 
-/**
- * Creates the yaml config file for an extension
- * This is mostly useful for the case of generic build servers.
- */
-function run_create_ext_config( $task=null, $args=array(), $cliopts=array() )
-{
-    /// @todo ...
+    $configfile = eZExtBuilder::getOptionsDir() . "/options-$extname.yaml";
+    if ( file_exists( $configfile ) )
+    {
+        pake_echo( "File $configfile already exists. Must overwrite it to continue" );
+        $ok = pake_input( "Do you want to overwrite it them? [y/n]", 'n' );
+        if ( $ok != 'y' )
+        {
+            return;
+        }
+    }
+    pake_mkdirs( eZExtBuilder::getOptionsDir() );
+    pake_write_file( $configfile, $extconf, true );
 }
 
 /**
@@ -168,7 +195,7 @@ function run_create_ext_config( $task=null, $args=array(), $cliopts=array() )
 * This is mostly useful for the case of generic build servers.
 */
 /*
-function run_update_ext_config( $task=null, $args=array(), $cliopts=array() )
+function run_update_extension_config( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0] );
     $destfile = "pake/options-.yaml";
@@ -232,9 +259,8 @@ function run_list_extensions( $task=null, $args=array(), $cliopts=array() )
 */
 function run_show_properties( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
-    pake_echo ( 'Build dir: ' . eZExtBuilder::getBuildDir( $opts ) );
-    pake_echo ( 'Extension name: ' . $opts['extension']['name'] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+    pake_echo ( print_r( $opts, true ) );
 }
 
 /**
@@ -253,7 +279,7 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
 
     if ( ! $skip_init )
     {
-        $opts = eZExtBuilder::getOpts( @$args[0] );
+        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
         pake_mkdirs( eZExtBuilder::getBuildDir( $opts ) );
 
         $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
@@ -281,7 +307,7 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
                 pakeGit::checkout_repo( $destdir, $opts['git']['branch'] );
                 /// @todo test that we got at least one file
             }
-            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
+            if ( strtoupper( substr( PHP_OS, 0, 3) ) === 'WIN' )
             {
                 sleep( 3 );
             }
@@ -369,7 +395,7 @@ function run_build( $task=null, $args=array(), $cliopts=array() )
 */
 function run_clean( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     pake_remove_dir( $opts['build']['dir'] );
 }
 
@@ -379,28 +405,24 @@ function run_clean( $task=null, $args=array(), $cliopts=array() )
 * Depending on configuration options, different versions of the extenion tarball
 * are generated by this task: .tar.gz, .zip, .ezpkg
 */
-function run_dist( $task=null, $args=array(), $cliospts=array() )
+function run_dist( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     if ( $opts['create']['tarball'] || $opts['create']['zip'] || $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
     {
-        if ( !class_exists( 'ezcArchive' ) )
-        {
-            throw new pakeException( "Missing Zeta Components: cannot generate tar file. Use the environment var PHP_CLASSPATH or change include_path in php.ini" );
-        }
         pake_mkdirs( $opts['dist']['dir'] );
         $rootpath = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
 
         if ( $opts['create']['tarball'] )
         {
             $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.tar.gz';
-            eZExtBuilder::archiveDir( $rootpath, $target, ezcArchive::TAR );
+            eZExtBuilder::archiveDir( $rootpath, $target );
         }
 
         if ( $opts['create']['zip'] )
         {
             $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '-' . $opts['version']['alias'] . '.' . $opts['version']['release'] . '.zip';
-            eZExtBuilder::archiveDir( $rootpath, $target, ezcArchive::ZIP );
+            eZExtBuilder::archiveDir( $rootpath, $target );
         }
 
         if ( $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
@@ -446,7 +468,7 @@ function run_dist( $task=null, $args=array(), $cliospts=array() )
             pake_copy( $rootpath . '/' . $opts['files']['gnu_dir'] . '/LICENSE', $toppath . '/documents/LICENSE' );
             pake_copy( $rootpath . '/' . $opts['files']['gnu_dir'] . '/README', $toppath . '/documents/README' );
             $target = $opts['dist']['dir'] . '/' . $opts['extension']['name'] . '_extension.ezpkg';
-            eZExtBuilder::archiveDir( $toppath, $target, ezcArchive::TAR, true );
+            eZExtBuilder::archiveDir( $toppath, $target, true );
 
             if ( $opts['create']['pearpackage'] )
             {
@@ -463,7 +485,7 @@ function run_dist( $task=null, $args=array(), $cliospts=array() )
 */
 function run_dist_clean( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     pake_remove_dir( $opts['dist']['dir'] );
 }
 
@@ -472,7 +494,7 @@ function run_dist_clean( $task=null, $args=array(), $cliopts=array() )
 */
 function run_build_dependencies( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $current = $opts['extension']['name'];
     foreach( $opts['dependencies']['extensions'] as $ext => $source )
     {
@@ -524,10 +546,11 @@ function run_build_dependencies( $task=null, $args=array(), $cliopts=array() )
 
 /**
 * Creates a tarball of all extensions in the build/ directory
+*
 */
 function run_fat_dist( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     if ( !class_exists( 'ezcArchive' ) )
     {
         throw new pakeException( "Missing Zeta Components: cannot generate tar file. Use the environment var PHP_CLASSPATH or change include_path in php.ini" );
@@ -585,7 +608,7 @@ function run_clean_all( $task=null, $args=array(), $cliopts=array() )
 */
 function run_update_ezinfo( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
 
     $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->maxdepth( 0 )->in( $destdir );
@@ -619,7 +642,7 @@ function run_update_ezinfo( $task=null, $args=array(), $cliopts=array() )
 */
 function run_update_license_headers( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
     $files = pakeFinder::type( 'file' )->name( array( '*.php', '*.css', '*.js' ) )->in( $destdir );
     pake_replace_regexp( $files, $destdir, array(
@@ -634,7 +657,7 @@ function run_update_license_headers( $task=null, $args=array(), $cliopts=array()
 */
 function run_update_extra_files( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
     $extrafiles = $opts['files']['to_parse'];
     //$files = pakeFinder::type( 'file' )->name( $extrafiles )->in( $destdir );
@@ -665,7 +688,7 @@ function run_update_extra_files( $task=null, $args=array(), $cliopts=array() )
 */
 function run_generate_documentation( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
     $docdir = $destdir . '/doc';
     $files = pakeFinder::type( 'file' )->name( '*.rst' )->in( $docdir );
@@ -699,9 +722,12 @@ function run_generate_documentation( $task=null, $args=array(), $cliopts=array()
         $doxygen = @$cliopts['doxygen'];
         if ( $doxygen == '' )
         {
-            $doxygen = 'doxygen';
+            $doxygen = eZExtBuilder::getTool( 'doxygen', $opts );
         }
-        $doxygen = escapeshellarg( $doxygen );
+        else
+        {
+            $doxygen = escapeshellarg( $doxygen );
+        }
         $doxyfile = $destdir . '/doxyfile';
         pake_copy( __DIR__ . 'pake/doxyfile_master', $doxyfile, array( 'override' => true ) );
         file_put_contents( $doxyfile,
@@ -726,7 +752,7 @@ function run_generate_documentation( $task=null, $args=array(), $cliopts=array()
 */
 function run_generate_md5sums( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     if ( $opts['create']['filelist_md5'] )
     {
         $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
@@ -753,7 +779,7 @@ function run_generate_md5sums( $task=null, $args=array(), $cliopts=array() )
 */
 function run_generate_package_filelist( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     if ( $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
     {
         $doc = new DOMDocument( '1.0', 'utf-8' );
@@ -818,11 +844,11 @@ function run_generate_package_filelist( $task=null, $args=array(), $cliopts=arra
  *         `__ schema.sql
  *
  * NB: there are NOT a lot of extensions currently following this schema.
- * Alternativate used are: sql/mysql/mysql.sql, sql/mysql/random.sql
+ * Alternative used are: sql/mysql/mysql.sql, sql/mysql/random.sql
  */
 function run_check_sql_files( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
 
     $schemafile = $opts['files']['sql_files']['db_schema'];
@@ -881,7 +907,7 @@ function run_check_sql_files( $task=null, $args=array(), $cliopts=array() )
 */
 function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
     if ( $opts['files']['gnu_dir'] )
     {
@@ -896,12 +922,12 @@ function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
 
 /**
 * Checks for validity all template files - needs a working eZP install somewhere to get the tpl syntax checker script;
-* options: --php=path/to/php/executable (otherwise $PATH is searched for "php"),
+* options: --php=path/to/php/executable (otherwise, if not in your path, use config. file),
 * --ezp=path/to/eZPublish/installation (if empty, it is assumed we are building from within an eZP installation)
 */
 function run_check_templates( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
     $files = pakeFinder::type( 'file' )->name( array( '*.tpl' ) )->maxdepth( 0 )->in( $destdir );
     if ( count( $files ) )
@@ -909,14 +935,22 @@ function run_check_templates( $task=null, $args=array(), $cliopts=array() )
         $php = @$cliopts['php'];
         if ( $php == '' )
         {
-            $php = pake_which( 'php' );
+            $php = eZPCPBuilder::getTool( 'php', $opts );
         }
-        if ( strpos( pake_sh( escapeshellarg( $php ) . " -v" ), 'PHP' ) === false )
+        else
+        {
+            $php = escapeshellarg( $php );
+        }
+        if ( strpos( pake_sh( $php . " -v" ), 'PHP' ) === false )
         {
             throw new pakeException( "$php does not seem to be a valid php executable" );
         }
 
         $ezp = @$cliopts['ezp'];
+        if ( $ezp == '' )
+        {
+            $ezp = @$opts['ezublish']['install_dir_LS'];
+        }
         if ( $ezp == '' )
         {
             // assume we're running inside an eZ installation
@@ -943,7 +977,7 @@ function run_check_templates( $task=null, $args=array(), $cliopts=array() )
  */
 function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
 {
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
     $files = pakeFinder::type( 'file' )->name( array( '*.php' ) )->maxdepth( 0 )->in( $destdir );
     if ( count( $files ) )
@@ -951,9 +985,13 @@ function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
         $php = @$cliopts['php'];
         if ( $php == '' )
         {
-            $php = pake_which( 'php' );
+            $php = eZExtBuilder::getTool( 'php', $opts );
         }
-        if ( strpos( pake_sh( escapeshellarg( $php ) . " -v" ), 'PHP' ) === false )
+        else
+        {
+            $php = escapeshellarg( $php );
+        }
+        if ( strpos( pake_sh( $php . " -v" ), 'PHP' ) === false )
         {
             throw new pakeException( "$php does not seem to be a valid php executable" );
         }
@@ -975,7 +1013,7 @@ function run_update_package_xml( $task=null, $args=array(), $cliopts=array() )
 {
     /// @todo replace hostname, build time
 
-    $opts = eZExtBuilder::getOpts( @$args[0] );
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $destdir = $opts['build']['dir'];
     $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 0 )->in( $destdir );
     if ( count( $files ) == 1 )
@@ -1095,78 +1133,13 @@ function run_tool_version( $task=null, $args=array(), $cliopts=array() )
 }
 
 /**
- * Checks if a newer version of the tool is available online
- */
-function run_tool_upgrade_check( $task=null, $args=array(), $cliopts=array() )
-{
-    $latest = eZExtBuilder::latestVersion();
-    if ( $latest == false )
-    {
-        pake_echo ( "Cannot determine latest version available. Please check that you can connect to the internet" );
-    }
-    else
-    {
-        $current = eZExtBuilder::$version;
-        $check = version_compare( $latest, $current );
-        if ( $check == -1 )
-        {
-            pake_echo ( "Danger, Will Robinson! You are running a newer version ($current) than the lastest available online ($latest)" );
-        }
-        else if( $check == 0 )
-        {
-            pake_echo ( "You are running the lastest available version: $latest" );
-        }
-        else
-        {
-            pake_echo ( "A newer version is available online: $latest (you are running $current)" );
-            $ok = pake_input( "Do you want to upgrade? [y/n]", 'n' );
-            if ( $ok == 'y' )
-            {
-                run_tool_upgrade(  $task, $args, $cliopts );
-            }
-        }
-    }
-}
-
-/**
- * Upgrades to the latest version of the tool available online
- *
- * @todo add a backup enable/disable option
- */
-function run_tool_upgrade( $task=null, $args=array(), $cliopts=array() )
-{
-    $latest = eZExtBuilder::latestVersion( true );
-    if ( $latest == false )
-    {
-        pake_echo ( "Cannot download latest version available. Please check that you can connect to the internet" );
-    }
-    else
-    {
-        // 1st get the whole 'pake' dir contents, making a backup copy
-        $tmpzipfile = tempnam( "tmp", "zip" );
-        $zipfile = __DIR__ . '/pake/pakedir-' . eZExtBuilder::$version . '.zip';
-        eZExtBuilder::archiveDir( __DIR__. '/pake', $tmpzipfile, ezcArchive::ZIP );
-        @unlink( $zipfile ); // otherwise pake_rename might complain
-        pake_rename( $tmpzipfile, $zipfile );
-        eZExtBuilder::bootstrap();
-
-        // then update the pakefile itself, making a backup copy
-        pake_copy( __FILE__, __DIR__ . '/pake/pakefile-' . eZExtBuilder::$version . '.php', array( 'override' => true ) );
-        /// @todo test: does this work on windows?
-        file_put_contents( __FILE__, $latest );
-    }
-}
-
-
-/**
 * Class implementing the core logic for our pake tasks
 * @todo separate in another file?
 */
 class eZExtBuilder
 {
     static $options = null;
-    static $defaultext = null;
-    static $installurl = 'http://svn.projects.ez.no/ezextensionbuilder/stable/pake';
+    static $defaultExt = null;
     static $version = '0.5.0-dev';
     static $min_pake_version = '1.7.4';
 
@@ -1180,26 +1153,40 @@ class eZExtBuilder
         return $dir;
     }
 
+    static function getOptionsDir()
+    {
+        return 'pake';
+    }
+
+    /**
+     * Searches for a default extension name (i.e. when there is only 1 config file in the config dir), saves it internally
+     * and returns it
+     *
+     * @return string
+     * @throws pakeException
+     */
     static function getDefaultExtName()
     {
-        if ( self::$defaultext != null )
+        if ( self::$defaultExt != null )
         {
-            return self::$defaultext;
+            return self::$defaultExt;
         }
-        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->not_name( 'options-ezextensionbuilder.yaml' )->maxdepth( 0 )->in( 'pake' );
+        $optsDir = self::getOptionsDir();
+        /// @bug corner case: what if file options-.yaml is there?
+        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->not_name( 'options-ezextensionbuilder.yaml' )->maxdepth( 0 )->in( $optsDir );
         if ( count( $files ) == 1 )
         {
-            self::$defaultext = substr( basename( $files[0] ), 8, -5 );
-            pake_echo ( 'Found extension: ' . self::$defaultext );
-            return self::$defaultext;
+            self::$defaultExt = substr( basename( $files[0] ), 8, -5 );
+            pake_echo ( 'Found extension: ' . self::$defaultExt );
+            return self::$defaultExt;
         }
         else if ( count( $files ) == 0 )
         {
-            throw new pakeException( "Missing configuration file pake/options-[extname].yaml, cannot continue" );
+            throw new pakeException( "Missing configuration file $optsDir/options-[extname].yaml, cannot continue" );
         }
         else
         {
-            throw new pakeException( "Multiple configuration files pake/options-*.yaml found, need to specify an extension name to continue" );
+            throw new pakeException( "Multiple configuration files $optsDir/options-*.yaml found, need to specify an extension name to continue" );
         }
     }
 
@@ -1209,7 +1196,7 @@ class eZExtBuilder
      */
     static function getAvailableExtNames()
     {
-        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->not_name( 'options-ezextensionbuilder.yaml' )->maxdepth( 0 )->in( 'pake' );
+        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->not_name( 'options-ezextensionbuilder.yaml' )->maxdepth( 0 )->in( self::getOptionsDir() );
         foreach ( $files as $i => $file )
         {
             $files[$i] = substr( basename( $file ), 8, -5 );
@@ -1221,23 +1208,67 @@ class eZExtBuilder
      * Loads, caches and returns the config options for a given extension
      * @return array
      */
-    static function getOpts( $extname='' )
+    static function getOpts( $extname='', $cliopts = array() )
     {
         if ( $extname == '' )
         {
             $extname = self::getDefaultExtName();
-            //self::$defaultext = $extname;
         }
+
+        /// @bug we cache the options gotten from disk, but what if this function is invoked multiple times with different cli options?
         if ( !isset( self::$options[$extname] ) || !is_array( self::$options[$extname] ) )
         {
-            self::loadConfiguration( "pake/options-$extname.yaml", $extname );
+            // custom config file
+            if ( isset( $cliopts['config-file'] ) )
+            {
+                $cfgfile = $cliopts['config-file'];
+            }
+            else
+            {
+                $cfgfile = self::getOptionsDir() . "/options-$extname.yaml";
+            }
+    
+            // user-local config file
+            if ( isset( $cliopts['user-config-file'] ) )
+            {
+                $usercfgfile = $cliopts['user-config-file'];
+            }
+            else
+            {
+                $usercfgfile = str_replace( '.yaml', '-user.yaml', $cfgfile );
+            }
+    
+            // command-line config options
+            foreach( $cliopts as $opt => $val )
+            {
+                if ( substr( $opt, 0, 7 ) == 'option.')
+                {
+                    unset( $cliopts[$opt] );
+    
+                    // transform dotted notation in array structure
+                    $work = array_reverse( explode( '.', substr( $opt, 7 ) ) );
+                    $built = array( array_shift( $work ) => $val );
+                    foreach( $work as $key )
+                    {
+                        $built = array( $key=> $built );
+                    }
+                    self::recursivemerge( $cliopts, $built );
+                }
+            }
+
+            self::loadConfiguration( $cfgfile, $extname, $usercfgfile, $cliopts );
         }
+        
         return self::$options[$extname];
     }
 
     /// @bug this only works as long as all defaults are 2 levels deep
-    static protected function loadConfiguration ( $infile='pake/options.yaml', $extname='' )
+    static protected function loadConfiguration ( $infile='', $extname='', $useroptsfile='', $overrideoptions=array() )
     {
+        if ( $infile == '' )
+        {
+            $infile = self::getOptionsDir() . '/options' . ( $extname != '' ? "-$extname" : '' ) . '.yaml';
+        }
         $mandatory_opts = array( /*'extension' => array( 'name' ),*/ 'version' => array( 'major', 'minor', 'release' ) );
         $default_opts = array(
             'build' => array( 'dir' => 'build' ),
@@ -1247,8 +1278,27 @@ class eZExtBuilder
             'releasenr' => array( 'separator' => '-' ),
             'files' => array( 'to_parse' => array(), 'to_exclude' => array(), 'gnu_dir' => '', 'sql_files' => array( 'db_schema' => 'schema.sql', 'db_data' => 'cleandata.sql' ) ),
             'dependencies' => array( 'extensions' => array() ) );
+
+        // load main config file
         /// @todo !important: test if !file_exists give a nicer warning than what we get from loadFile()
         $options = pakeYaml::loadFile( $infile );
+
+        // merge data from local config file
+        if ( $useroptsfile != '' && file_exists( $useroptsfile ) )
+        {
+            $useroptions = pakeYaml::loadFile( $useroptsfile );
+            //var_dump( $useroptions );
+            self::recursivemerge( $options, $useroptions );
+        }
+
+        // merge options from cli
+        if ( count( $overrideoptions ) )
+        {
+            //var_dump( $overrideoptions );
+            self::recursivemerge( $options, $overrideoptions );
+        }
+
+        // check if anything mandatory is missing
         foreach( $mandatory_opts as $key => $opts )
         {
             foreach( $opts as $opt )
@@ -1259,6 +1309,8 @@ class eZExtBuilder
                 }
             }
         }
+
+        // hardcoded overrides
         if ( !isset( $options['extension']['name'] ) || $options['extension']['name'] == '' )
         {
             $options['extension']['name'] = $extname;
@@ -1267,6 +1319,8 @@ class eZExtBuilder
         {
             $options['version']['alias'] = $options['version']['major'] . '.' . $options['version']['minor'];
         }
+
+        // merge default values
         foreach( $default_opts as $key => $opts )
         {
             if ( isset( $options[$key] ) && is_array( $options[$key] ) )
@@ -1279,6 +1333,7 @@ class eZExtBuilder
                 $options[$key] = $opts;
             }
         }
+        
         self::$options[$extname] = $options;
         return true;
     }
@@ -1289,8 +1344,12 @@ class eZExtBuilder
     * @todo move to a separate class to slim down base class?
     * @todo make it capable to remove complete $ext.version.alias property
     */
-    static function convertPropertyFileToYamlFile( $infile, $outfile='pake/options.yaml', $transform = array(), $prepend='' )
+    static function convertPropertyFileToYamlFile( $infile, $outfile='', $transform = array(), $prepend='' )
     {
+        if ( $outfile == '' )
+        {
+            $outfile = self::getOptionsDir() . '/options.yaml';
+        }
         $current = array();
         $out = array();
         foreach ( file( $infile ) as $line )
@@ -1387,140 +1446,126 @@ class eZExtBuilder
     }
 
     /**
-    * Download from the web all files that make up the extension (except self)
-    * and uncompress them in ./pake dir
-    */
-    static function bootstrap()
+     * Creates an archive out of a directory.
+     *
+     * Uses command-lne tar as Zeta Cmponents do no compress well, and pake
+     * relies on phar which is buggy/unstable on old php versions
+     *
+     * @param boolean $no_top_dir when set, $sourcedir directory is not packaged as top-level dir in archive
+     * @todo for tar formats, fix the extra "." dir packaged
+     */
+    static function archiveDir( $sourcedir, $archivefile, $no_top_dir=false )
     {
-        if ( is_file( 'pake ' ) )
-        {
-            echo "Error: could not create 'pake' directory to install the extension because a file named 'pake' exists";
-            exit( -1 );
-        }
+        // please tar cmd on win - OH MY!
 
-        if ( is_dir( 'pake') )
-        {
-            /// @todo test: if dir is not empty, ask for confirmation,
-            ///       least we overwrite something
-        }
+        $archivefile = str_replace( '\\', '/', $archivefile );
+        $sourcedir = str_replace( '\\', '/', realpath( $sourcedir ) );
 
-        if ( !is_dir( 'pake' ) && !mkdir( 'pake' ) )
+        if( $no_top_dir )
         {
-            echo "Error: could not create 'pake' directory to install the extension";
-            exit( -1 );
-        }
-
-        // download components
-        /// @todo use a recursive fget, so that we do not need to download a zip
-        $src = self::$installurl.'/pake/ezextensionbuilder_pakedir.zip';
-        $zipfile = tempnam( "tmp", "zip" );
-        if ( !file_put_contents( $zipfile, file_get_contents( $src ) ) )
-        {
-            echo "Error: could not download source file $src";
-            exit -1;
-        }
-
-        // unzip them
-        $zip = new ZipArchive;
-        if ( $zip->open( $zipfile ) !== true )
-        {
-            echo "Error: downloaded source file $src is not a valid zip file";
-            exit -1;
-        }
-        if ( !$zip->extractTo( 'pake' ) )
-        {
-            echo "Error: could not decompress source file $zipfile";
-            $zip->close();
-            exit -1;
-        }
-        $zip->close();
-        unlink( $zipfile );
-    }
-
-    /**
-    * Checks the latest version available online
-    * @return string the version nr. or the new version of the file, depending on input param (false in case of error)
-    */
-    static function latestVersion( $getfile=false )
-    {
-        $src = self::$installurl.'/pakefile.php?show=source';
-        /// @todo test using curl for allow_url_fopen off
-        if ( $source = pake_read_file( $src ) )
-        {
-            if ( $getfile )
-            {
-                return $source;
-            }
-            if ( preg_match( '/^[\s]*static \$version = \'([^\']+)\';/m', $source, $matches ) )
-            {
-                return $matches[1];
-            }
-        }
-        return false;
-    }
-
-    /**
-    * Creates an archive out of a directory
-    */
-    static function archiveDir( $sourcedir, $archivefile, $archivetype, $no_top_dir=false )
-    {
-        if ( substr( $archivefile, -3 ) == '.gz' )
-        {
-            $zipext = 'gz';
-            $target = substr( $archivefile, 0, -3 );
-        }
-        else if ( substr( $archivefile, -4 ) == '.bz2' )
-        {
-            $zipext = 'bz2';
-            $target = substr( $archivefile, 0, -4 );
-        }
-        else if ( substr( $archivefile, -6 ) == '.ezpkg' )
-        {
-            $zipext = 'ezpkg';
-            $target = substr( $archivefile, 0, -6 ) . '.tar';
+            $srcdir = '.';
+            $workdir = $sourcedir;
         }
         else
         {
-            $zipext = false;
-            $target = $archivefile;
+            $srcdir = basename( $sourcedir );
+            $workdir = dirname( $sourcedir );
         }
-        $rootpath = str_replace( '\\', '/', realpath( $no_top_dir ? $sourcedir : dirname( $sourcedir ) ) );
-        $files = pakeFinder::type( 'any' )->in( $sourcedir );
-        // fix for win
-        foreach( $files as $i => $file )
+        $archivedir = dirname( $archivefile );
+        $extra = '';
+
+        $tar = self::getTool( 'tar' );
+
+        if ( substr( $archivefile, -7 ) == '.tar.gz' || substr( $archivefile, -4 ) == '.tgz' )
         {
-            $files[$i] = str_replace( '\\', '/', $file );
+            $cmd = "$tar -z -cvf";
+            $extra = "-C " . escapeshellarg( $workdir );
+            $workdir = $archivedir;
+            $archivefile = basename( $archivefile );
         }
-        // current ezc code does not like having folders in list of files to pack
-        // unless they end in '/'
-        foreach( $files as $i => $f )
+        else if ( substr( $archivefile, -8 ) == '.tar.bz2' )
         {
-            if ( is_dir( $f ) )
-            {
-                $files[$i] = $files[$i] . '/';
-            }
+            $cmd = "$tar -j -cvf";
+            $extra = "-C " . escapeshellarg( $workdir );
+            $workdir = $archivedir;
+            $archivefile = basename( $archivefile );
         }
-        // we do not rely on this, not to depend on phar extension and also because it's slightly buggy if there are dots in archive file name
-        //pakeArchive::createArchive( $files, $opts['build']['dir'], $target, true );
-        $tar = ezcArchive::open( $target, $archivetype );
-        $tar->truncate();
-        $tar->append( $files, $rootpath );
-        $tar->close();
-        if ( $zipext )
+        else if ( substr( $archivefile, -4 ) == '.tar' )
         {
-            $compress = 'zlib';
-            if ( $zipext == 'bz2' )
-            {
-                $compress = 'bzip2';
-            }
-            $fp = fopen( "compress.$compress://" . ( $zipext == 'ezpkg' ? substr( $target, 0, -4 ) : $target ) . ".$zipext", 'wb9' );
-            /// @todo read file by small chunks to avoid memory exhaustion
-            fwrite( $fp, file_get_contents( $target ) );
-            fclose( $fp );
-            unlink( $target );
+            $cmd = "$tar -cvf";
+            $extra = "-C " . escapeshellarg( $workdir );
+            $workdir = $archivedir;
+            $archivefile = basename( $archivefile );
         }
+        else if ( substr( $archivefile, -4 ) == '.zip' )
+        {
+            $zip = self::getTool( 'zip' );
+            $cmd = "$zip -9 -r";
+        }
+        else
+        {
+            throw new pakeException( "Can not determine archive type from filename: $archivefile" );
+        }
+
+        pake_sh( self::getCdCmd( $workdir ) . " && $cmd $archivefile $extra $srcdir" );
+
         pake_echo_action( 'file+', $archivefile );
     }
+
+    public static function getTool( $tool, $opts=false )
+    {
+        // dirty workaround
+        if ( $opts == false )
+        {
+            $opts = self::$options[self::$defaultExt];
+        }
+        if ( isset( $opts['tools'][$tool] ) )
+        {
+            return escapeshellarg( $opts['tools'][$tool] );
+        }
+        else
+        {
+            return escapeshellarg( pake_which( $tool ) );
+        }
+    }
+
+    /**
+     * Make "cd" work for all cases, even on win
+     */
+    static function getCdCmd( $dir )
+    {
+        if ( $dir[1] == ':' )
+        {
+            return 'cd /D ' . escapeshellarg( $dir );
+        }
+        return 'cd ' . escapeshellarg( $dir );
+    }
+
+    static function recursivemerge( &$a, $b )
+    {
+        //$a will be result. $a will be edited. It's to avoid a lot of copying in recursion
+        foreach( $b as $child => $value )
+        {
+            if( isset( $a[$child] ) )
+            {
+                if( is_array( $a[$child] ) && is_array( $value ) )
+                {
+                    //merge if they are both arrays
+                    self::recursivemerge( $a[$child], $value );
+                }
+                else
+                {
+                    // replace otherwise
+                    $a[$child] = $value;
+                }
+            }
+            else
+            {
+                $a[$child] = $value; //add if not exists
+            }
+        }
+    }
+
 }
 
 }
@@ -1530,7 +1575,7 @@ if ( !function_exists( 'pake_antpattern' ) )
 
 /**
 * Mimics ant pattern matching.
-* NB: in pake 1.6.3 and later this is supported natively. To be removed
+* NB: in pake 1.6.3 and later this functionality is supported natively. To be removed
 *
 * @see http://ant.apache.org/manual/dirtasks.html#patterns
 * @todo more complete testing
@@ -1608,49 +1653,38 @@ function pake_antpattern( $files, $rootdir )
 // (we allow both direct invocation via "php pakefile.php" and invocation via "php pake.php")
 if ( !function_exists( 'pake_desc' ) )
 {
-    // Running script directly. look if pake is found in the folder where this script installs it: ./pake/src
+    // Running script directly. Look if pake is found in
+    // - the folder where this script used to install it (before composer  usage): ./pake/src (old style)
+    // - the folder where composer installs it (assuming this file is also installed by composer)
     if ( ( file_exists( 'pake/src/bin/pake.php' ) && $pakesrc = 'pake/src/bin/pake.php' ) ||
-        ( file_exists( 'vendor/indeyets/pake/bin/pake.php' ) && $pakesrc = 'vendor/indeyets/pake/bin/pake.php' ) )
+        ( file_exists( __DIR__ . '/../../indeyets/pake/bin/pake.php' ) && $pakesrc = __DIR__ . '/../../indeyets/pake/bin/pake.php' ) )
     {
         include( $pakesrc );
 
-        // force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
+        // force ezc autoloading (including pake.php might have reset the include path from env var PHP_CLASSPATH)
         register_ezc_autoload();
 
         $GLOBALS['internal_pake'] = true;
 
+        // pakeApp will include again this file, and execute all the pake_task() calls found below
         $pake = pakeApp::get_instance();
-        $pake->run();
+        if ( getcwd() !== __DIR__ )
+        {
+            // Running from another directory compared to where pakefile is.
+            // Pake 1.7.4 and earlier has a bug: it does not support specification of pakefile.php using absolute paths
+            /// @todo to support pakefile.php in other locations, subclass pakeApp and override load_pakefile()
+            $pake->run( preg_replace( '#^' . preg_quote( getcwd() . DIRECTORY_SEPARATOR ) . '#', '', __FILE__ ) );
+        }
+        else
+        {
+            $pake->run();
+        }
     }
     else
     {
 
-        echo "Pake tool not found. Bootstrap needed\n  (automatic download of missing components from project.ez.no)\n";
-        do
-        {
-            echo 'Continue? [y/n] ';
-            $fp = fopen('php://stdin', 'r');
-            $ok = trim( strtolower( fgets( $fp ) ) );
-            fclose( $fp );
-            if ( $ok == 'y' )
-            {
-                break;
-            }
-            else if ( $ok == 'n' )
-            {
-                exit ( 0 );
-            }
-            echo "\n";
-        } while( true );
-
-        eZExtBuilder::bootstrap();
-
-        echo
-            "Succesfully downloaded sources\n" .
-            "  Next steps: copy pake/options-sample.yaml to pake/options-<yourextension>.yaml, edit it\n" .
-            "  then run again this script.\n".
-            "  Use the environment var PHP_CLASSPATH if needed for proper class autoloading of eg. Zeta Components";
-        exit( 0 );
+        echo "Pake tool not found. Bootstrap needed.\nTry running 'composer install' or 'composer update'\n";
+        exit( -1 );
 
     }
 }
@@ -1661,19 +1695,22 @@ else
 // force ezc autoloading (including pake.php will have set include path from env var PHP_CLASSPATH)
 register_ezc_autoload();
 
-// this is unfortunately a necessary hack: version 0.1 of this extension
+// This is unfortunately a necessary hack: version 0.1 of this extension
 // shipped with a faulty pake_version, so we cannot check for required version
 // when using the bundled pake.
 // To aggravate things, version 0.1 did not upgrade the bundled pake when
 // upgrading to a new script, so we can not be sure that, even if the end user
 // updates to a newer pakefile, the bundled pake will be upgraded
 // (it will only be when the user does two consecutive updates)
+// Last but not least, when using a pake version installed via composer, it also does not come with proper version tag...
 if ( !( isset( $GLOBALS['internal_pake'] ) && $GLOBALS['internal_pake'] ) )
 {
     pake_require_version( eZExtBuilder::$min_pake_version );
 }
 
 pake_task( 'default' );
+
+pake_task( 'generate-extension-config' );
 
 pake_task( 'download-extension-config' );
 
@@ -1683,7 +1720,8 @@ pake_task( 'show-properties' );
 
 pake_task( 'init' );
 
-pake_task( 'build', 'init', 'check-php-files', 'check-templates', 'check-sql-files', 'check-gnu-files',
+pake_task( 'build',
+    'init', 'check-php-files', 'check-templates', 'check-sql-files', 'check-gnu-files',
     'update-ezinfo', 'update-license-headers', 'update-extra-files', 'update-package-xml',
     'generate-documentation', 'generate-md5sums', 'generate-package-filelist' );
 
@@ -1693,7 +1731,8 @@ pake_task( 'dist' );
 
 pake_task( 'dist-clean' );
 
-pake_task( 'all', 'build', 'dist', 'build-dependencies' );
+pake_task( 'all',
+    'build', 'dist', 'build-dependencies' );
 
 pake_task( 'clean-all', 'clean', 'dist-clean' );
 
@@ -1736,10 +1775,6 @@ pake_task( 'generate-sample-package-xml' );
 pake_task( 'convert-configuration' );
 
 pake_task( 'tool-version' );
-
-pake_task( 'tool-upgrade-check' );
-
-pake_task( 'tool-upgrade' );
 
 }
 

@@ -2,9 +2,12 @@ Requirements
 ============
 
 - the php cli
-- the Zeta Components php library (only for generating tarballs and html docs from rst)
-- command line tools: svn and/or git, doxygen
+- command line tools: svn and/or git, doxygen, tar, zip
+- the Composer php tool
+- the Pake php build tool
+- the Zeta Components php library (only for generating html docs from rst)
 
+(note that the last two will be automatically downloaded for you during the installation process outlined below)
 
 How to install and use eZ Extension Builder
 ===========================================
@@ -12,35 +15,59 @@ How to install and use eZ Extension Builder
 This is a 4 steps tutorial. The fifth step is optional ;-)
 
 
-1. Download the pakefile script (once)
---------------------------------------
+1. Install the pakefile script and its dependencies via composer (once)
+-----------------------------------------------------------------------
 
-Usually you would run the build script in root directory of your extension,
-but that is not a strict prerequisite. ::
+You can declare the script as a dependency in the composer.json file of your extension:
+
+{
+    "name": "<me>/<myextension>",
+    "type": "ezpublish-legacy-extension",
+    "description": "Adds/improves the native capabilities of eZ Publish to work as webservices server or webservices client, with a visual webservices debugger thrown in for good measure",
+    "license": "GNU General Public License v2.0",
+    "minimum-stability": "dev",
+    "require": {
+        "ezsystems/ezpublish-legacy-installer": "*"
+    },
+	"require-dev": {
+        "gggeek/ezextensionbuilder": "*"
+    }
+}
+
+Usually you would run the build script in the root directory of your extension,
+but that is not a strict rerequisite (you could run the build process in some other dir). ::
 
     cd <myextension_directory>
-    wget http://svn.projects.ez.no/ezextensionbuilder/stable/pake/pakefile.php
+    php composer.phar install
+
+If you do not have composer.phar, see here how to install it: http://getcomposer.org/doc/00-intro.md
 
 
-2. Launch the pakefile script for the first time (once)
--------------------------------------------------------
+2. Create the configuration file (once)
+---------------------------------------
 
-The script is able to bootstrap, ie. to download all missing components the
-first time that you run it: ::
+A configuration file is needed to drive the build. The extension can generate a sample one for you ::
 
-    php pakefile.php
+    php vendor/gggeek/ezextensionbuilder/pakefile.php generate-extension-config <myextension>
 
-This will create a directory ./pake/ and download into it all needed stuff from http://svn.projects.ez.no/ezextensionbuilder.
+This will create a directory ./pake/ and save into it the file options-<myextension>.yaml
+
+If your extension already has such file in its source repository, you can instead just download it ::
+
+    php vendor/gggeek/ezextensionbuilder/pakefile.php download-extension-config myextension https://raw.github.com/<me>/<myextension>/master/pake/options-<myextension>.yaml
 
 
 3. Edit the configuration file (for every build)
 ------------------------------------------------
 
-A sample configuration file is provided by the extension: ./pake/options-sample.yaml
-You should copy it to ./pake/options-<myextension>.yaml and edit it to suit your needs.
+You should edit ./pake/options-<myextension>.yaml to suit your needs.
 
-Note that steps 1 to 3 have to be executed only once.
+Note that steps 1 and 2 have to be executed only once.
 
+Note also that you can pass any configuration option on the command line as well.
+This makes it easy to keep the same configuration file and run different builds. Ex: ::
+
+    php vendor/gggeek/ezextensionbuilder/pakefile.php show-properties --option.version.major=99
 
 4. Launch the final build (for every build)
 -------------------------------------------
@@ -51,10 +78,10 @@ To get a list of all available tasks run::
 
 To build your extension run::
 
-    php pakefile.php build myextension
+    php pakefile.php build <myextension>
 
 NB: every time the extension is built, a fresh version is retrieved from its
-svn/github repository. The local copy is not used at all.
+svn/git repository. The local copy is not used at all.
 
 NB: The Zeta Components library must be available in your php include_path. If it
 is not, you can set the environment variable PHP_CLASSPATH to make it available

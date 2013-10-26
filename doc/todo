@@ -2,15 +2,13 @@
 
 . rewrite fat_dist task not to use eZComponents for creating the tarball
 
-. rewrite custom inclusion of ezcomponents sources - use composer method for autoload
-
-. split main pakefile in 3 (bootstrapper, real pakefile, class) since we do not use anymore 1-file install
-
 # general
 
-. ezfind: should not pack manual in odf format => improve exclude list w. depth
+. add installation of command in composer/bin
 
 . allow config file to be in other directory than ./pake
+
+. ezfind: should not pack manual in odf format => improve exclude list w. depth
 
 . allow extension to build self:
   - currently it replaces tokens within pakefile.php files
@@ -67,7 +65,7 @@
 
 # improve tasks
 
-. add auto-update task to std build tasks, except when using --skip-upgrade-check option (?)
+. pakefile download task: allow silent overwrite (for updates)
 
 . init task that starts with a file untar
 

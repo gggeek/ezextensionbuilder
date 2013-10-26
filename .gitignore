@@ -3,3 +3,5 @@ dist/
 ant/
 .idea
 vendor/
+composer.lock
+composer.phar

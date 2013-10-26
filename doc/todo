@@ -2,6 +2,9 @@
 
 . rewrite fat_dist task not to use eZComponents for creating the tarball
 
+. rewrite custom inclusion of ezcomponents sources - use composer method for autoload
+
+. split main pakefile in 3 (bootstrapper, real pakefile, class) since we do not use anymore 1-file install
 
 # general
 

@@ -12,5 +12,6 @@
     },
     "autoload": {
         "psr-0": { "eZExtBuilder\\": "classes/" }
-    }
+    },
+    "bin": [ "bin/pake" ]
 }

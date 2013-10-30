@@ -4,7 +4,7 @@
  * @copyright (C) G. Giunta 2013
  * @license   code licensed under the GNU GPL 2.0: see README file
  *
- * We do nto namespace this because of a bug in php autoloading namespaced classes using aliases when the same file is
+ * We do nto namespace this because of problems with php autoloading namespaced classes using aliases when the same file is
  * included twice (which happens with our pakefile.php): https://bugs.php.net/bug.php?id=65999
  */
 
@@ -66,7 +66,8 @@ class eZExtBuilder
         }
         $optsDir = self::getOptionsDir();
         /// @bug corner case: what if file options-.yaml is there?
-        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->not_name( 'options-ezextensionbuilder.yaml' )->maxdepth( 0 )->in( $optsDir );
+        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->
+            not_name( 'options-user.yaml' )->maxdepth( 0 )->in( $optsDir );
         if ( count( $files ) == 1 )
         {
             self::$defaultExt = substr( basename( $files[0] ), 8, -5 );
@@ -89,7 +90,7 @@ class eZExtBuilder
      */
     static function getAvailableExtNames()
     {
-        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->not_name( 'options-ezextensionbuilder.yaml' )->maxdepth( 0 )->in( self::getOptionsDir() );
+        $files = pakeFinder::type( 'file' )->name( 'options-*.yaml' )->not_name( 'options-sample.yaml' )->not_name( 'options-user.yaml' )->maxdepth( 0 )->in( self::getOptionsDir() );
         foreach ( $files as $i => $file )
         {
             $files[$i] = substr( basename( $file ), 8, -5 );
@@ -128,7 +129,7 @@ class eZExtBuilder
             }
             else
             {
-                $usercfgfile = str_replace( '.yaml', '-user.yaml', $cfgfile );
+                $usercfgfile = self::getOptionsDir() . "/options-user.yaml";
             }
 
             // command-line config options

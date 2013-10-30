@@ -52,9 +52,14 @@ if ( !( isset( $GLOBALS['internal_pake'] ) && $GLOBALS['internal_pake'] ) )
 function run_default()
 {
     pake_echo ( "eZ Extension Builder ver." . eZExtBuilder::$version .
-        "\nSyntax: php pakefile.php [--\$general-options] \$task [\$extension] [--\$task-options].\n" .
+        "\n\nSyntax: php pakefile.php [--\$general-options] \$task [\$extension] [--\$task-options].\n" .
         "  If no extension name is provided, a default configuration file will be searched for.\n" .
-        "  Run: php pakefile.php --tasks to learn more about available tasks." );
+        "  General options:\n" .
+        "    --config-file=\$file           to be used instead of ./pake/options-\$ext.yaml\n" .
+        "    --user-config-file=\$file      to be used instead of ./pake/options-user.yaml\n" .
+        "    --option.\$option.\$name=\$value to override any configuration setting\n" .
+        "  Run: php pakefile.php --tasks to learn more about available tasks.\n"
+    );
 }
 
 /**

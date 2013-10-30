@@ -65,18 +65,35 @@ if ( !class_exists( 'ezcBase' ) )
 }
 
 
-// pakeApp will include again this pakefile.php, and execute all the pake_task() calls found in it
+if ( !function_exists( 'pake_exception_default_handler' ) )
+{
+    // same bootstrap code as done by pake_cli_init.php, which we do not bother searching for in the composer dir
+    function pake_exception_default_handler( $exception )
+    {
+        pakeException::render( $exception );
+        exit( 1 );
+    }
+}
+set_exception_handler( 'pake_exception_default_handler' );
+mb_internal_encoding( 'utf-8' );
+
+// pakeApp will include again the main pakefile.php, and execute all the pake_task() calls found in it
 $pake = pakeApp::get_instance();
 if ( getcwd() !== __DIR__ )
 {
     // Running from another directory compared to where pakefile is.
     // Pake 1.7.4 and earlier has a bug: it does not support specification of pakefile.php using absolute paths, at least on windows
     /// @todo to support pakefile.php in other locations, subclass pakeApp and override load_pakefile()
-    $pake->run( preg_replace( '#^' . preg_quote( getcwd() . DIRECTORY_SEPARATOR ) . '#', '', __DIR__ . '/pakefile.php' ) );
+    $retval = $pake->run( preg_replace( '#^' . preg_quote( getcwd() . DIRECTORY_SEPARATOR ) . '#', '', __DIR__ . '/pakefile.php' ) );
 }
 else
 {
-    $pake->run();
+    $retval = $pake->run();
+}
+
+if ($retval === false )
+{
+    exit(1);
 }
 
 ?>

@@ -3,11 +3,12 @@
  * @author    G. Giunta
  * @copyright (C) G. Giunta 2013
  * @license   code licensed under the GNU GPL 2.0: see README file
+ *
+ * We do nto namespace this because of a bug in php autoloading namespaced classes using aliases when the same file is
+ * included twice (which happens with our pakefile.php): https://bugs.php.net/bug.php?id=65999
  */
 
-namespace eZExtBuilder;
-
-class Builder
+class eZExtBuilder
 {
 
     static $options = null;
@@ -384,19 +385,46 @@ class Builder
         pake_echo_action( 'file+', $archivefile );
     }
 
-    public static function getTool( $tool, $opts=false )
+    /**
+     * Find a cli executable, looking first for configured binaries, then in $PATH and/or composer bin dir.
+     * Takes proper care of adding windows suffixes to tool name when needed
+     *
+     * @param string $tool e.g. "git"
+     * @param array $opts
+     * @param bool $composerBinary when true, look in vendor/bin before $PATH
+     * @return string
+     */
+    public static function getTool( $tool, $opts=false, $composerBinary=false )
     {
         // dirty workaround
         if ( $opts == false )
         {
             $opts = self::$options[self::$defaultExt];
         }
-        if ( isset( $opts['tools'][$tool] ) )
+        if ( isset( $opts['tools'][$tool] ) && is_string( $opts['tools'][$tool] ) && $opts['tools'][$tool] != '' )
         {
             return escapeshellarg( $opts['tools'][$tool] );
         }
+        else if ( isset( $opts['tools'][$tool] ) && is_array( $opts['tools'][$tool] )
+            && isset( $opts['tools'][$tool]['binary'] ) && $opts['tools'][$tool]['binary'] != '' )
+        {
+            return escapeshellarg( $opts['tools'][$tool]['binary'] );
+        }
         else
         {
+            if ( $composerBinary )
+            {
+                if ( ( file_exists( __DIR__ . "/../../../vendor/bin/$tool" ) && $file = __DIR__ . "/../../../vendor/bin/$tool" ) ||
+                    ( file_exists( __DIR__ . "/../vendor/bin/$tool" ) && $file = __DIR__ . "/../vendor/bin/$tool" ) )
+                {
+                    $file = realpath( $file );
+                    if ( strtoupper( substr( PHP_OS, 0, 3) ) === 'WIN' )
+                    {
+                        $file .= '.bat';
+                    }
+                    return escapeshellarg( $file );
+                }
+            }
             return escapeshellarg( pake_which( $tool ) );
         }
     }

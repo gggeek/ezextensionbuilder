@@ -20,8 +20,6 @@
  *      not have enough rights to remove the .svn/.git & checkout dirs...
  */
 
-use eZExtBuilder\Builder as eZExtBuilder;
-
 // We allow this script to be used both
 // 1. by having it in the current directory and invoking pake: pake --tasks
 // 2. using direct invocation: php pakefile.php --tasks
@@ -975,7 +973,7 @@ function run_check_templates( $task=null, $args=array(), $cliopts=array() )
 }
 
 /**
- * Checks for validity all template files; options: --php=path/to/php/executable (otherwise $PATH is searched for "php")
+ * Checks for validity all php files; options: --php=path/to/php/executable (otherwise $PATH is searched for "php")
  */
 function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
 {
@@ -1005,6 +1003,28 @@ function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
                 throw new pakeException( "$file does not seem to be a valid php file" );
             }
         }
+    }
+}
+
+function run_check_code_mess( $task=null, $args=array(), $cliopts=array() )
+{
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+    $phpmd = eZExtBuilder::getTool( 'phpmd', $opts, true );
+    $out = '';
+    if ( $opts['tools']['phpmd']['report']  != '' )
+    {
+        $out = " > " . escapeshellarg( $opts['tools']['phpmd']['report'] );
+    }
+    try
+    {
+        // phpmd will exit with a non-0 value aws soon as there is any violation (which generates an exception in pake_sh),
+        // but we do not consider this a fatal error, as phpmd is really nitpicky ;-)
+        pake_sh( "$phpmd " . escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) . " " .
+            escapeshellarg( $opts['tools']['phpmd']['format'] ) . " " .
+            escapeshellarg( $opts['tools']['phpmd']['rules'] ) . $out );
+    }
+    catch ( pakeException $e )
+    {
     }
 }
 
@@ -1247,12 +1267,14 @@ pake_task( 'update-extra-files' );
 
 pake_task( 'generate-documentation' );
 
-//pake_desc( 'Checks PHP code coding standard, requires PHPCodeSniffer' );
-//pake_task( 'coding-standards-check' );
+//pake_task( 'check-coding-standards' );
+
 
 pake_task( 'check-php-files' );
 
 pake_task( 'check-templates' );
+
+pake_task( 'check-code-mess' );
 
 pake_task( 'generate-md5sums' );
 
@@ -1276,6 +1298,5 @@ pake_task( 'generate-sample-package-xml' );
 pake_task( 'convert-configuration' );
 
 pake_task( 'tool-version' );
-
 
 }

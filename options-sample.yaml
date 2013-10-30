@@ -129,3 +129,11 @@ tools:
     # in case these are not in your path or you want to use alternative versions
     tar:
     zip:
+
+    phpmd:
+        # leave empty to use the one installed with composer
+        binary:
+        # leave empty for sending output to stderr, otherwise save it in this file
+        report:
+        rules: cleancode,codesize,controversial,design,naming,unusedcode
+        format: text

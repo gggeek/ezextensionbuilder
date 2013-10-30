@@ -6,12 +6,11 @@
     "require": {
         "php": ">=5.3",
         "indeyets/pake": ">=1.7.4",
-        "zetacomponents/document": "*",
+        "zetacomponents/document": "@dev",
         "phpunit/phpunit": "3.7.*",
         "phpmd/phpmd": "*"
     },
     "autoload": {
-        "psr-0": { "eZExtBuilder\\": "classes/" }
-    },
-    "bin": [ "bin/pake" ]
+        "classmap": [ "classes" ]
+    }
 }

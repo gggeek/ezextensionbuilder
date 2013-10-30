@@ -115,7 +115,7 @@ build:
 dist:
     dir: dist
 
-# separator char used between vaersion minor and release numbers. Defaults to '-' if unspecified
+# separator char used between version-minor and release numbers. Defaults to '-' if unspecified
 releasenr:
     separator: .
 
@@ -136,4 +136,22 @@ tools:
         # leave empty for sending output to stderr, otherwise save it in this file
         report:
         rules: cleancode,codesize,controversial,design,naming,unusedcode
+        # can be: text, html
         format: text
+
+    phpcs:
+        # leave empty to use the one installed with composer
+        binary:
+        # leave empty for sending output to stderr, otherwise save it in this file
+        report:
+        # can be: "full", "xml", "checkstyle", "csv", "json", "emacs", "source", "summary", "svnblame",
+        # "gitblame", "hgblame", "notifysend"
+        format: full
+        # the default coding standard to follow ("ezcs" is installed automatically via composer from https://github.com/ezsystems/ezcs)
+        rules: ezcs
+
+    csslint:
+
+    jshint:
+
+    npm:

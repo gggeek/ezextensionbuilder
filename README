@@ -14,6 +14,9 @@ The build process consists currently of the following steps:
 - generating end-user documentation from documentation sources (eg.html from rst files)
 - creating tarballs of the extension
 
+The steps are implemented via "pake tasks".
+Many other tasks are available as well - making this a swiss-army-knife tool of Quality Assurance as well as build.
+
 2. License
 ----------
 
@@ -25,11 +28,11 @@ or questions please contact info@ez.no
 ---------------
 
 - the php cli
+- command line tools: svn and/or git, doxygen, tar, zip
 - Pake version 1.7.4 or later.
   You can get it either from https://github.com/indeyets/pake/wiki
-  or as part of the extension itself, using composer
-- the Zeta Components php library (only for generating tarballs and html docs from rst)
-- command line tools: svn and/or git, doxygen, tar, zip
+  or as part of the extension itself, using composer installation
+- other php tools and libraries: all dependencies are managed automatically through composer
 
 4. Installing
 -------------
@@ -57,15 +60,19 @@ ROOT_DIR/
  |
  `___vendor/gggeek/ezextensionbuilder
      |
-     |___doc/     more documentation, such as changelogs, todos and known bugs
-     |___src/     a complete copy of the pake tool
-     |___README   this file
-     |___INSTALL  installation instructions
-     |___LICENSE  license file
-     |___doxyfile_master configuration file used when the generate-documentation task is set to create api docs via doxygen
+     |___classes/               php classes with the bulk of the business logic for this tool
+     |___doc/                   more documentation, such as changelogs, todos and known bugs
+     |___INSTALL                installation instructions
+     |___LICENSE                license file
+     |___README                 this file
+     |___composer.json          configuration file for composer
+     |___doxyfile_master        configuration file used when the generate-documentation task is set to create api docs via doxygen
+     |___ezextbuilder           a shell-script wrapping execution of pakefile.php
      |___options-ezextensionbuilder.yaml configuration file used to build this extension itself
-     |___options-sample.yaml a sample configuration file
-     `___package_master.tpl template file used by the generate-sample-package-file task
+     |___options-sample.yaml    a sample configuration file
+     |___package_master.xml     template file used by the generate-sample-package-file task
+     |___pakefile.php           the main build script
+     `___pakefile_bootstrap.php a php file used by the build script
 
 As you can see, we try to pollute as little as possible the ROOT_DIR: everything
 is neatly stowed away in the vendor, pake, build and dist subdirectories.
@@ -76,12 +83,12 @@ FAQ
 
 - Can a standalone copy of pake be used with the pakefile instead of the bundled one?
     Yes: just use a different command line: ::
-    php pake.php -f ./vendor/gggeek/ezextensionbuilder/pakefile.php build myext
+    pake -f ./vendor/gggeek/ezextensionbuilder/pakefile.php build myext
 
 - Can multiple extensions be built in the same ROOT_DIR?
     Yes. Just create an option file for each
 
-- Can the script use my previous configuration files used with the ant-based version?
+- Can the script use my ancient configuration files used with the previous ant-based version?
     Yes. Use the convert-configuration task for converting them to the new format
 
 - Can I download a complete zip of the tool instead of installing via composer?

@@ -921,6 +921,16 @@ function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
 }
 
 /**
+ * Runs all code quality checks (NB: this can take a while)
+ *
+ * We rely on the pake dependency system to do the real stuff
+ * (run pake -P to see tasks included in this one)
+ */
+function run_check_code_quality( $task=null, $args=array(), $cliopts=array() )
+{
+}
+
+/**
  * Checks for validity all template files - needs a working eZP install somewhere to get the tpl syntax checker script;
  * options: --php=path/to/php/executable (otherwise, if not in your path, use config. file),
  * --ezp=path/to/eZPublish/installation (if empty, it is assumed we are building from within an eZP installation)
@@ -935,7 +945,7 @@ function run_check_templates( $task=null, $args=array(), $cliopts=array() )
         $php = @$cliopts['php'];
         if ( $php == '' )
         {
-            $php = eZPCPBuilder::getTool( 'php', $opts );
+            $php = eZExtBuilder::getTool( 'php', $opts );
         }
         else
         {
@@ -979,7 +989,7 @@ function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $destdir = eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
-    $files = pakeFinder::type( 'file' )->name( array( '*.php' ) )->maxdepth( 0 )->in( $destdir );
+    $files = pakeFinder::type( 'file' )->name( array( '*.php' ) )->in( $destdir );
     if ( count( $files ) )
     {
         $php = @$cliopts['php'];
@@ -996,9 +1006,9 @@ function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
             throw new pakeException( "$php does not seem to be a valid php executable" );
         }
 
-        foreach ( pakeFinder::type( 'file' )->name( array( '*.php' ) )->maxdepth( 0 )->in( $destdir ) as $file )
+        foreach ( pakeFinder::type( 'file' )->name( array( '*.php' ) )->in( $destdir ) as $file )
         {
-            if ( strpos( pake_sh( escapeshellarg( $php ) . " -l " . escapeshellarg( $file ) ), 'No syntax errors detected' ) === false )
+            if ( strpos( pake_sh( $php . " -l " . escapeshellarg( $file ) ), 'No syntax errors detected' ) === false )
             {
                 throw new pakeException( "$file does not seem to be a valid php file" );
             }
@@ -1006,6 +1016,9 @@ function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
     }
 }
 
+/**
+ * Generates a "code messyness" report using PHPMD. The rules to check can be set via configuration options
+ */
 function run_check_code_mess( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
@@ -1026,6 +1039,43 @@ function run_check_code_mess( $task=null, $args=array(), $cliopts=array() )
     catch ( pakeException $e )
     {
     }
+}
+
+/**
+ * Generates a "coding style violations" report using PHPCodeSniffer.
+ * The rules to check can be set via configuration options, default being "ezcs" (@see https://github.com/ezsystems/ezcs)
+ */
+function run_check_coding_style( $task=null, $args=array(), $cliopts=array() )
+{
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+    $phpcs = eZExtBuilder::getTool( 'phpcs', $opts, true );
+    $out = '';
+    if ( $opts['tools']['phpcs']['report']  != '' )
+    {
+        $out = " --report-{$opts['tools']['phpcs']['format']}=" . escapeshellarg( $opts['tools']['phpcs']['report'] );
+    }
+
+    // in case we use the standard rule set, try to install it (after composer has downloaded it)
+    // nb: this could become a task of its own...
+    $rulesDir = eZExtBuilder::getVendorDir() . '/squizlabs/php_codesniffer/Codesniffer/Standards/' . $opts['tools']['phpcs']['rules'] ;
+    if ( !is_dir( $rulesDir ) )
+    {
+        if ( $opts['tools']['phpcs']['rules'] == 'ezcs' )
+        {
+            $sourceDir = eZExtBuilder::getVendorDir() . '/ezsystems/ezcs/php/ezcs';
+            if ( is_dir( $sourceDir ) )
+            {
+                pake_symlink( $sourceDir, $rulesDir );
+            }
+        }
+    }
+
+    pake_sh( "$phpcs --standard=" . escapeshellarg( $opts['tools']['phpcs']['rules'] ) . " " .
+        "--report=" . escapeshellarg( $opts['tools']['phpcs']['format'] ) . " " .
+        // if we do not filter on php files, phpcs can go in a loop trying to parse tpl files
+        "--extensions=php " . /*"--encoding=utf8 " .*/
+        $out .
+        escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
 }
 
 /**
@@ -1275,6 +1325,11 @@ pake_task( 'check-php-files' );
 pake_task( 'check-templates' );
 
 pake_task( 'check-code-mess' );
+
+pake_task( 'check-coding-style' );
+
+pake_task( 'check-code-quality',
+    'check-php-files', 'check-templates', 'check-coding-style', 'check-code-mess' );
 
 pake_task( 'generate-md5sums' );
 

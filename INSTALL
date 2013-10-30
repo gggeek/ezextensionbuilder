@@ -4,10 +4,7 @@ Requirements
 - the php cli
 - command line tools: svn and/or git, doxygen, tar, zip
 - the Composer php tool
-- the Pake php build tool
-- the Zeta Components php library (only for generating html docs from rst)
-
-(note that the last two will be automatically downloaded for you during the installation process outlined below)
+- all other php libraries and tools will be automatically downloaded during the installation process outlined below
 
 How to install and use eZ Extension Builder
 ===========================================
@@ -15,16 +12,14 @@ How to install and use eZ Extension Builder
 This is a 4 steps tutorial. The fifth step is optional ;-)
 
 
-1. Install the pakefile script and its dependencies via composer (once)
------------------------------------------------------------------------
+1. Install ezextensionbuilder and its dependencies via composer (once)
+----------------------------------------------------------------------
 
 You can declare the script as a dependency in the composer.json file of your extension:
 
 {
     "name": "<me>/<myextension>",
     "type": "ezpublish-legacy-extension",
-    "description": "Adds/improves the native capabilities of eZ Publish to work as webservices server or webservices client, with a visual webservices debugger thrown in for good measure",
-    "license": "GNU General Public License v2.0",
     "minimum-stability": "dev",
     "require": {
         "ezsystems/ezpublish-legacy-installer": "*"
@@ -42,19 +37,23 @@ but that is not a strict rerequisite (you could run the build process in some ot
 
 If you do not have composer.phar, see here how to install it: http://getcomposer.org/doc/00-intro.md
 
+To test that installation worked fine, try getting a list of available tasks: run::
+To get a list of all available tasks run::
+
+    php vendor/bin/ezextbuilder --tasks
 
 2. Create the configuration file (once)
 ---------------------------------------
 
 A configuration file is needed to drive the build. The extension can generate a sample one for you ::
 
-    php vendor/gggeek/ezextensionbuilder/pakefile.php generate-extension-config <myextension>
+    php vendor/bin/ezextbuilder generate-extension-config <myextension>
 
 This will create a directory ./pake/ and save into it the file options-<myextension>.yaml
 
 If your extension already has such file in its source repository, you can instead just download it ::
 
-    php vendor/gggeek/ezextensionbuilder/pakefile.php download-extension-config myextension https://raw.github.com/<me>/<myextension>/master/pake/options-<myextension>.yaml
+    php vendor/bin/ezextbuilder download-extension-config myextension https://raw.github.com/<me>/<myextension>/master/pake/options-<myextension>.yaml
 
 
 3. Edit the configuration file (for every build)
@@ -67,25 +66,21 @@ Note that steps 1 and 2 have to be executed only once.
 Note also that you can pass any configuration option on the command line as well.
 This makes it easy to keep the same configuration file and run different builds. Ex: ::
 
-    php vendor/gggeek/ezextensionbuilder/pakefile.php show-properties --option.version.major=99
+    php vendor/bin/ezextbuilder show-properties --option.version.major=99
 
 4. Launch the final build (for every build)
 -------------------------------------------
 
 To get a list of all available tasks run::
 
-    php pakefile.php --tasks
+    php vendor/bin/ezextbuilder --tasks
 
 To build your extension run::
 
-    php pakefile.php build <myextension>
+    php vendor/bin/ezextbuilder build <myextension>
 
 NB: every time the extension is built, a fresh version is retrieved from its
 svn/git repository. The local copy is not used at all.
-
-NB: The Zeta Components library must be available in your php include_path. If it
-is not, you can set the environment variable PHP_CLASSPATH to make it available
-to the script.
 
 
 5. Creating a packaged version of the extension (optional)

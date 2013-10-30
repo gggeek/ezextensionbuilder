@@ -8,9 +8,15 @@
         "indeyets/pake": ">=1.7.4",
         "zetacomponents/document": "@dev",
         "phpunit/phpunit": "3.7.*",
-        "phpmd/phpmd": "*"
+        "phpmd/phpmd": "1.*",
+        "squizlabs/php_codesniffer": "1.*",
+
+        "ezsystems/ezcs": "@dev"
     },
     "autoload": {
         "classmap": [ "classes" ]
-    }
+    },
+    "bin": [
+        "ezextbuilder"
+    ]
 }

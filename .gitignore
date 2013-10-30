@@ -1,7 +1,8 @@
 build/
 dist/
 ant/
-.idea
+.idea/
 vendor/
+var/
 composer.lock
 composer.phar

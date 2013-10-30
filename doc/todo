@@ -10,57 +10,51 @@
 
 . ezfind: should not pack manual in odf format => improve exclude list w. depth
 
-. allow extension to build self:
-  - currently it replaces tokens within pakefile.php files
-  - it should build the zip used on the website for auto-upgrades (besides the full zip), or
-  - improve upgrade task not to need a separate zip (see description later)
+. allow extension to build self (does it means anything at all now?)
 
 . allow to build many extensions in a single call
   (workaround: use extension dependencies with a fake 'root' extension)
 
-. add support for different dir schemas for extensions providing packages? nb: better if we can do it without that...
-
 . add more detailed documentation of expected coding/file layouts standards
 
-. move all the business logic in php classes outside of pakefile
+. move all the business logic in php classes outside of pakefile.php
 
 . copy task names from http://jenkins-php.org/ (as duplicate names for current tasks)
+
+. add support for different dir schemas for extensions providing packages? nb: better if we can do it without that...
 
 
 # new tasks
 
-. add a task to generate .sql files from .dba
-
-. add some code quality checks (possibly from other extensions)
-  - validity of php files
+. add more code quality checks (possibly from other extensions/tools/packages)
   - proper php opening tag for ini files, absence of charset tag (or only utf8 recommended)
   - proper naming of ini files
-  - php coding style
-  - css validation (via w3.org validator? see http://jigsaw.w3.org/css-validator/api.html)
-  - translation checking (see eg. checks done in ez 4.5 cli script)
+  - css validation (via csslint - needs node.js - or w3.org validator? see http://jigsaw.w3.org/css-validator/api.html)
+  - js validation (via jshint - needs node.js )
+  - translation checking (see eg. checks done in ez 4.5+ cli script)
 
 . add metrics-generating task. See:
-  - codesniffer
   - phpqatools.org
 
-. add support for launching testsuite tests
+. add support for launching testsuite tests => needs a full-feldged ez installation ?
+
+. add a task to generate .sql files from .dba ones
 
 . changelog generation task: if it's not there, build it from git/svn commit messages
   (also update ez package with that info)
 
-. deployment task (eg. to upload extension to projects.ez.no or github)
+. deployment task (eg. to upload extension to projects.ez.no or branch + tag it github)
   - might need first some changes on projects.ez.no site
 
 . a task that checks for presence of update sql scripts (needs to have access to previous version sources too)
 
 . css/js minification task (not very important since we have ezjscore)
 
-. add an apply-patch task to apply patch files at build time
-
 . add tasks to generate sample ezinfo.php and extension.xml files
 
 . add task that displays the tool's own changelog
 
+. add an apply-patch task to apply patch files at build time (???)
 
 # improve tasks
 
@@ -70,10 +64,10 @@
 
 . add support for generating more docs:
   . manual from docbook
-  . api docs from sami, phpdoc besides doxygen
+  . api docs from sami, phpdoc2 besides doxygen
   . rst docs in other dirs?
 
-. do not try to replace tokens in doxygen-generated css
+. do not try to replace tokens in doxygen-generated css files
 
 . dist task: allow to specify .tar.bz2 output format
 

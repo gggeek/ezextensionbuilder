@@ -11,6 +11,10 @@ Changes for version 0.5 - released 2013/xx/yy
 - added a new task: check-code-mess. It uses phpmd to generate a report, echoed by default on command line.
   You will need to add some new config lines to your options file for this to work properly, see options-sample.yaml
   for more details
+- added a new task: check-coding-style. It uses PhpCodeSniffer and https://github.com/ezsystems/ezcs to generate style
+  violation reports.
+  NB: on windows this task has to be run with admin user the 1st time, because it needs to create a symlink
+- added a new task: check-code-quality. It incorporates all checks for coding standards / violations
 - task show_properties now shows all the configured options, not just extension name and version
 - a local options file will be read if present: pake/options-$extension-user.yaml.
   This makes it easier to keep config files with things specific to current build server separate from generic build options

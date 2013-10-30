@@ -32,6 +32,26 @@ class eZExtBuilder
     }
 
     /**
+     * Tries to find out the vendor dir of composer - should work both when ezextbuilder is main project and when it is
+     * a dependency. Returns FALSE if not found
+     *
+     * @param string $vendorPrefix
+     * @return string
+     */
+    static function getVendorDir( $vendorPrefix = 'vendor' )
+    {
+        if( is_dir( __DIR__ . '/../../../composer' ) && is_file( __DIR__ . '/../../../autoload.php' ) )
+        {
+            return realpath( __DIR__ . '/../../..' );
+        }
+        if( is_dir( __DIR__ . "/../$vendorPrefix/composer" ) && is_file( __DIR__ . "/../$vendorPrefix/autoload.php" ) )
+        {
+            return realpath( __DIR__ . "/../$vendorPrefix" );
+        }
+        return false;
+    }
+
+    /**
      * Searches for a default extension name (i.e. when there is only 1 config file in the config dir), saves it internally
      * and returns it
      *
@@ -414,10 +434,10 @@ class eZExtBuilder
         {
             if ( $composerBinary )
             {
-                if ( ( file_exists( __DIR__ . "/../../../vendor/bin/$tool" ) && $file = __DIR__ . "/../../../vendor/bin/$tool" ) ||
-                    ( file_exists( __DIR__ . "/../vendor/bin/$tool" ) && $file = __DIR__ . "/../vendor/bin/$tool" ) )
+                $vendorDir = self::getVendorDir();
+                if ( file_exists( $vendorDir . "/bin/$tool" ) )
                 {
-                    $file = realpath( $file );
+                    $file = realpath( $vendorDir . "/bin/$tool" );
                     if ( strtoupper( substr( PHP_OS, 0, 3) ) === 'WIN' )
                     {
                         $file .= '.bat';

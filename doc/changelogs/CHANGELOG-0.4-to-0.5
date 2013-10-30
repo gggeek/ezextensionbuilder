@@ -6,8 +6,11 @@ Changes for version 0.5 - released 2013/xx/yy
   (this also means we rely on the standard pake, and do not bundle it anymore)
   Note that the preferred directory layout has now changed. See the README file for more details
 - added 2 new tasks to check validity of any .tpl and .php file found. Active by default as part of "build" task
-- added a new task to list all extensions which can be built (because they have a config file avaiable): list-extensions
+- added a new task: list-extensions. It lists all extensions which can be built (because they have a config file avaiable)
 - added a new task: tool-version. It displays complete version info for the tool itself
+- added a new task: check-code-mess. It uses phpmd to generate a report, echoed by default on command line.
+  You will need to add some new config lines to your options file for this to work properly, see options-sample.yaml
+  for more details
 - task show_properties now shows all the configured options, not just extension name and version
 - a local options file will be read if present: pake/options-$extension-user.yaml.
   This makes it easier to keep config files with things specific to current build server separate from generic build options

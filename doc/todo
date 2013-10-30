@@ -40,7 +40,6 @@
   - translation checking (see eg. checks done in ez 4.5 cli script)
 
 . add metrics-generating task. See:
-  - phpmd
   - codesniffer
   - phpqatools.org
 

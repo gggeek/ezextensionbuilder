@@ -150,6 +150,18 @@ tools:
         # the default coding standard to follow ("ezcs" is installed automatically via composer from https://github.com/ezsystems/ezcs)
         rules: ezcs
 
+    phploc:
+        # leave empty to use the one installed with composer
+        binary:
+        # leave empty for sending output to stderr, otherwise save it in this file
+        report:
+
+    phpcpd:
+        # leave empty to use the one installed with composer
+        binary:
+        # leave empty for sending output to stderr, otherwise save it in this file
+        report:
+
     csslint:
 
     jshint:

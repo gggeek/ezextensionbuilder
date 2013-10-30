@@ -341,7 +341,7 @@ function run_init( $task=null, $args=array(), $cliopts=array() )
         // known files/dirs not to be packed / md5'ed
         /// @todo !important shall we make this configurable?
         /// @bug 'build' & 'dist' we should probably take from options
-        $files = array( 'ant/', 'build.xml', '**/.svn', '.git/', 'build/', 'dist/' );
+        $files = array( 'ant/', 'build.xml', '**/.svn', '.git/', 'build/', 'dist/', 'composer.phar', 'composer.lock' );
         // hack! when packing ourself, we need to keep this stuff
         if ( $opts['extension']['name'] != 'ezextensionbuilder' )
         {
@@ -554,10 +554,6 @@ function run_build_dependencies( $task=null, $args=array(), $cliopts=array() )
 function run_fat_dist( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
-    if ( !class_exists( 'ezcArchive' ) )
-    {
-        throw new pakeException( "Missing Zeta Components: cannot generate tar file. Use the environment var PHP_CLASSPATH or change include_path in php.ini" );
-    }
     pake_mkdirs( $opts['dist']['dir'] );
     $files = pakeFinder::type( 'any' )->in( eZExtBuilder::getBuildDir( $opts ) );
     // get absolute path to build dir
@@ -912,16 +908,6 @@ function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
 }
 
 /**
- * Runs all code quality checks (NB: this can take a while)
- *
- * We rely on the pake dependency system to do the real stuff
- * (run pake -P to see tasks included in this one)
- */
-function run_check_code_quality( $task=null, $args=array(), $cliopts=array() )
-{
-}
-
-/**
  * Checks for validity all template files - needs a working eZP install somewhere to get the tpl syntax checker script;
  * use config options to specify the path to php executable if needed, as well as the path to an
  * eZPublish installation
@@ -988,27 +974,46 @@ function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
 }
 
 /**
+ * Generates all code quality reports (NB: this can take a while)
+ *
+ * We rely on the pake dependency system to do the real stuff
+ * (run pake -P to see tasks included in this one)
+ */
+function run_code_quality_reports( $task=null, $args=array(), $cliopts=array() )
+{
+}
+
+/**
  * Generates a "code messyness" report using PHPMD. The rules to check can be set via configuration options
  */
-function run_check_code_mess( $task=null, $args=array(), $cliopts=array() )
+function run_code_mess_report( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $phpmd = eZExtBuilder::getTool( 'phpmd', $opts, true );
-    $out = '';
+    /*$out = '';
     if ( $opts['tools']['phpmd']['report']  != '' )
     {
         $out = " > " . escapeshellarg( $opts['tools']['phpmd']['report'] );
-    }
+    }*/
     try
     {
         // phpmd will exit with a non-0 value aws soon as there is any violation (which generates an exception in pake_sh),
-        // but we do not consider this a fatal error, as phpmd is really nitpicky ;-)
-        pake_sh( "$phpmd " . escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) . " " .
+        // but we do not consider this a fatal error, as we are only generating reports
+        $out  = pake_sh( "$phpmd " . escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) . " " .
             escapeshellarg( $opts['tools']['phpmd']['format'] ) . " " .
-            escapeshellarg( $opts['tools']['phpmd']['rules'] ) . $out );
+            escapeshellarg( $opts['tools']['phpmd']['rules'] ) );
     }
     catch ( pakeException $e )
     {
+        $out = preg_replace( '/^Problem executing command/', '', $e->getMessage() );
+    }
+    if ( $opts['tools']['phpmd']['report']  != '' )
+    {
+        pake_write_file( $opts['tools']['phpmd']['report'], $out );
+    }
+    else
+    {
+        echo $out;
     }
 }
 
@@ -1016,15 +1021,10 @@ function run_check_code_mess( $task=null, $args=array(), $cliopts=array() )
  * Generates a "coding style violations" report using PHPCodeSniffer.
  * The rules to check can be set via configuration options, default being "ezcs" (@see https://github.com/ezsystems/ezcs)
  */
-function run_check_coding_style( $task=null, $args=array(), $cliopts=array() )
+function run_coding_style_report( $task=null, $args=array(), $cliopts=array() )
 {
     $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
     $phpcs = eZExtBuilder::getTool( 'phpcs', $opts, true );
-    $out = '';
-    if ( $opts['tools']['phpcs']['report']  != '' )
-    {
-        $out = " --report-{$opts['tools']['phpcs']['format']}=" . escapeshellarg( $opts['tools']['phpcs']['report'] );
-    }
 
     // in case we use the standard rule set, try to install it (after composer has downloaded it)
     // nb: this could become a task of its own...
@@ -1041,12 +1041,78 @@ function run_check_coding_style( $task=null, $args=array(), $cliopts=array() )
         }
     }
 
-    pake_sh( "$phpcs --standard=" . escapeshellarg( $opts['tools']['phpcs']['rules'] ) . " " .
+    $out = pake_sh( "$phpcs --standard=" . escapeshellarg( $opts['tools']['phpcs']['rules'] ) . " " .
         "--report=" . escapeshellarg( $opts['tools']['phpcs']['format'] ) . " " .
         // if we do not filter on php files, phpcs can go in a loop trying to parse tpl files
         "--extensions=php " . /*"--encoding=utf8 " .*/
-        $out .
         escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+    if ( $opts['tools']['phpcs']['report']  != '' )
+    {
+        pake_write_file( $opts['tools']['phpcs']['report'], $out );
+    }
+    else
+    {
+        echo out;
+    }
+}
+
+/**
+ * Generates a "copy-pasted code" report using phpcpd
+ */
+function run_copy_paste_report( $task=null, $args=array(), $cliopts=array() )
+{
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+    $phpcpd = eZExtBuilder::getTool( 'phpcpd', $opts, true );
+    // phpcpd will exit with a non-0 value aws soon as there is any violation (which generates an exception in pake_sh),
+    // but we do not consider this a fatal error, as we are only generating reports
+    try
+    {
+        $out = pake_sh( "$phpcpd " .
+            escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+    }
+    catch ( pakeException $e )
+    {
+        $out = preg_replace( '/^Problem executing command/', '', $e->getMessage() );
+    }
+    if ( $opts['tools']['phpcpd']['report']  != '' )
+    {
+        pake_write_file( $opts['tools']['phpcpd']['report'], $out );
+    }
+    else
+    {
+        echo out;
+    }
+}
+
+/**
+ * Generates all code metrics reports (NB: this can take a while)
+ *
+ * We rely on the pake dependency system to do the real stuff
+ * (run pake -P to see tasks included in this one)
+ */
+function run_code_metrics_reports( $task=null, $args=array(), $cliopts=array() )
+{
+}
+
+/**
+ * Generates a "lines of code" report using phploc.
+ */
+function run_php_loc_report( $task=null, $args=array(), $cliopts=array() )
+{
+    $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+    $phploc = eZExtBuilder::getTool( 'phploc', $opts, true );
+
+    $out = pake_sh( "$phploc -n " .
+        escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+
+    if ( $opts['tools']['phploc']['report']  != '' )
+    {
+        pake_write_file( $opts['tools']['phploc']['report'], $out );
+    }
+    else
+    {
+        echo out;
+    }
 }
 
 /**
@@ -1293,12 +1359,19 @@ pake_task( 'check-php-files' );
 
 pake_task( 'check-templates' );
 
-pake_task( 'check-code-mess' );
+pake_task( 'code-mess-report' );
 
-pake_task( 'check-coding-style' );
+pake_task( 'coding-style-report' );
 
-pake_task( 'check-code-quality',
-    'check-php-files', 'check-templates', 'check-coding-style', 'check-code-mess' );
+pake_task( 'copy-paste-report' );
+
+pake_task( 'code-quality-reports',
+    'coding-style-report', 'code-mess-report', 'copy-paste-report' );
+
+pake_task( 'php-loc-report' );
+
+pake_task( 'code-metrics-reports',
+    'php-loc-report' );
 
 pake_task( 'generate-md5sums' );
 

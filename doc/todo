@@ -2,11 +2,10 @@
 
 . rewrite fat_dist task not to use eZComponents for creating the tarball
 
+. simplify configuration for reports: only set 1 dir for all outputs
+. allow config file to specify doc dir for plain docs as well
+
 # general
-
-. add installation of command in composer/bin
-
-. allow config file to be in other directory than ./pake
 
 . ezfind: should not pack manual in odf format => improve exclude list w. depth
 
@@ -33,10 +32,10 @@
   - js validation (via jshint - needs node.js )
   - translation checking (see eg. checks done in ez 4.5+ cli script)
 
-. add metrics-generating task. See:
-  - phpqatools.org
+. add metrics-generating task. See f.e. phpqatools.org
+  - graphs from phpdepend
 
-. add support for launching testsuite tests => needs a full-feldged ez installation ?
+. add support for launching testsuite tests => needs a full-fledged ez installation ?
 
 . add a task to generate .sql files from .dba ones
 

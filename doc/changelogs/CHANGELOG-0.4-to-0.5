@@ -8,18 +8,22 @@ Changes for version 0.5 - released 2013/xx/yy
 - added 2 new tasks to check validity of any .tpl and .php file found. Active by default as part of "build" task
 - added a new task: list-extensions. It lists all extensions which can be built (because they have a config file avaiable)
 - added a new task: tool-version. It displays complete version info for the tool itself
-- added a new task: check-code-mess. It uses phpmd to generate a report, echoed by default on command line.
+- added a new task: code-mess-report. It uses phpmd to generate a report, echoed by default on command line.
   You will need to add some new config lines to your options file for this to work properly, see options-sample.yaml
   for more details
-- added a new task: check-coding-style. It uses PhpCodeSniffer and https://github.com/ezsystems/ezcs to generate style
+- added a new task: coding-style-report. It uses PhpCodeSniffer and https://github.com/ezsystems/ezcs to generate style
   violation reports.
   NB: on windows this task has to be run with admin user the 1st time, because it needs to create a symlink
-- added a new task: check-code-quality. It incorporates all checks for coding standards / violations
+- added a new task: copy-paste-report. It uses phpcpd to find traces of copy-pasted code
+- added a new task: code-quality-report. It incorporates all reports for coding standards / violations
+- added a new task: php-loc-report. It uses phploc to generate a code-size report.
+- added a new task: code-metrics-report. It incorporates all reports for code metrics
 - task show_properties now shows all the configured options, not just extension name and version
 - a local options file will be read if present: pake/options-$extension-user.yaml.
   This makes it easier to keep config files with things specific to current build server separate from generic build options
   which are generally commited to the source repository
 - all options from config file can now be overridden on command line, using --option.<name>.<suboption>.<etc>=value syntax
 - no more need for eZComponents for creation of standard tarballs. You need tar and zip cli tools installed
+- we now avoid packing composer.json and composer.phar in the build artifacts
 
 *Bugfixes:

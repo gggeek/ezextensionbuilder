@@ -4,7 +4,8 @@ Requirements
 - the php cli
 - command line tools: svn and/or git, doxygen, tar, zip
 - the Composer php tool
-- all other php libraries and tools will be automatically downloaded during the installation process outlined below
+- all other php libraries and tools will be automatically downloaded during the installation process outlined below.
+  NB: you will need at least 150MB of free space for them, plus enough space for the build
 
 How to install and use eZ Extension Builder
 ===========================================
@@ -30,7 +31,7 @@ You can declare the script as a dependency in the composer.json file of your ext
 }
 
 Usually you would run the build script in the root directory of your extension,
-but that is not a strict rerequisite (you could run the build process in some other dir). ::
+but that is not a strict requisite (you could run the build process in some other dir). ::
 
     cd <myextension_directory>
     php composer.phar install

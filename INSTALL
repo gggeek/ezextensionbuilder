@@ -40,20 +40,20 @@ If you do not have composer.phar, see here how to install it: http://getcomposer
 To test that installation worked fine, try getting a list of available tasks: run::
 To get a list of all available tasks run::
 
-    php vendor/bin/ezextbuilder --tasks
+    ./vendor/bin/ezextbuilder --tasks
 
 2. Create the configuration file (once)
 ---------------------------------------
 
 A configuration file is needed to drive the build. The extension can generate a sample one for you ::
 
-    php vendor/bin/ezextbuilder generate-extension-config <myextension>
+    ./vendor/bin/ezextbuilder generate-extension-config <myextension>
 
 This will create a directory ./pake/ and save into it the file options-<myextension>.yaml
 
 If your extension already has such file in its source repository, you can instead just download it ::
 
-    php vendor/bin/ezextbuilder download-extension-config myextension https://raw.github.com/<me>/<myextension>/master/pake/options-<myextension>.yaml
+    ./vendor/bin/ezextbuilder download-extension-config myextension https://raw.github.com/<me>/<myextension>/master/pake/options-<myextension>.yaml
 
 
 3. Edit the configuration file (for every build)
@@ -66,22 +66,24 @@ Note that steps 1 and 2 have to be executed only once.
 Note also that you can pass any configuration option on the command line as well.
 This makes it easy to keep the same configuration file and run different builds. Ex: ::
 
-    php vendor/bin/ezextbuilder show-properties --option.version.major=99
+    ./vendor/bin/ezextbuilder show-properties --option.version.major=99
 
 4. Launch the final build (for every build)
 -------------------------------------------
 
-To get a list of all available tasks run::
-
-    php vendor/bin/ezextbuilder --tasks
-
 To build your extension run::
 
-    php vendor/bin/ezextbuilder build <myextension>
+    ./vendor/bin/ezextbuilder build <myextension>
 
 NB: every time the extension is built, a fresh version is retrieved from its
 svn/git repository. The local copy is not used at all.
 
+You can also execute the different steps of the build process one by one, as well as execute optional tasks, such as
+generating QA reports of your code.
+
+To get a list of all available tasks run::
+
+    ./vendor/bin/ezextbuilder --tasks
 
 5. Creating a packaged version of the extension (optional)
 ----------------------------------------------------------

@@ -58,6 +58,8 @@
 
 # improve tasks
 
+. phpcs task: allow exclusion of directories
+
 . pakefile download task: allow silent overwrite (for updates)
 
 . init task that starts with a file untar

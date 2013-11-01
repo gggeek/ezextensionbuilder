@@ -49,22 +49,6 @@ else
 
 }
 
-// Try harder to set up ezc autoloading.
-// Only useful in non-composer mode (including pake.php might have reset the include path from env var PHP_CLASSPATH),
-if ( !class_exists( 'ezcBase' ) )
-{
-    @include( 'ezc/Base/base.php' ); // pear install
-    if ( !class_exists( 'ezcBase' ) )
-    {
-        @include( 'Base/src/base.php' ); // tarball download / svn install
-    }
-    if ( class_exists( 'ezcBase' ) )
-    {
-        spl_autoload_register( array( 'ezcBase', 'autoload' ) );
-    }
-}
-
-
 if ( !function_exists( 'pake_exception_default_handler' ) )
 {
     // same bootstrap code as done by pake_cli_init.php, which we do not bother searching for in the composer dir
@@ -76,6 +60,14 @@ if ( !function_exists( 'pake_exception_default_handler' ) )
 }
 set_exception_handler( 'pake_exception_default_handler' );
 mb_internal_encoding( 'utf-8' );
+
+// take over display of help - in case we want to modify some of it
+function run_help( $task=null, $args=array(), $cliopts=array() )
+{
+    $pake = pakeApp::get_instance();
+    $pake->help();
+};
+pake_task( 'help' );
 
 // pakeApp will include again the main pakefile.php, and execute all the pake_task() calls found in it
 $pake = pakeApp::get_instance();

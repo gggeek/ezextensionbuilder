@@ -1,14 +1,19 @@
 <?php
 /**
+ * Core functionality
+ *
  * @author    G. Giunta
  * @copyright (C) G. Giunta 2013
  * @license   code licensed under the GNU GPL 2.0: see README file
- *
- * We do nto namespace this because of problems with php autoloading namespaced classes using aliases when the same file is
- * included twice (which happens with our pakefile.php): https://bugs.php.net/bug.php?id=65999
  */
 
-class eZExtBuilder
+namespace eZExtBuilder;
+
+use pakeException;
+use pakeFinder;
+use pakeYaml;
+
+class Builder
 {
 
     static $options = null;

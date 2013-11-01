@@ -3,13 +3,15 @@
 . rewrite fat_dist task not to use eZComponents for creating the tarball
 
 . simplify configuration for reports: only set 1 dir for all outputs
-. allow config file to specify doc dir for plain docs as well
+. allow config file to specify doc dir for plain docs
+. test running report generation tasks against ezp (5, legacy, community) instead of an extension
+. when looking around for composer dirs, test value of COMPOSER_XXX env vars (see http://getcomposer.org/doc/03-cli.md#composer-home)
 
 # general
 
 . ezfind: should not pack manual in odf format => improve exclude list w. depth
 
-. allow extension to build self (does it means anything at all now?)
+. allow ezextensionbuilder to build self (does it means anything at all now?)
 
 . allow to build many extensions in a single call
   (workaround: use extension dependencies with a fake 'root' extension)
@@ -22,7 +24,6 @@
 
 . add support for different dir schemas for extensions providing packages? nb: better if we can do it without that...
 
-
 # new tasks
 
 . add more code quality checks (possibly from other extensions/tools/packages)
@@ -31,8 +32,10 @@
   - css validation (via csslint - needs node.js - or w3.org validator? see http://jigsaw.w3.org/css-validator/api.html)
   - js validation (via jshint - needs node.js )
   - translation checking (see eg. checks done in ez 4.5+ cli script)
-
-. add metrics-generating task. See f.e. phpqatools.org
+  - hhvm-wrapper?
+  - yui-something? (look at ezcs)
+  
+. add more metrics-generating tasks. See f.e. phpqatools.org, http://jenkins-php.org/
   - graphs from phpdepend
 
 . add support for launching testsuite tests => needs a full-fledged ez installation ?
@@ -57,7 +60,7 @@
 
 # improve tasks
 
-. phpcs task: allow exclusion of directories
+. all report tasks: allow exclusion of directories
 
 . pakefile download task: allow silent overwrite (for updates)
 
@@ -65,7 +68,7 @@
 
 . add support for generating more docs:
   . manual from docbook
-  . api docs from sami, phpdoc2 besides doxygen
+  . api docs from sami, phpdoc2, (phpdox?) besides doxygen
   . rst docs in other dirs?
 
 . do not try to replace tokens in doxygen-generated css files

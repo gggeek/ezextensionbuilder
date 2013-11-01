@@ -1,0 +1,159 @@
+<?php
+/**
+ * A class containing all pake tasks related to report generation
+ *
+ * @author    G. Giunta
+ * @copyright (C) G. Giunta 2013
+ * @license   code licensed under the GNU GPL 2.0: see README file
+ */
+
+namespace eZExtBuilder;
+
+use eZExtBuilder\Builder as eZExtBuilder;
+use pakeException;
+
+class ReportTasks
+{
+    /**
+     * Generates all code quality reports (NB: this can take a while)
+     *
+     * We rely on the pake dependency system to do the real stuff
+     * (run pake -P to see tasks included in this one)
+     */
+    static function run_code_quality_reports( $task=null, $args=array(), $cliopts=array() )
+    {
+    }
+
+    /**
+     * Generates a "code messyness" report using PHPMD. The rules to check can be set via configuration options
+     */
+    static function run_code_mess_report( $task=null, $args=array(), $cliopts=array() )
+    {
+        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+        $phpmd = eZExtBuilder::getTool( 'phpmd', $opts, true );
+        /*$out = '';
+        if ( $opts['tools']['phpmd']['report']  != '' )
+        {
+            $out = " > " . escapeshellarg( $opts['tools']['phpmd']['report'] );
+        }*/
+        try
+        {
+            // phpmd will exit with a non-0 value aws soon as there is any violation (which generates an exception in pake_sh),
+            // but we do not consider this a fatal error, as we are only generating reports
+            $out  = pake_sh( "$phpmd " . escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) . " " .
+                escapeshellarg( $opts['tools']['phpmd']['format'] ) . " " .
+                escapeshellarg( $opts['tools']['phpmd']['rules'] ) );
+        }
+        catch ( pakeException $e )
+        {
+            $out = preg_replace( '/^Problem executing command/', '', $e->getMessage() );
+        }
+        if ( $opts['tools']['phpmd']['report']  != '' )
+        {
+            pake_write_file( $opts['tools']['phpmd']['report'], $out );
+        }
+        else
+        {
+            echo $out;
+        }
+    }
+
+    /**
+     * Generates a "coding style violations" report using PHPCodeSniffer.
+     * The rules to check can be set via configuration options, default being "ezcs" (@see https://github.com/ezsystems/ezcs)
+     */
+    static function run_coding_style_report( $task=null, $args=array(), $cliopts=array() )
+    {
+        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+        $phpcs = eZExtBuilder::getTool( 'phpcs', $opts, true );
+
+        // in case we use the standard rule set, try to install it (after composer has downloaded it)
+        // nb: this could become a task of its own...
+        $rulesDir = eZExtBuilder::getVendorDir() . '/squizlabs/php_codesniffer/Codesniffer/Standards/' . $opts['tools']['phpcs']['rules'] ;
+        if ( !is_dir( $rulesDir ) )
+        {
+            if ( $opts['tools']['phpcs']['rules'] == 'ezcs' )
+            {
+                $sourceDir = eZExtBuilder::getVendorDir() . '/ezsystems/ezcs/php/ezcs';
+                if ( is_dir( $sourceDir ) )
+                {
+                    pake_symlink( $sourceDir, $rulesDir );
+                }
+            }
+        }
+
+        $out = pake_sh( "$phpcs --standard=" . escapeshellarg( $opts['tools']['phpcs']['rules'] ) . " " .
+            "--report=" . escapeshellarg( $opts['tools']['phpcs']['format'] ) . " " .
+            // if we do not filter on php files, phpcs can go in a loop trying to parse tpl files
+            "--extensions=php " . /*"--encoding=utf8 " .*/
+            escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+        if ( $opts['tools']['phpcs']['report']  != '' )
+        {
+            pake_write_file( $opts['tools']['phpcs']['report'], $out );
+        }
+        else
+        {
+            echo out;
+        }
+    }
+
+    /**
+     * Generates a "copy-pasted code" report using phpcpd
+     */
+    static function run_copy_paste_report( $task=null, $args=array(), $cliopts=array() )
+    {
+        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+        $phpcpd = eZExtBuilder::getTool( 'phpcpd', $opts, true );
+        // phpcpd will exit with a non-0 value aws soon as there is any violation (which generates an exception in pake_sh),
+        // but we do not consider this a fatal error, as we are only generating reports
+        try
+        {
+            $out = pake_sh( "$phpcpd " .
+                escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+        }
+        catch ( pakeException $e )
+        {
+            $out = preg_replace( '/^Problem executing command/', '', $e->getMessage() );
+        }
+        if ( $opts['tools']['phpcpd']['report']  != '' )
+        {
+            pake_write_file( $opts['tools']['phpcpd']['report'], $out );
+        }
+        else
+        {
+            echo out;
+        }
+    }
+
+    /**
+     * Generates all code metrics reports (NB: this can take a while)
+     *
+     * We rely on the pake dependency system to do the real stuff
+     * (run pake -P to see tasks included in this one)
+     */
+    static function run_code_metrics_reports( $task=null, $args=array(), $cliopts=array() )
+    {
+    }
+
+    /**
+     * Generates a "lines of code" report using phploc.
+     */
+    static function run_php_loc_report( $task=null, $args=array(), $cliopts=array() )
+    {
+        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+        $phploc = eZExtBuilder::getTool( 'phploc', $opts, true );
+
+        $out = pake_sh( "$phploc -n " .
+            escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+
+        if ( $opts['tools']['phploc']['report']  != '' )
+        {
+            pake_write_file( $opts['tools']['phploc']['report'], $out );
+        }
+        else
+        {
+            echo out;
+        }
+    }
+
+} 

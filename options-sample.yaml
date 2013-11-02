@@ -156,6 +156,14 @@ tools:
         # leave empty to use the one installed with composer
         binary:
 
+    pdepend:
+        # leave empty to use the one installed with composer
+        binary:
+
+    phpdcd:
+        # leave empty to use the one installed with composer
+        binary:
+
     csslint:
 
     jshint:

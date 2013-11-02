@@ -155,4 +155,36 @@ class ReportTasks
         pake_write_file( $destdir . '/phploc.txt', $out, true );
     }
 
+    /**
+     * Generates images and xml report using pdepend.
+     */
+    static function run_php_pdepend_report( $task=null, $args=array(), $cliopts=array() )
+    {
+        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
+        $pdepend = eZExtBuilder::getTool( 'pdepend', $opts, true );
+
+        pake_mkdirs( $destdir );
+        $out = pake_sh( $pdepend .
+            " --jdepend-chart=" . escapeshellarg( eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'] . '/jdependchart.svg' ) .
+            " --overview-pyramid=" . escapeshellarg( eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'] . '/overview-pyramid.svg' ) .
+            " --summary-xml=" . escapeshellarg( eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'] . '/summary.xml' ) .
+            " " . escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+    }
+
+    /**
+     * Generates a "lines of code" report using phploc.
+     */
+    static function run_dead_code_report( $task=null, $args=array(), $cliopts=array() )
+    {
+        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
+        $phpdcd = eZExtBuilder::getTool( 'phpdcd', $opts, true );
+
+        $out = pake_sh( "$phpdcd " .
+            escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+
+        pake_mkdirs( $destdir );
+        pake_write_file( $destdir . '/phpdcd.txt', $out, true );
+    }
 } 

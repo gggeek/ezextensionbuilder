@@ -30,8 +30,7 @@
   - hhvm-wrapper?
   - yui-something? (look at ezcs)
   
-. add more metrics-generating tasks. See f.e. phpqatools.org, http://jenkins-php.org/
-  - graphs from phpdepend
+. add more metrics-generating tasks? See f.e. phpqatools.org, http://jenkins-php.org/
 
 . add support for launching testsuite tests => needs a full-fledged ez installation ?
 

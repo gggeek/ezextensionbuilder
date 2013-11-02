@@ -467,7 +467,7 @@ class BuildTasks
             pake_mkdirs( $docdir . '/api' );
             $doxygen = eZExtBuilder::getTool( 'doxygen', $opts );
             $doxyfile = $destdir . '/doxyfile';
-            pake_copy( __DIR__ . '/doxyfile_master', $doxyfile, array( 'override' => true ) );
+            pake_copy( __DIR__ . '/../doxyfile_master', $doxyfile, array( 'override' => true ) );
             file_put_contents( $doxyfile,
                 "\nPROJECT_NAME = " . $opts['extension']['name'] .
                 "\nPROJECT_NUMBER = " . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] .
@@ -776,7 +776,7 @@ class BuildTasks
      */
     static function run_generate_sample_package_xml( $task=null, $args=array(), $cliopts=array() )
     {
-        pake_copy( __DIR__ . 'package_master.xml', 'package.xml' );
+        pake_copy( __DIR__ . '/../package_master.xml', 'package.xml' );
         // tokens not replaced here are replaced at build time
         // tokens in square brackets are supposed to be edited by the developer
         $tokens = array(

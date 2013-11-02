@@ -58,8 +58,6 @@
   . allow exclusion of directories
   . allow usage of "stdout" as directory for output
 
-. pakefile download task: allow silent overwrite (for updates)
-
 . init task that starts with a file untar
 
 . add support for generating more docs:

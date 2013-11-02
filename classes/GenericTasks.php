@@ -16,7 +16,7 @@ class GenericTasks
 {
     static function run_default( $task=null, $args=array(), $cliopts=array() )
     {
-        pake_echo ( "eZ Extension Builder ver." . eZExtBuilder::$version .
+        pake_echo ( "eZ Extension Builder ver." . eZExtBuilder::VERSION .
             "\n\nSyntax: ezextbuilder [--\$general-options] \$task [\$extension] [--\$task-options].\n" .
             "  If no extension name is provided, a default configuration file will be searched for.\n" .
             "  General options:\n" .
@@ -24,7 +24,7 @@ class GenericTasks
             "    --config-file=\$file           to be used instead of ./pake/options-\$ext.yaml\n" .
             "    --user-config-file=\$file      to be used instead of ./pake/options-user.yaml\n" .
             "    --option.\$option.\$name=\$value to override any configuration setting\n" .
-            "    -...                           options for modifying behaviour of the pake tool\n" .
+            "    -...                          options for modifying behaviour of the pake tool\n" .
             "  Run: ezextbuilder help to learn about the general options for pake.\n" .
             "  Run: ezextbuilder --tasks to learn more about available tasks.\n"
         );
@@ -69,17 +69,18 @@ class GenericTasks
 
     /**
      * Creates a sample yaml configuration file used to drive the build for a given extension.
-     * Will ask to overwrite an existing config file if found.
+     * Will ask to overwrite an existing config file if found, unless option overwrite-existing is given
      */
     static function run_generate_extension_config( $task=null, $args=array(), $cliopts=array() )
     {
+        $overwrite = @$cliopts['overwrite-existing'];
         if ( count( $args ) == 0 )
         {
             throw new pakeException( "Missing extension name" );
         }
         $extname = $args[0];
         $configfile = eZExtBuilder::getOptionsDir() . "/options-$extname.yaml";
-        if ( file_exists( $configfile ) )
+        if ( file_exists( $configfile ) && ! $overwrite )
         {
             pake_echo( "File $configfile already exists. Must overwrite it to continue" );
             $ok = pake_input( "Do you want to overwrite it? [y/n]", 'n' );
@@ -89,7 +90,7 @@ class GenericTasks
             }
         }
         pake_mkdirs( eZExtBuilder::getOptionsDir() );
-        pake_copy( __DIR__ . '/options-sample.yaml', $configfile, array( 'override' => true ) );
+        pake_copy( __DIR__ . '/../options-sample.yaml', $configfile, array( 'override' => true ) );
         pake_echo( "Created file $configfile, now go and edit it" );
     }
 
@@ -97,9 +98,11 @@ class GenericTasks
      * Downloads the yaml file used to drive the build for a given extension, from projects.ez.no/github/some random url.
      * You have to provide the url to the config file as 2nd parameter, unless your extension is set up on projects.ez.no,
      * in which case we try to figure it out automatically.
+     * Will ask to overwrite an existing config file if found, unless option overwrite-existing is given
      */
     static function run_download_extension_config( $task=null, $args=array(), $cliopts=array() )
     {
+        $overwrite = @$cliopts['overwrite-existing'];
         if ( count( $args ) == 0 )
         {
             throw new pakeException( "Missing extension name" );
@@ -186,7 +189,7 @@ class GenericTasks
         $extconf = pake_read_file( $exturl );
 
         $configfile = eZExtBuilder::getOptionsDir() . "/options-$extname.yaml";
-        if ( file_exists( $configfile ) )
+        if ( file_exists( $configfile ) && ! $overwrite )
         {
             pake_echo( "File $configfile already exists. Must overwrite it to continue" );
             $ok = pake_input( "Do you want to overwrite it them? [y/n]", 'n' );

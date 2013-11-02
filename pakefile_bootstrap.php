@@ -64,8 +64,15 @@ mb_internal_encoding( 'utf-8' );
 // take over display of help - in case we want to modify some of it
 function run_help( $task=null, $args=array(), $cliopts=array() )
 {
+    /*if ( count( $args ) == 0 )
+    {
+        // ...
+    }*/
+    // work around a pake bug
+    if ( count( $args ) > 0 )
+        $args[0] = pakeTask::get_full_task_name( $args[0] );
     $pake = pakeApp::get_instance();
-    $pake->help();
+    $pake->run_help( $task, $args );
 };
 pake_task( 'help' );
 

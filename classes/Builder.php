@@ -62,6 +62,11 @@ class Builder
         return false;
     }
 
+    static function getResourceDir()
+    {
+        return __DIR__ . '/..';
+    }
+
     /**
      * Searches for a default extension name (i.e. when there is only 1 config file in the config dir), saves it internally
      * and returns it
@@ -109,11 +114,7 @@ class Builder
         return $files;
     }
 
-    /**
-     * Loads, caches and returns the config options for a given extension
-     * @return array
-     */
-    static function getOpts( $extname='', $cliopts = array() )
+    static function setConfigDir( $cliopts = array() )
     {
         if ( isset( $cliopts['config-dir'] ) )
         {
@@ -123,6 +124,15 @@ class Builder
             }
             self::$options_dir = $cliopts['config-dir'];
         }
+    }
+
+    /**
+     * Loads, caches and returns the config options for a given extension
+     * @return array
+     */
+    static function getOpts( $extname='', $cliopts = array() )
+    {
+        self::setConfigDir( $cliopts );
 
         if ( $extname == '' )
         {

@@ -9,10 +9,9 @@
 
 namespace eZExtBuilder;
 
-use eZExtBuilder\Builder as eZExtBuilder;
 use pakeException;
 
-class ReportTasks
+class ReportTasks extends Builder
 {
     /**
      * Generates all code reports (NB: this can take a while)
@@ -39,9 +38,9 @@ class ReportTasks
      */
     static function run_code_mess_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
-        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
-        $phpmd = eZExtBuilder::getTool( 'phpmd', $opts, true );
+        $opts = self::getOpts( @$args[0], $cliopts );
+        $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
+        $phpmd = self::getTool( 'phpmd', $opts, true );
         /*$out = '';
         if ( $opts['tools']['phpmd']['report']  != '' )
         {
@@ -51,7 +50,7 @@ class ReportTasks
         {
             // phpmd will exit with a non-0 value as soon as there is any violation (which generates an exception in pake_sh),
             // but we do not consider this a fatal error, as we are only generating reports
-            $out  = pake_sh( "$phpmd " . escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) . " " .
+            $out  = pake_sh( "$phpmd " . escapeshellarg( self::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) . " " .
                 escapeshellarg( $opts['tools']['phpmd']['format'] ) . " " .
                 escapeshellarg( $opts['tools']['phpmd']['rules'] ) );
         }
@@ -69,18 +68,18 @@ class ReportTasks
      */
     static function run_coding_style_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
-        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
-        $phpcs = eZExtBuilder::getTool( 'phpcs', $opts, true );
+        $opts = self::getOpts( @$args[0], $cliopts );
+        $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
+        $phpcs = self::getTool( 'phpcs', $opts, true );
 
         // in case we use the standard rule set, try to install it (after composer has downloaded it)
         // nb: this could become a task of its own...
-        $rulesDir = eZExtBuilder::getVendorDir() . '/squizlabs/php_codesniffer/Codesniffer/Standards/' . $opts['tools']['phpcs']['rules'] ;
+        $rulesDir = self::getVendorDir() . '/squizlabs/php_codesniffer/Codesniffer/Standards/' . $opts['tools']['phpcs']['rules'] ;
         if ( !is_dir( $rulesDir ) )
         {
             if ( $opts['tools']['phpcs']['rules'] == 'ezcs' )
             {
-                $sourceDir = eZExtBuilder::getVendorDir() . '/ezsystems/ezcs/php/ezcs';
+                $sourceDir = self::getVendorDir() . '/ezsystems/ezcs/php/ezcs';
                 if ( is_dir( $sourceDir ) )
                 {
                     pake_symlink( $sourceDir, $rulesDir );
@@ -96,7 +95,7 @@ class ReportTasks
                 "--report=" . escapeshellarg( $opts['tools']['phpcs']['format'] ) . " " .
                 // if we do not filter on php files, phpcs can go in a loop trying to parse tpl files
                 "--extensions=php " . /*"--encoding=utf8 " .*/
-                escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+                escapeshellarg( self::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
         }
         catch ( pakeException $e )
         {
@@ -111,15 +110,15 @@ class ReportTasks
      */
     static function run_copy_paste_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
-        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
-        $phpcpd = eZExtBuilder::getTool( 'phpcpd', $opts, true );
+        $opts = self::getOpts( @$args[0], $cliopts );
+        $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
+        $phpcpd = self::getTool( 'phpcpd', $opts, true );
         // phpcpd will exit with a non-0 value as soon as there is any violation (which generates an exception in pake_sh),
         // but we do not consider this a fatal error, as we are only generating reports
         try
         {
             $out = pake_sh( "$phpcpd " .
-                escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+                escapeshellarg( self::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
         }
         catch ( pakeException $e )
         {
@@ -144,12 +143,12 @@ class ReportTasks
      */
     static function run_php_loc_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
-        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
-        $phploc = eZExtBuilder::getTool( 'phploc', $opts, true );
+        $opts = self::getOpts( @$args[0], $cliopts );
+        $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
+        $phploc = self::getTool( 'phploc', $opts, true );
 
         $out = pake_sh( "$phploc -n " .
-            escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+            escapeshellarg( self::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
 
         pake_mkdirs( $destdir );
         pake_write_file( $destdir . '/phploc.txt', $out, true );
@@ -160,16 +159,16 @@ class ReportTasks
      */
     static function run_php_pdepend_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
-        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
-        $pdepend = eZExtBuilder::getTool( 'pdepend', $opts, true );
+        $opts = self::getOpts( @$args[0], $cliopts );
+        $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
+        $pdepend = self::getTool( 'pdepend', $opts, true );
 
         pake_mkdirs( $destdir );
         $out = pake_sh( $pdepend .
-            " --jdepend-chart=" . escapeshellarg( eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'] . '/jdependchart.svg' ) .
-            " --overview-pyramid=" . escapeshellarg( eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'] . '/overview-pyramid.svg' ) .
-            " --summary-xml=" . escapeshellarg( eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'] . '/summary.xml' ) .
-            " " . escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+            " --jdepend-chart=" . escapeshellarg( self::getReportDir( $opts ) . '/' . $opts['extension']['name'] . '/jdependchart.svg' ) .
+            " --overview-pyramid=" . escapeshellarg( self::getReportDir( $opts ) . '/' . $opts['extension']['name'] . '/overview-pyramid.svg' ) .
+            " --summary-xml=" . escapeshellarg( self::getReportDir( $opts ) . '/' . $opts['extension']['name'] . '/summary.xml' ) .
+            " " . escapeshellarg( self::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
     }
 
     /**
@@ -177,12 +176,12 @@ class ReportTasks
      */
     static function run_dead_code_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
-        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
-        $phpdcd = eZExtBuilder::getTool( 'phpdcd', $opts, true );
+        $opts = self::getOpts( @$args[0], $cliopts );
+        $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
+        $phpdcd = self::getTool( 'phpdcd', $opts, true );
 
         $out = pake_sh( "$phpdcd " .
-            escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+            escapeshellarg( self::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
 
         pake_mkdirs( $destdir );
         pake_write_file( $destdir . '/phpdcd.txt', $out, true );

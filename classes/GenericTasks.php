@@ -9,23 +9,21 @@
 
 namespace eZExtBuilder;
 
-use eZExtBuilder\Builder as eZExtBuilder;
 use pakeApp;
 
-class GenericTasks
+class GenericTasks extends Builder
 {
     static function run_default( $task=null, $args=array(), $cliopts=array() )
     {
-        pake_echo ( "eZ Extension Builder ver." . eZExtBuilder::VERSION .
-            "\n\nSyntax: ezextbuilder [--\$general-options] \$task [\$extension] [--\$task-options].\n" .
+        pake_echo ( "eZ Extension Builder ver." . self::VERSION .
+            "\n\nSyntax: ezextbuilder [--\$pake-options] \$task [\$extension] [--\$general-options] [--\$task-options].\n" .
             "  If no extension name is provided, a default configuration file will be searched for.\n" .
             "  General options:\n" .
             "    --config-dir=\$dir             to be used instead of ./pake\n" .
             "    --config-file=\$file           to be used instead of ./pake/options-\$ext.yaml\n" .
             "    --user-config-file=\$file      to be used instead of ./pake/options-user.yaml\n" .
             "    --option.\$option.\$name=\$value to override any configuration setting\n" .
-            "    -...                          options for modifying behaviour of the pake tool\n" .
-            "  Run: ezextbuilder help to learn about the general options for pake.\n" .
+            "  Run: ezextbuilder help to learn about the options for pake.\n" .
             "  Run: ezextbuilder --tasks to learn more about available tasks.\n"
         );
     }
@@ -35,7 +33,7 @@ class GenericTasks
      */
     static function run_tool_version( $task=null, $args=array(), $cliopts=array() )
     {
-        pake_echo( "eZ Extension Builder ver." . eZExtBuilder::VERSION . "\nRunning on pake " . pakeApp::VERSION );
+        pake_echo( "eZ Extension Builder ver." . self::VERSION . "\nRunning on pake " . pakeApp::VERSION );
     }
 
     /**
@@ -43,7 +41,7 @@ class GenericTasks
      */
     static function run_show_properties( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], $cliopts );
         pake_echo ( print_r( $opts, true ) );
     }
 
@@ -52,17 +50,18 @@ class GenericTasks
      */
     static function run_list_extensions( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = eZExtBuilder::getAvailableExtNames();
-        switch( count( $opts ) )
+        self::setConfigDir( $cliopts );
+        $exts = self::getAvailableExtNames();
+        switch( count( $exts ) )
         {
             case 0:
                 pake_echo ( 'Available extensions: -' );
                 break;
             case 1:
-                pake_echo ( 'Available extensions: ' . $opts[0] . ' (default)' );
+                pake_echo ( 'Available extensions: ' . $exts[0] . ' (default)' );
                 break;
             default:
-                pake_echo ( 'Available extensions: ' . implode( ', ', $opts ) );
+                pake_echo ( 'Available extensions: ' . implode( ', ', $exts ) );
         }
     }
 
@@ -73,13 +72,14 @@ class GenericTasks
      */
     static function run_generate_extension_config( $task=null, $args=array(), $cliopts=array() )
     {
+        self::setConfigDir( $cliopts );
         $overwrite = @$cliopts['overwrite-existing'];
         if ( count( $args ) == 0 )
         {
             throw new pakeException( "Missing extension name" );
         }
         $extname = $args[0];
-        $configfile = eZExtBuilder::getOptionsDir() . "/options-$extname.yaml";
+        $configfile = self::getOptionsDir() . "/options-$extname.yaml";
         if ( file_exists( $configfile ) && ! $overwrite )
         {
             pake_echo( "File $configfile already exists. Must overwrite it to continue" );
@@ -89,8 +89,8 @@ class GenericTasks
                 return;
             }
         }
-        pake_mkdirs( eZExtBuilder::getOptionsDir() );
-        pake_copy( __DIR__ . '/../options-sample.yaml', $configfile, array( 'override' => true ) );
+        pake_mkdirs( self::getOptionsDir() );
+        pake_copy( self::getResourceDir() . '/options-sample.yaml', $configfile, array( 'override' => true ) );
         pake_echo( "Created file $configfile, now go and edit it" );
     }
 
@@ -102,6 +102,7 @@ class GenericTasks
      */
     static function run_download_extension_config( $task=null, $args=array(), $cliopts=array() )
     {
+        self::setConfigDir( $cliopts );
         $overwrite = @$cliopts['overwrite-existing'];
         if ( count( $args ) == 0 )
         {
@@ -142,7 +143,7 @@ class GenericTasks
 
             pake_echo ( "Scm system found: $source" );
 
-            $targetfile = eZExtBuilder::getOptionsDir() . "/options-$extname.yaml";
+            $targetfile = self::getOptionsDir() . "/options-$extname.yaml";
             if ( $source == 'github' )
             {
                 $branch = 'master';
@@ -188,7 +189,7 @@ class GenericTasks
         /// @todo check that $extconf is a valid yaml file with minimal params
         $extconf = pake_read_file( $exturl );
 
-        $configfile = eZExtBuilder::getOptionsDir() . "/options-$extname.yaml";
+        $configfile = self::getOptionsDir() . "/options-$extname.yaml";
         if ( file_exists( $configfile ) && ! $overwrite )
         {
             pake_echo( "File $configfile already exists. Must overwrite it to continue" );
@@ -198,7 +199,7 @@ class GenericTasks
                 return;
             }
         }
-        pake_mkdirs( eZExtBuilder::getOptionsDir() );
+        pake_mkdirs( self::getOptionsDir() );
         pake_write_file( $configfile, $extconf, true );
     }
 
@@ -209,8 +210,8 @@ class GenericTasks
     /*
     static function run_update_extension_config( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = eZExtBuilder::getOpts( @$args[0] );
-        $destfile = eZExtBuilder::getOptionsDir() . "/options-.yaml";
+        $opts = self::getOpts( @$args[0] );
+        $destfile = self::getOptionsDir() . "/options-.yaml";
         if ( @$opts['svn']['url'] != '' )
         {
             pake_echo( 'Updating yaml config from SVN repository' );
@@ -257,6 +258,7 @@ class GenericTasks
      */
     static function run_convert_configuration( $task=null, $args=array(), $cliopts=array() )
     {
+        self::setConfigDir( $cliopts );
         $extname = @$args[0];
         if ( $extname == '' )
         {
@@ -271,9 +273,9 @@ class GenericTasks
             }
         }
 
-        eZExtBuilder::convertPropertyFileToYamlFile(
+        self::convertPropertyFileToYamlFile(
             "ant/$extname.properties",
-            eZExtBuilder::getConfigDir() . "/options-$extname.yaml",
+            self::getConfigDir() . "/options-$extname.yaml",
             array( $extname => '', 'external' => 'dependencies', 'dependency' => 'extensions', 'repository' => array( 'svn', 'url' ) ),
             "extension:\n    name: $extname\n\n" );
 
@@ -287,7 +289,7 @@ class GenericTasks
                 if ( count( $in = file( $src, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES ) ) )
                 {
                     $in = "\n\nfiles:\n    $option: [" . implode( ', ', $in ) . "]\n";
-                    file_put_contents( eZExtBuilder::getConfigDir() . "options-$extname.yaml", $in, FILE_APPEND );
+                    file_put_contents( self::getConfigDir() . "options-$extname.yaml", $in, FILE_APPEND );
                 }
             }
         }

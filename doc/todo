@@ -2,6 +2,9 @@
 
 . test running report generation tasks against ezp (5, legacy, community) instead of an extension
 
+. add some locks to avoid non-reentrant operations (such as init) to execute in parallel.
+  This is a step on the way to make this tool usable on a build server, triggered by commits
+
 . when looking around for composer dirs, test value of COMPOSER_XXX env vars (see http://getcomposer.org/doc/03-cli.md#composer-home)
 
 . rewrite fat_dist task not to use eZComponents for creating the tarball
@@ -13,7 +16,7 @@
 . allow to build many extensions in a single call
   (workaround: use extension dependencies with a fake 'root' extension)
 
-. add more detailed documentation of expected coding/file layouts standards
+. add more detailed documentation of expected coding/file layouts standards for extensions
 
 . copy task names from http://jenkins-php.org/, composer (as duplicate names for current tasks)
 
@@ -29,10 +32,10 @@
   - translation checking (see eg. checks done in ez 4.5+ cli script)
   - hhvm-wrapper?
   - yui-something? (look at ezcs)
-  
-. add more metrics-generating tasks? See f.e. phpqatools.org, http://jenkins-php.org/
 
 . add support for launching testsuite tests => needs a full-fledged ez installation ?
+
+. add more metrics-generating tasks? See f.e. phpqatools.org, http://jenkins-php.org/
 
 . add a task to generate .sql files from .dba ones (needs an ez installation)
 
@@ -48,15 +51,15 @@
 
 . add tasks to generate sample ezinfo.php and extension.xml files
 
-. add task that displays the tool's own changelog
+. add task that displays the tool's own changelog (or as an option to the tool-version task)
 
 . add an apply-patch task to apply patch files at build time (???)
 
 # improve tasks
 
 . all report tasks:
-  . allow exclusion of directories
-  . allow usage of "stdout" as directory for output
+  . allow exclusion of directories from code analysis
+  . allow usage of "stdout" as directory for outputting reports
 
 . init task that starts with a file untar
 

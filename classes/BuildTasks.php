@@ -561,6 +561,16 @@ class BuildTasks extends Builder
     }
 
     /**
+     * Runs all code compliance checks.
+     *
+     * We rely on the pake dependency system to do the real stuff
+     * (run pake -P to see tasks included in this one)
+     */
+    static function run_code_checks( $task=null, $args=array(), $cliopts=array() )
+    {
+    }
+
+    /**
      * Checks if a schema.sql file is present for any supported database (or none at all)
      *
      * The accepted directory structure is:

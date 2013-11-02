@@ -61,11 +61,14 @@ pake_task( 'eZExtBuilder\BuildTasks::all',
     'build', 'dist', 'build-dependencies' );
 
 pake_task( 'eZExtBuilder\BuildTasks::build',
-    'init', 'check-php-files', 'check-templates', 'check-sql-files', 'check-gnu-files',
+    'init', 'code-checks',
     'update-ezinfo', 'update-license-headers', 'update-extra-files', 'update-package-xml',
     'generate-documentation', 'generate-md5sums', 'generate-package-filelist' );
 
 pake_task( 'eZExtBuilder\BuildTasks::init' );
+
+pake_task( 'eZExtBuilder\BuildTasks::code-checks',
+    'check-php-files', 'check-templates', 'check-sql-files', 'check-gnu-files' );
 
 pake_task( 'eZExtBuilder\BuildTasks::check-php-files' );
 
@@ -125,7 +128,7 @@ pake_task( 'eZExtBuilder\ReportTasks::copy-paste-report' );
 pake_task( 'eZExtBuilder\ReportTasks::dead-code-report' );
 
 pake_task( 'eZExtBuilder\ReportTasks::code-metrics-reports',
-    'php-loc-report' );
+    'php-loc-report', 'php-pdepend-report' );
 
 pake_task( 'eZExtBuilder\ReportTasks::php-loc-report' );
 

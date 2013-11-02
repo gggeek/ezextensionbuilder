@@ -2,11 +2,11 @@ Changes for version 0.5 - released 2013/xx/yy
 
 *General:
 - upped requirements to php 5.3. Your extensions can still run on legacy php, please use a modern php on the build server
-- the preferred installation method of the tool itself is now via composer. No more self-update or bootstrap!
+- the supported installation method of the tool itself is now via composer. No more self-update or bootstrap!
   (this also means we rely on the standard pake, and do not bundle it anymore)
   Note that the preferred directory layout has now changed. See the README file for more details
 - added 2 new tasks to check validity of any .tpl and .php file found. Active by default as part of "build" task
-- added a new task: list-extensions. It lists all extensions which can be built (because they have a config file avaiable)
+- added a new task: list-extensions. It lists all extensions which can be built (because they have a config file available)
 - added a new task: tool-version. It displays complete version info for the tool itself
 - added a new task: code-mess-report. It uses phpmd to generate a report, echoed by default on command line.
   You will need to add some new config lines to your options file for this to work properly, see options-sample.yaml
@@ -16,13 +16,16 @@ Changes for version 0.5 - released 2013/xx/yy
   NB: on windows this task has to be run with admin user the 1st time, because it needs to create a symlink
 - added a new task: copy-paste-report. It uses phpcpd to find traces of copy-pasted code
 - added a new task: code-quality-report. It incorporates all reports for coding standards / violations
-- added a new task: php-loc-report. It uses phploc to generate a code-size report.
+- added a new task: php-loc-report. It uses phploc to generate a code-size report
+- added a new task: php-pdepend-report. It uses pdepend to generate a code-metrics report (an xml file and 2 images).
 - added a new task: code-metrics-report. It incorporates all reports for code metrics
+- added a new task: code-checks. It groups all the code checks part of the "build" task
 - task show_properties now shows all the configured options, not just extension name and version
-- a local options file will be read if present: pake/options-$extension-user.yaml.
+- a local options file will be read if present: pake/options-user.yaml.
   This makes it easier to keep config files with things specific to current build server separate from generic build options
   which are generally commited to the source repository
 - all options from config file can now be overridden on command line, using --option.<name>.<suboption>.<etc>=value syntax
+- the directory where config files are stored can be changed using cli switch --config-dir=<dir>
 - no more need for eZComponents for creation of standard tarballs. You need tar and zip cli tools installed
 - we now avoid packing composer.json and composer.phar in the build artifacts
 

@@ -110,19 +110,22 @@ pake_task( 'eZExtBuilder\BuildTasks::clean' );
 pake_task( 'eZExtBuilder\BuildTasks::dist-clean' );
 
 
+pake_task( 'eZExtBuilder\ReportTasks::all-code-reports',
+    'code-quality-reports', 'code-metrics-reports' );
+
+pake_task( 'eZExtBuilder\ReportTasks::code-quality-reports',
+    'coding-style-report', 'code-mess-report', 'copy-paste-report' );
+
 pake_task( 'eZExtBuilder\ReportTasks::code-mess-report' );
 
 pake_task( 'eZExtBuilder\ReportTasks::coding-style-report' );
 
 pake_task( 'eZExtBuilder\ReportTasks::copy-paste-report' );
 
-pake_task( 'eZExtBuilder\ReportTasks::code-quality-reports',
-    'coding-style-report', 'code-mess-report', 'copy-paste-report' );
-
-pake_task( 'eZExtBuilder\ReportTasks::php-loc-report' );
-
 pake_task( 'eZExtBuilder\ReportTasks::code-metrics-reports',
     'php-loc-report' );
+
+pake_task( 'eZExtBuilder\ReportTasks::php-loc-report' );
 
 
 pake_task( 'eZExtBuilder\GenericTasks::tool-version' );

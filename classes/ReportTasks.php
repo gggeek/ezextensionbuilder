@@ -15,6 +15,16 @@ use pakeException;
 class ReportTasks
 {
     /**
+     * Generates all code reports (NB: this can take a while)
+     *
+     * We rely on the pake dependency system to do the real stuff
+     * (run pake -P to see tasks included in this one)
+     */
+    static function run_all_code_reports( $task=null, $args=array(), $cliopts=array() )
+    {
+    }
+
+    /**
      * Generates all code quality reports (NB: this can take a while)
      *
      * We rely on the pake dependency system to do the real stuff
@@ -50,7 +60,7 @@ class ReportTasks
             $out = preg_replace( '/^Problem executing command/', '', $e->getMessage() );
         }
         pake_mkdirs( $destdir );
-        pake_write_file( $destdir . '/phpmd.' . str_replace( 'text', 'txt', $opts['tools']['phpmd']['format'] ), $out );
+        pake_write_file( $destdir . '/phpmd.' . str_replace( 'text', 'txt', $opts['tools']['phpmd']['format'] ), $out, true );
     }
 
     /**
@@ -93,7 +103,7 @@ class ReportTasks
             $out = preg_replace( '/^Problem executing command/', '', $e->getMessage() );
         }
         pake_mkdirs( $destdir );
-        pake_write_file( $destdir . '/phpcs.txt', $out );
+        pake_write_file( $destdir . '/phpcs.txt', $out, true );
     }
 
     /**
@@ -116,7 +126,7 @@ class ReportTasks
             $out = preg_replace( '/^Problem executing command/', '', $e->getMessage() );
         }
         pake_mkdirs( $destdir );
-        pake_write_file( $destdir . '/phpcpd.txt', $out );
+        pake_write_file( $destdir . '/phpcpd.txt', $out, true );
     }
 
     /**
@@ -142,7 +152,7 @@ class ReportTasks
             escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
 
         pake_mkdirs( $destdir );
-        pake_write_file( $destdir . '/phploc.txt', $out );
+        pake_write_file( $destdir . '/phploc.txt', $out, true );
     }
 
 } 

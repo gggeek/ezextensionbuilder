@@ -4,5 +4,7 @@ ant/
 .idea/
 vendor/
 var/
+pake/*
+!pake/options-ezextensionbuilder.yaml
 composer.lock
 composer.phar

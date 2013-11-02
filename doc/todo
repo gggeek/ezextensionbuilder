@@ -1,13 +1,10 @@
-# to fix
+# general
 
-. rewrite fat_dist task not to use eZComponents for creating the tarball
-
-. simplify configuration for reports: only set 1 dir for all outputs
-. allow config file to specify doc dir for plain docs
 . test running report generation tasks against ezp (5, legacy, community) instead of an extension
+
 . when looking around for composer dirs, test value of COMPOSER_XXX env vars (see http://getcomposer.org/doc/03-cli.md#composer-home)
 
-# general
+. rewrite fat_dist task not to use eZComponents for creating the tarball
 
 . ezfind: should not pack manual in odf format => improve exclude list w. depth
 
@@ -18,9 +15,7 @@
 
 . add more detailed documentation of expected coding/file layouts standards
 
-. move all the business logic in php classes outside of pakefile.php
-
-. copy task names from http://jenkins-php.org/ (as duplicate names for current tasks)
+. copy task names from http://jenkins-php.org/, composer (as duplicate names for current tasks)
 
 . add support for different dir schemas for extensions providing packages? nb: better if we can do it without that...
 
@@ -40,7 +35,7 @@
 
 . add support for launching testsuite tests => needs a full-fledged ez installation ?
 
-. add a task to generate .sql files from .dba ones
+. add a task to generate .sql files from .dba ones (needs an ez installation)
 
 . changelog generation task: if it's not there, build it from git/svn commit messages
   (also update ez package with that info)
@@ -60,7 +55,9 @@
 
 # improve tasks
 
-. all report tasks: allow exclusion of directories
+. all report tasks:
+  . allow exclusion of directories
+  . allow usage of "stdout" as directory for output
 
 . pakefile download task: allow silent overwrite (for updates)
 

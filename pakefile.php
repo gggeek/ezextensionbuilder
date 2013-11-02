@@ -26,9 +26,9 @@
 if ( !function_exists( 'pake_task' ) )
 {
     require( __DIR__ . '/pakefile_bootstrap.php' );
-    exit;
 }
-
+else
+{
 
 // This is unfortunately a necessary hack: ideally we would always check for
 // proper pake version, but version 0.1 of this extension was
@@ -42,7 +42,7 @@ if ( !function_exists( 'pake_task' ) )
 // also does not come with proper version tag...
 if ( !( isset( $GLOBALS['internal_pake'] ) && $GLOBALS['internal_pake'] ) )
 {
-    pake_require_version( eZExtBuilder\Builder::$min_pake_version );
+    pake_require_version( eZExtBuilder\Builder::MIN_PAKE_VERSION );
 }
 
 // *** declaration of the pake tasks ***
@@ -136,3 +136,5 @@ pake_task( 'eZExtBuilder\GenericTasks::generate-extension-config' );
 pake_task( 'eZExtBuilder\GenericTasks::download-extension-config' );
 
 pake_task( 'eZExtBuilder\GenericTasks::convert-configuration' );
+
+}

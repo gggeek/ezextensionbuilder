@@ -20,9 +20,12 @@ class GenericTasks
             "\n\nSyntax: ezextbuilder [--\$general-options] \$task [\$extension] [--\$task-options].\n" .
             "  If no extension name is provided, a default configuration file will be searched for.\n" .
             "  General options:\n" .
+            "    --config-dir=\$dir             to be used instead of ./pake\n" .
             "    --config-file=\$file           to be used instead of ./pake/options-\$ext.yaml\n" .
             "    --user-config-file=\$file      to be used instead of ./pake/options-user.yaml\n" .
             "    --option.\$option.\$name=\$value to override any configuration setting\n" .
+            "    -...                           options for modifying behaviour of the pake tool\n" .
+            "  Run: ezextbuilder help to learn about the general options for pake.\n" .
             "  Run: ezextbuilder --tasks to learn more about available tasks.\n"
         );
     }
@@ -32,7 +35,7 @@ class GenericTasks
      */
     static function run_tool_version( $task=null, $args=array(), $cliopts=array() )
     {
-        pake_echo( "eZ Extension Builder ver." . eZExtBuilder::$version . "\nRunning on pake " . pakeApp::VERSION );
+        pake_echo( "eZ Extension Builder ver." . eZExtBuilder::VERSION . "\nRunning on pake " . pakeApp::VERSION );
     }
 
     /**

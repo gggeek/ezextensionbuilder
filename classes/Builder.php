@@ -18,8 +18,9 @@ class Builder
 
     static $options = null;
     static $defaultExt = null;
-    static $version = '0.5.0-dev';
-    static $min_pake_version = '1.7.4';
+    protected static $options_dir = 'pake';
+    const VERSION = '0.5.0-dev';
+    const MIN_PAKE_VERSION = '1.7.4';
 
     static function getBuildDir( $opts )
     {
@@ -31,9 +32,14 @@ class Builder
         return $dir;
     }
 
+    static function getReportDir( $opts )
+    {
+        return $opts['report']['dir'];
+    }
+
     static function getOptionsDir()
     {
-        return 'pake';
+        return self::$options_dir;
     }
 
     /**
@@ -85,7 +91,7 @@ class Builder
         }
         else
         {
-            throw new pakeException( "Multiple configuration files $optsDir/options-*.yaml found, need to specify an extension name to continue" );
+            throw new pakeException( "Multiple configuration files $optsDir/options-*.yaml found, need to specify an extension name to continue\n(run ezextbuilder list-extensions for a list of available extensions)" );
         }
     }
 
@@ -109,6 +115,15 @@ class Builder
      */
     static function getOpts( $extname='', $cliopts = array() )
     {
+        if ( isset( $cliopts['config-dir'] ) )
+        {
+            if( !is_dir( $cliopts['config-dir'] ) )
+            {
+                throw new PakeOption( "Could not find configuration-file directory {$cliopts['config-dir']}" );
+            }
+            self::$options_dir = $cliopts['config-dir'];
+        }
+
         if ( $extname == '' )
         {
             $extname = self::getDefaultExtName();
@@ -131,6 +146,10 @@ class Builder
             if ( isset( $cliopts['user-config-file'] ) )
             {
                 $usercfgfile = $cliopts['user-config-file'];
+                if ( !is_file( $cliopts['user-config-file'] ) )
+                {
+                    throw new PakeOption( "Could not find user-configuration-file {$cliopts['user-config-file']}" );
+                }
             }
             else
             {
@@ -172,6 +191,7 @@ class Builder
         $default_opts = array(
             'build' => array( 'dir' => 'build' ),
             'dist' => array( 'dir' => 'dist' ),
+            'report' => array( 'dir' => 'dist/report' ),
             'create' => array( 'tarball' => false, 'zip' => false, 'filelist_md5' => true, 'doxygen_doc' => false, 'ezpackage' => false, 'pearpackage' => false ),
             'version' => array( 'license' => 'GNU General Public License v2.0' ),
             'releasenr' => array( 'separator' => '-' ),

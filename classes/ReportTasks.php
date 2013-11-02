@@ -30,6 +30,7 @@ class ReportTasks
     static function run_code_mess_report( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
         $phpmd = eZExtBuilder::getTool( 'phpmd', $opts, true );
         /*$out = '';
         if ( $opts['tools']['phpmd']['report']  != '' )
@@ -38,7 +39,7 @@ class ReportTasks
         }*/
         try
         {
-            // phpmd will exit with a non-0 value aws soon as there is any violation (which generates an exception in pake_sh),
+            // phpmd will exit with a non-0 value as soon as there is any violation (which generates an exception in pake_sh),
             // but we do not consider this a fatal error, as we are only generating reports
             $out  = pake_sh( "$phpmd " . escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) . " " .
                 escapeshellarg( $opts['tools']['phpmd']['format'] ) . " " .
@@ -48,14 +49,8 @@ class ReportTasks
         {
             $out = preg_replace( '/^Problem executing command/', '', $e->getMessage() );
         }
-        if ( $opts['tools']['phpmd']['report']  != '' )
-        {
-            pake_write_file( $opts['tools']['phpmd']['report'], $out );
-        }
-        else
-        {
-            echo $out;
-        }
+        pake_mkdirs( $destdir );
+        pake_write_file( $destdir . '/phpmd.' . str_replace( 'text', 'txt', $opts['tools']['phpmd']['format'] ), $out );
     }
 
     /**
@@ -65,6 +60,7 @@ class ReportTasks
     static function run_coding_style_report( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
         $phpcs = eZExtBuilder::getTool( 'phpcs', $opts, true );
 
         // in case we use the standard rule set, try to install it (after composer has downloaded it)
@@ -82,19 +78,22 @@ class ReportTasks
             }
         }
 
-        $out = pake_sh( "$phpcs --standard=" . escapeshellarg( $opts['tools']['phpcs']['rules'] ) . " " .
-            "--report=" . escapeshellarg( $opts['tools']['phpcs']['format'] ) . " " .
-            // if we do not filter on php files, phpcs can go in a loop trying to parse tpl files
-            "--extensions=php " . /*"--encoding=utf8 " .*/
-            escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
-        if ( $opts['tools']['phpcs']['report']  != '' )
+        // phpcs will exit with a non-0 value as soon as there is any violation (which generates an exception in pake_sh),
+        // but we do not consider this a fatal error, as we are only generating reports
+        try
         {
-            pake_write_file( $opts['tools']['phpcs']['report'], $out );
+            $out = pake_sh( "$phpcs --standard=" . escapeshellarg( $opts['tools']['phpcs']['rules'] ) . " " .
+                "--report=" . escapeshellarg( $opts['tools']['phpcs']['format'] ) . " " .
+                // if we do not filter on php files, phpcs can go in a loop trying to parse tpl files
+                "--extensions=php " . /*"--encoding=utf8 " .*/
+                escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
         }
-        else
+        catch ( pakeException $e )
         {
-            echo out;
+            $out = preg_replace( '/^Problem executing command/', '', $e->getMessage() );
         }
+        pake_mkdirs( $destdir );
+        pake_write_file( $destdir . '/phpcs.txt', $out );
     }
 
     /**
@@ -103,8 +102,9 @@ class ReportTasks
     static function run_copy_paste_report( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
         $phpcpd = eZExtBuilder::getTool( 'phpcpd', $opts, true );
-        // phpcpd will exit with a non-0 value aws soon as there is any violation (which generates an exception in pake_sh),
+        // phpcpd will exit with a non-0 value as soon as there is any violation (which generates an exception in pake_sh),
         // but we do not consider this a fatal error, as we are only generating reports
         try
         {
@@ -115,14 +115,8 @@ class ReportTasks
         {
             $out = preg_replace( '/^Problem executing command/', '', $e->getMessage() );
         }
-        if ( $opts['tools']['phpcpd']['report']  != '' )
-        {
-            pake_write_file( $opts['tools']['phpcpd']['report'], $out );
-        }
-        else
-        {
-            echo out;
-        }
+        pake_mkdirs( $destdir );
+        pake_write_file( $destdir . '/phpcpd.txt', $out );
     }
 
     /**
@@ -141,19 +135,14 @@ class ReportTasks
     static function run_php_loc_report( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = eZExtBuilder::getOpts( @$args[0], $cliopts );
+        $destdir = eZExtBuilder::getReportDir( $opts ) . '/' . $opts['extension']['name'];
         $phploc = eZExtBuilder::getTool( 'phploc', $opts, true );
 
         $out = pake_sh( "$phploc -n " .
             escapeshellarg( eZExtBuilder::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
 
-        if ( $opts['tools']['phploc']['report']  != '' )
-        {
-            pake_write_file( $opts['tools']['phploc']['report'], $out );
-        }
-        else
-        {
-            echo out;
-        }
+        pake_mkdirs( $destdir );
+        pake_write_file( $destdir . '/phploc.txt', $out );
     }
 
 } 

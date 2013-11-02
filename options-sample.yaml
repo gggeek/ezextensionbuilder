@@ -59,7 +59,7 @@ git:
     url:
     branch:
 
-# If the source is on a local folder
+# If the source is in a local folder
 file:
     url:
 
@@ -114,6 +114,8 @@ build:
     dir: build
 dist:
     dir: dist
+report:
+    dir: dist/reports
 
 # separator char used between version-minor and release numbers. Defaults to '-' if unspecified
 releasenr:
@@ -133,17 +135,13 @@ tools:
     phpmd:
         # leave empty to use the one installed with composer
         binary:
-        # leave empty for sending output to stderr, otherwise save it in this file
-        report:
         rules: cleancode,codesize,controversial,design,naming,unusedcode
         # can be: text, html
-        format: text
+        format: html
 
     phpcs:
         # leave empty to use the one installed with composer
         binary:
-        # leave empty for sending output to stderr, otherwise save it in this file
-        report:
         # can be: "full", "xml", "checkstyle", "csv", "json", "emacs", "source", "summary", "svnblame",
         # "gitblame", "hgblame", "notifysend"
         format: full
@@ -153,14 +151,10 @@ tools:
     phploc:
         # leave empty to use the one installed with composer
         binary:
-        # leave empty for sending output to stderr, otherwise save it in this file
-        report:
 
     phpcpd:
         # leave empty to use the one installed with composer
         binary:
-        # leave empty for sending output to stderr, otherwise save it in this file
-        report:
 
     csslint:
 

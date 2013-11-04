@@ -8,7 +8,8 @@
  * Known limitations:
  * - very simple algorithm - does not prevent writer starvation
  * - acquire() is all but atomic; we should do some stress testing to see how we fare
- * - killing processes and bad coding will leave lock files on disk. This is why we have a cleanup() function
+ * - killing processes or bad coding will leave lock files on disk. This is why we have a cleanup() function
+ * - not really thread safe (esp. if user code tries to acquire 2 R locks on same token at same time in different threads)
  *
  * @author    G. Giunta
  * @copyright (C) G. Giunta 2013
@@ -23,8 +24,10 @@ class SharedLock
     static $cleanedUp = false;
 
     /**
-     * Returns true if the given task for the given extension has not already been locked
-     * If no task name is passed, the lock will block any task for this extension (iff the 2nd task checks for locks, of course).
+     * Returns true if the lock is acquired for the given token (no waiting here).
+     * A Write lock can only be acquired as long as there are no W or R locks.
+     * A Read lock can be acquired as long as there are no W locks.
+     * Does not not complain if 2 Read locks are taken on the same token by the same php script.
      *
      * @param string $token
      * @param int $mode LOCK_SH (reader) or LOCK_EX (writer)
@@ -70,6 +73,7 @@ class SharedLock
         // assume a read lock
         $rLockFile = "$lockDir/{$token}_R/" . getmypid() . ".lock";
         pake_mkdirs( "$lockDir/{$token}_R/" );
+        // we assume to be running in single-thread mode: do not lock the file for writing
         if ( !file_put_contents( $rLockFile, getmypid() /*. ' ' . $task*/ ) )
         {
             // log some error?

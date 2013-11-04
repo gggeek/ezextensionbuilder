@@ -1,9 +1,6 @@
 # general
 
-. test running report generation tasks against ezp (5, legacy, community) instead of an extension
-
-. add some locks to avoid non-reentrant operations (such as init) to execute in parallel.
-  This is a step on the way to make this tool usable on a build server, triggered by commits
+. test running report generation tasks against ezp (5, community) instead of an extension
 
 . when looking around for composer dirs, test value of COMPOSER_XXX env vars (see http://getcomposer.org/doc/03-cli.md#composer-home)
 
@@ -22,6 +19,9 @@
 
 . add support for different dir schemas for extensions providing packages? nb: better if we can do it without that...
 
+. improve locking schema to avoid non-reentrant operations (such as init) to execute in parallel:
+  at the moment we only protect access to the "build" dir, not to the "pake" or "dist" ones
+
 # new tasks
 
 . add more code quality checks (possibly from other extensions/tools/packages)
@@ -32,10 +32,12 @@
   - translation checking (see eg. checks done in ez 4.5+ cli script)
   - hhvm-wrapper?
   - yui-something? (look at ezcs)
+  - scrutinizer-ci/php-analyzer (needs php 4)
+  - sensiolabs/security-checker /needs composer.lock of main project)
 
 . add support for launching testsuite tests => needs a full-fledged ez installation ?
 
-. add more metrics-generating tasks? See f.e. phpqatools.org, http://jenkins-php.org/
+. add more metrics-generating tasks? See f.e. phpqatools.org, http://jenkins-php.org/, https://scrutinizer-ci.com/docs/
 
 . add a task to generate .sql files from .dba ones (needs an ez installation)
 
@@ -54,6 +56,8 @@
 . add task that displays the tool's own changelog (or as an option to the tool-version task)
 
 . add an apply-patch task to apply patch files at build time (???)
+
+. write into extension (where?) the git/svn revision
 
 # improve tasks
 

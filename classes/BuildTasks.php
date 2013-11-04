@@ -37,6 +37,9 @@ class BuildTasks extends Builder
             pake_mkdirs( self::getBuildDir( $opts ) );
 
             $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
+
+            if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
+                throw new PakeException( "Source code locked by another process" );
         }
 
         if ( ! $skip_init_fetch )
@@ -73,6 +76,7 @@ class BuildTasks extends Builder
                 $files = pakeFinder::type( 'any' )->in( $opts['file']['url'] );
                 if ( count( $files ) == 0 )
                 {
+                    SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
                     throw new pakeException( "Empty source repo option: no files found in {$opts['file']['url']}" );
                 }
 
@@ -80,6 +84,7 @@ class BuildTasks extends Builder
             }
             else
             {
+                SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
                 throw new pakeException( "Missing source repo option: either svn:url, git:url or file:url" );
             }
         }
@@ -131,6 +136,8 @@ class BuildTasks extends Builder
                     pake_remove( $file, '' );
                 }
             }
+
+            SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
         }
     }
 
@@ -150,7 +157,12 @@ class BuildTasks extends Builder
     static function run_clean( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         pake_remove_dir( $opts['build']['dir'] );
+
+        SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
     }
 
     /**
@@ -164,6 +176,9 @@ class BuildTasks extends Builder
         $opts = self::getOpts( @$args[0], $cliopts );
         if ( $opts['create']['tarball'] || $opts['create']['zip'] || $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
         {
+            if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
+                throw new PakeException( "Source code locked by another process" );
+
             pake_mkdirs( $opts['dist']['dir'] );
             $rootpath = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
 
@@ -231,6 +246,7 @@ class BuildTasks extends Builder
                 }
             }
 
+            SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
         }
     }
 
@@ -245,6 +261,8 @@ class BuildTasks extends Builder
 
     /**
      * Builds dependent extensions
+     *
+     * @todo add locking support
      */
     static function run_build_dependencies( $task=null, $args=array(), $cliopts=array() )
     {
@@ -300,6 +318,8 @@ class BuildTasks extends Builder
 
     /**
      * Creates a tarball of all extensions in the build/ directory
+     *
+     * @todo add locking support
      */
     static function run_fat_dist( $task=null, $args=array(), $cliopts=array() )
     {
@@ -358,6 +378,9 @@ class BuildTasks extends Builder
     static function run_update_ezinfo( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
 
         $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->maxdepth( 0 )->in( $destdir );
@@ -375,6 +398,8 @@ class BuildTasks extends Builder
                 '#^([\s]{1,8}<license>)([^<]*)(</license>\r?\n?)#m' => '${1}' . htmlspecialchars( $opts['version']['license'] ) . '$3',
                 '#^([\s]{1,8}<copyright>)Copyright \(C\) 1999-[\d]{4} eZ Systems AS(</copyright>\r?\n?)#m' => '${1}' . 'Copyright (C) 1999-' . strftime( '%Y' ). ' eZ Systems AS' . '$2' ),
             1 );
+
+        SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
     }
 
     /**
@@ -392,12 +417,17 @@ class BuildTasks extends Builder
     static function run_update_license_headers( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
         $files = pakeFinder::type( 'file' )->name( array( '*.php', '*.css', '*.js' ) )->in( $destdir );
         pake_replace_regexp( $files, $destdir, array(
             '#// SOFTWARE RELEASE: (.*)#m' => '// SOFTWARE RELEASE: ' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
             '/Copyright \(C\) 1999-[\d]{4} eZ Systems AS/m' => 'Copyright (C) 1999-' . strftime( '%Y' ). ' eZ Systems AS',
             '#(.*@version )//autogentag//(\r?\n?)#m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$2' ) );
+
+        SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
     }
 
     /**
@@ -407,6 +437,9 @@ class BuildTasks extends Builder
     static function run_update_extra_files( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
         $extrafiles = $opts['files']['to_parse'];
         //$files = pakeFinder::type( 'file' )->name( $extrafiles )->in( $destdir );
@@ -420,6 +453,8 @@ class BuildTasks extends Builder
             $tokens['EXTENSION_PUBLISH_VERSION'] = $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release'];
         }
         pake_replace_tokens( $files, $destdir, '[', ']', $tokens );
+
+        SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
     }
 
     /**
@@ -439,6 +474,9 @@ class BuildTasks extends Builder
     static function run_generate_documentation( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
         $docdir = $destdir . '/doc';
         $files = pakeFinder::type( 'file' )->name( '*.rst' )->in( $docdir );
@@ -480,6 +518,8 @@ class BuildTasks extends Builder
             $files = pakeFinder::type( 'file' )->name( array( '*.dot', '*.md5', '*.map', 'installdox' ) )->in( $docdir . '/api' );
             pake_remove( $files, '' );
         }
+
+        SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
     }
 
     /**
@@ -492,6 +532,9 @@ class BuildTasks extends Builder
         $opts = self::getOpts( @$args[0], $cliopts );
         if ( $opts['create']['filelist_md5'] )
         {
+            if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
+                throw new PakeException( "Source code locked by another process" );
+
             $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
             // make sure we do not add to checksum file the file itself
             @unlink( $destdir . '/share/filelist.md5'  );
@@ -505,6 +548,8 @@ class BuildTasks extends Builder
             pake_mkdirs( $destdir . '/share' );
             file_put_contents( $destdir . '/share/filelist.md5', implode( "\n", $out ) );
             pake_echo_action('file+', $destdir . '/share/filelist.md5' );
+
+            SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
         }
     }
 
@@ -519,6 +564,9 @@ class BuildTasks extends Builder
         $opts = self::getOpts( @$args[0], $cliopts );
         if ( $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
         {
+            if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
+                throw new PakeException( "Source code locked by another process" );
+
             $doc = new DOMDocument( '1.0', 'utf-8' );
             $doc->formatOutput = true;
 
@@ -557,6 +605,8 @@ class BuildTasks extends Builder
 
             $doc->save( self::getBuildDir( $opts ) . '/extension-' . $opts['extension']['name'] . '.xml' );
             pake_echo_action( 'file+', self::getBuildDir( $opts ) . '/extension-' . $opts['extension']['name'] . '.xml' );
+
+            SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
         }
     }
 
@@ -596,6 +646,9 @@ class BuildTasks extends Builder
     static function run_check_sql_files( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
 
         $schemafile = $opts['files']['sql_files']['db_schema'];
@@ -612,6 +665,7 @@ class BuildTasks extends Builder
             {
                 if ( filesize( $files[0] ) == 0 )
                 {
+                    SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
                     throw new pakeException( "Sql schema file {$files[0]} is empty. Please fix" );
                 }
                 $count++;
@@ -620,6 +674,7 @@ class BuildTasks extends Builder
         }
         if ( $count > 0 && $count < 4 )
         {
+            SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
             throw new pakeException( "Found some sql schema files but not all of them. Please fix" );
         }
 
@@ -637,6 +692,7 @@ class BuildTasks extends Builder
             {
                 if ( filesize( $files[0] ) == 0 )
                 {
+                    SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
                     throw new pakeException( "Sql data file {$files[0]} is empty. Please fix" );
                 }
                 $count++;
@@ -644,8 +700,11 @@ class BuildTasks extends Builder
         }
         if ( $count > 0 && $count < 4 )
         {
+            SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
             throw new pakeException( "Found some sql data files but not all of them. Please fix" );
         }
+
+        SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
     }
 
     /**
@@ -655,6 +714,9 @@ class BuildTasks extends Builder
     static function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
         if ( $opts['files']['gnu_dir'] )
         {
@@ -663,8 +725,11 @@ class BuildTasks extends Builder
         $files = pakeFinder::type( 'file' )->name( array( 'README', 'LICENSE' ) )->maxdepth( 0 )->in( $destdir );
         if ( count( $files ) != 2 )
         {
+            SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
             throw new pakeException( "README and/or LICENSE files missing. Please fix" );
         }
+
+        SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
     }
 
     /**
@@ -675,6 +740,9 @@ class BuildTasks extends Builder
     static function run_check_templates( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
         $files = pakeFinder::type( 'file' )->name( array( '*.tpl' ) )->maxdepth( 0 )->in( $destdir );
         if ( count( $files ) )
@@ -682,6 +750,7 @@ class BuildTasks extends Builder
             $php = self::getTool( 'php', $opts );
             if ( strpos( pake_sh( $php . " -v" ), 'PHP' ) === false )
             {
+                SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
                 throw new pakeException( "$php does not seem to be a valid php executable" );
             }
 
@@ -693,6 +762,7 @@ class BuildTasks extends Builder
             }
             if ( !file_exists( $ezp . '/bin/php/eztemplatecheck.php' ) )
             {
+                SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
                 throw new pakeException( "$ezp does not seem to be a valid eZ Publish install" );
             }
 
@@ -702,9 +772,12 @@ class BuildTasks extends Builder
             $out = pake_sh( "cd " . escapeshellarg( $ezp ) . " && " . escapeshellarg( $php ) . " bin/php/eztemplatecheck.php " . escapeshellarg( $rootpath ) );
             if ( strpos( $out, 'Some templates did not validate' ) !== false )
             {
+                SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
                 throw new pakeException( $out );
             }
         }
+
+        SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
     }
 
     /**
@@ -713,6 +786,9 @@ class BuildTasks extends Builder
     static function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
         $files = pakeFinder::type( 'file' )->name( array( '*.php' ) )->in( $destdir );
         if ( count( $files ) )
@@ -720,6 +796,7 @@ class BuildTasks extends Builder
             $php = self::getTool( 'php', $opts );
             if ( strpos( pake_sh( $php . " -v" ), 'PHP' ) === false )
             {
+                SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
                 throw new pakeException( "$php does not seem to be a valid php executable" );
             }
 
@@ -727,10 +804,13 @@ class BuildTasks extends Builder
             {
                 if ( strpos( pake_sh( $php . " -l " . escapeshellarg( $file ) ), 'No syntax errors detected' ) === false )
                 {
+                    SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
                     throw new pakeException( "$file does not seem to be a valid php file" );
                 }
             }
         }
+
+        SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
     }
 
     /**
@@ -741,6 +821,9 @@ class BuildTasks extends Builder
         /// @todo replace hostname, build time
 
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = $opts['build']['dir'];
         $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 0 )->in( $destdir );
         if ( count( $files ) == 1 )
@@ -776,6 +859,8 @@ class BuildTasks extends Builder
                 '$ezp_version' => $opts['ezp']['version']['major'] . '.' . $opts['ezp']['version']['minor'] . '.' . $opts['ezp']['version']['release']
             ) );
         }
+
+        SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
     }
 
     /**

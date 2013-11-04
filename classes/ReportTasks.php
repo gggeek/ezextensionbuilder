@@ -39,6 +39,9 @@ class ReportTasks extends Builder
     static function run_code_mess_report( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
         $phpmd = self::getTool( 'phpmd', $opts, true );
         /*$out = '';
@@ -60,6 +63,8 @@ class ReportTasks extends Builder
         }
         pake_mkdirs( $destdir );
         pake_write_file( $destdir . '/phpmd.' . str_replace( 'text', 'txt', $opts['tools']['phpmd']['format'] ), $out, true );
+
+        SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
     }
 
     /**
@@ -69,6 +74,9 @@ class ReportTasks extends Builder
     static function run_coding_style_report( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
         $phpcs = self::getTool( 'phpcs', $opts, true );
 
@@ -103,6 +111,8 @@ class ReportTasks extends Builder
         }
         pake_mkdirs( $destdir );
         pake_write_file( $destdir . '/phpcs.txt', $out, true );
+
+        SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
     }
 
     /**
@@ -111,6 +121,9 @@ class ReportTasks extends Builder
     static function run_copy_paste_report( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
         $phpcpd = self::getTool( 'phpcpd', $opts, true );
         // phpcpd will exit with a non-0 value as soon as there is any violation (which generates an exception in pake_sh),
@@ -126,6 +139,8 @@ class ReportTasks extends Builder
         }
         pake_mkdirs( $destdir );
         pake_write_file( $destdir . '/phpcpd.txt', $out, true );
+
+        SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
     }
 
     /**
@@ -144,6 +159,9 @@ class ReportTasks extends Builder
     static function run_php_loc_report( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
         $phploc = self::getTool( 'phploc', $opts, true );
 
@@ -152,6 +170,8 @@ class ReportTasks extends Builder
 
         pake_mkdirs( $destdir );
         pake_write_file( $destdir . '/phploc.txt', $out, true );
+
+        SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
     }
 
     /**
@@ -160,6 +180,9 @@ class ReportTasks extends Builder
     static function run_php_pdepend_report( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
         $pdepend = self::getTool( 'pdepend', $opts, true );
 
@@ -169,6 +192,8 @@ class ReportTasks extends Builder
             " --overview-pyramid=" . escapeshellarg( self::getReportDir( $opts ) . '/' . $opts['extension']['name'] . '/overview-pyramid.svg' ) .
             " --summary-xml=" . escapeshellarg( self::getReportDir( $opts ) . '/' . $opts['extension']['name'] . '/summary.xml' ) .
             " " . escapeshellarg( self::getBuildDir( $opts ) . '/' . $opts['extension']['name'] ) );
+
+        SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
     }
 
     /**
@@ -177,6 +202,9 @@ class ReportTasks extends Builder
     static function run_dead_code_report( $task=null, $args=array(), $cliopts=array() )
     {
         $opts = self::getOpts( @$args[0], $cliopts );
+        if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
+            throw new PakeException( "Source code locked by another process" );
+
         $destdir = self::getReportDir( $opts ) . '/' . $opts['extension']['name'];
         $phpdcd = self::getTool( 'phpdcd', $opts, true );
 
@@ -185,5 +213,7 @@ class ReportTasks extends Builder
 
         pake_mkdirs( $destdir );
         pake_write_file( $destdir . '/phpdcd.txt', $out, true );
+
+        SharedLock::release( $opts['extension']['name'], LOCK_SH, $opts );
     }
 } 

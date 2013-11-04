@@ -522,4 +522,46 @@ class Builder
         }
     }
 
+    /**
+     * Returns true if the given task for the given extension has not already been locked
+     * If no task name is passed, the lock will block any task for this extension (iff the 2nd task checks for locks, of course).
+     *
+     * @param string $extension
+     * @param $mode LOCK_SH (reader) or LOCK_EX (writer)
+     * @param array $opts
+     * @return bool
+     */
+    static function acquireLock( $extension, $mode, $opts=array() )
+    {
+        $lockFile = self::lockFileName( $extension, $task, $opts );
+        $extensionLockFile = self::lockFileName( $extension, '', $opts );
+        pake_mkdirs( dirname( $lockFile ) );
+        if ( file_exists( $lockFile ) || file_exists( $extensionLockFile ) )
+        {
+            return false;
+        }
+        if ( !file_put_contents( $lockFile, getmypid() . ' ' . time() ) )
+        {
+            return false;
+        }
+    }
+
+    static function releaseLock( $extension, $task='', $opts=array() )
+    {
+        $lockFile = self::lockFileName( $extension, $task, $opts );
+        if ( is_file(  $lockFile ) )
+        {
+            if ( !unlink( $lockFile ) )
+            {
+                // what to do here? echo an error msg but do not throw an exception
+                pake_echo_error( "Could not remove lock file '$lockFile'" );
+            }
+        }
+    }
+
+    static protected function lockFileName( $extension, $mode, $opts=array() )
+    {
+         return self::getBuildDir( $opts ) . '/locks/' . $extension . '_' . $task . '.lock';
+    }
+
 } 

@@ -46,7 +46,7 @@ class BuildTasks extends Builder
         {
             if ( @$opts['svn']['url'] != '' )
             {
-                pake_echo( 'Fetching code from SVN repository' );
+                pake_echo( "Fetching code from SVN repository {$opts['svn']['url']}" );
                 pakeSubversion::checkout( $opts['svn']['url'], $destdir );
                 /// @todo test that we got at least one file
                 if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
@@ -56,7 +56,7 @@ class BuildTasks extends Builder
             }
             else if ( @$opts['git']['url'] != '' )
             {
-                pake_echo( 'Fetching code from GIT repository' );
+                pake_echo( "Fetching code from GIT repository {$opts['git']['url']}" );
                 pakeGit::clone_repository( $opts['git']['url'], $destdir );
                 if ( @$opts['git']['branch'] != '' )
                 {
@@ -71,9 +71,9 @@ class BuildTasks extends Builder
             }
             else if ( @$opts['file']['url'] != '' )
             {
-                pake_echo( 'Fetching code from local repository' );
+                pake_echo( "Fetching code from local repository {$opts['file']['url']}" );
                 /// @todo (!important) exclude stuff we know we're going to delete immediately afterwards
-                $files = pakeFinder::type( 'any' )->in( $opts['file']['url'] );
+                $files = pakeFinder::type( 'any' )->relative()->in( $opts['file']['url'] );
                 if ( count( $files ) == 0 )
                 {
                     SharedLock::release( $opts['extension']['name'], LOCK_EX, $opts );
@@ -96,7 +96,7 @@ class BuildTasks extends Builder
             // known files/dirs not to be packed / md5'ed
             /// @todo !important shall we make this configurable?
             /// @bug 'build' & 'dist' we should probably take from options
-            $files = array( 'ant/', 'build.xml', '**/.svn', '.git/', 'build/', 'dist/', 'composer.phar', 'composer.lock' );
+            $files = array( 'ant/', 'build.xml', '**/.svn', '.git/', 'build/', 'dist/', 'composer.phar', 'composer.lock', '.idea/', 'vendor/' );
             // hack! when packing ourself, we need to keep this stuff
             if ( $opts['extension']['name'] != 'ezextensionbuilder' )
             {
@@ -889,78 +889,4 @@ class BuildTasks extends Builder
         pake_echo ( "File package.xml generated. Please replace all tokens in square brackets in it (but do not replace values in curly brackets) then commit it to sources in the top dir of the extension" );
     }
 
-
-    // *** helper functions ***
-
-    /**
-     * Mimics ant pattern matching.
-     *
-     * @see http://ant.apache.org/manual/dirtasks.html#patterns
-     * @todo in pake 1.6.3 and later this functionality is supported natively. To be removed
-     * @todo more complete testing
-     * @bug looking for " d i r / * * / " will return subdirs but not dir itself
-     */
-    static function pake_antpattern( $files, $rootdir )
-    {
-        $results = array();
-        foreach( $files as $file )
-        {
-            //echo " Beginning with $file in dir $rootdir\n";
-
-            // safety measure: try to avoid multiple scans
-            $file = str_replace( '/**/**/', '/**/', $file );
-
-            $type = 'any';
-            // if user set '/ 'as last char: we look for directories only
-            if ( substr( $file, -1 ) == '/' )
-            {
-                $type = 'dir';
-                $file = substr( $file, 0, -1 );
-            }
-            // managing 'any subdir or file' as last item: trick!
-            if ( strlen( $file ) >= 3 && substr( $file, -3 ) == '/**' )
-            {
-                $file .= '/*';
-            }
-
-            $dir = dirname( $file );
-            $file = basename( $file );
-            if ( strpos( $dir, '**' ) !== false )
-            {
-                $split = explode( '/', $dir );
-                $path = '';
-                foreach( $split as $i => $part )
-                {
-                    if ( $part != '**' )
-                    {
-                        $path .= "/$part";
-                    }
-                    else
-                    {
-                        //echo "  Looking for subdirs in dir $rootdir{$path}\n";
-                        $newfile = implode( '/', array_slice( $split, $i + 1 ) ) . "/$file" . ( $type == 'dir'? '/' : '' );
-                        $dirs = pakeFinder::type( 'dir' )->in( $rootdir . $path );
-                        // also cater for the case '** matches 0 subdirs'
-                        $dirs[] = $rootdir . $path;
-                        foreach( $dirs as $newdir )
-                        {
-                            //echo "  Iterating in $newdir, looking for $newfile\n";
-                            $found = pake_antpattern( array( $newfile ), $newdir );
-                            $results = array_merge( $results, $found );
-                        }
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                //echo "  Looking for $type $file in dir $rootdir/$dir\n";
-                $found = pakeFinder::type( $type )->name( $file )->maxdepth( 0 )->in( $rootdir . '/' . $dir );
-                //echo "  Found: " . count( $found ) . "\n";
-                $results = array_merge( $results, $found );
-            }
-        }
-        return $results;
-    }
-
-} 
+}

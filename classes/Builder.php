@@ -522,46 +522,77 @@ class Builder
         }
     }
 
-    /**
-     * Returns true if the given task for the given extension has not already been locked
-     * If no task name is passed, the lock will block any task for this extension (iff the 2nd task checks for locks, of course).
-     *
-     * @param string $extension
-     * @param $mode LOCK_SH (reader) or LOCK_EX (writer)
-     * @param array $opts
-     * @return bool
-     */
-    static function acquireLock( $extension, $mode, $opts=array() )
-    {
-        $lockFile = self::lockFileName( $extension, $task, $opts );
-        $extensionLockFile = self::lockFileName( $extension, '', $opts );
-        pake_mkdirs( dirname( $lockFile ) );
-        if ( file_exists( $lockFile ) || file_exists( $extensionLockFile ) )
-        {
-            return false;
-        }
-        if ( !file_put_contents( $lockFile, getmypid() . ' ' . time() ) )
-        {
-            return false;
-        }
-    }
+    // *** helper functions ***
 
-    static function releaseLock( $extension, $task='', $opts=array() )
+    /**
+     * Mimics ant pattern matching.
+     *
+     * @see http://ant.apache.org/manual/dirtasks.html#patterns
+     * @todo in pake 1.6.3 and later this functionality is supported natively. To be removed
+     * @todo more complete testing
+     * @bug looking for " d i r / * * / " will return subdirs but not dir itself
+     */
+    static function pake_antpattern( $files, $rootdir )
     {
-        $lockFile = self::lockFileName( $extension, $task, $opts );
-        if ( is_file(  $lockFile ) )
+        $results = array();
+        foreach( $files as $file )
         {
-            if ( !unlink( $lockFile ) )
+            //echo " Beginning with $file in dir $rootdir\n";
+
+            // safety measure: try to avoid multiple scans
+            $file = str_replace( '/**/**/', '/**/', $file );
+
+            $type = 'any';
+            // if user set '/ 'as last char: we look for directories only
+            if ( substr( $file, -1 ) == '/' )
             {
-                // what to do here? echo an error msg but do not throw an exception
-                pake_echo_error( "Could not remove lock file '$lockFile'" );
+                $type = 'dir';
+                $file = substr( $file, 0, -1 );
+            }
+            // managing 'any subdir or file' as last item: trick!
+            if ( strlen( $file ) >= 3 && substr( $file, -3 ) == '/**' )
+            {
+                $file .= '/*';
+            }
+
+            $dir = dirname( $file );
+            $file = basename( $file );
+            if ( strpos( $dir, '**' ) !== false )
+            {
+                $split = explode( '/', $dir );
+                $path = '';
+                foreach( $split as $i => $part )
+                {
+                    if ( $part != '**' )
+                    {
+                        $path .= "/$part";
+                    }
+                    else
+                    {
+                        //echo "  Looking for subdirs in dir $rootdir{$path}\n";
+                        $newfile = implode( '/', array_slice( $split, $i + 1 ) ) . "/$file" . ( $type == 'dir'? '/' : '' );
+                        $dirs = pakeFinder::type( 'dir' )->in( $rootdir . $path );
+                        // also cater for the case '** matches 0 subdirs'
+                        $dirs[] = $rootdir . $path;
+                        foreach( $dirs as $newdir )
+                        {
+                            //echo "  Iterating in $newdir, looking for $newfile\n";
+                            $found = self::pake_antpattern( array( $newfile ), $newdir );
+                            $results = array_merge( $results, $found );
+                        }
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                //echo "  Looking for $type $file in dir $rootdir/$dir\n";
+                $found = pakeFinder::type( $type )->name( $file )->maxdepth( 0 )->in( $rootdir . '/' . $dir );
+                //echo "  Found: " . count( $found ) . "\n";
+                $results = array_merge( $results, $found );
             }
         }
+        return $results;
     }
 
-    static protected function lockFileName( $extension, $mode, $opts=array() )
-    {
-         return self::getBuildDir( $opts ) . '/locks/' . $extension . '_' . $task . '.lock';
-    }
-
-} 
+}

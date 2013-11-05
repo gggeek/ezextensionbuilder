@@ -27,7 +27,7 @@ Changes for version 0.5 - released 2013/xx/yy
 - all options from config file can now be overridden on command line, using --option.<name>.<suboption>.<etc>=value syntax
 - the directory where config files are stored can be changed using cli switch --config-dir=<dir>
 - no more need for eZComponents for creation of standard tarballs. You need tar and zip cli tools installed
-- we now avoid packing composer.json and composer.phar in the build artifacts
+- we now avoid packing composer.json and composer.phar, .idea/ and vendor/ in the build artifacts
 - a simple locking scheme has been put in place to prevent running in parallel many tasks on the same extension where
   results would be unpredictable: now only 1 task can write to the "dist" dir at any time, and many can read (as long as
   there is no writer active).
@@ -35,3 +35,4 @@ Changes for version 0.5 - released 2013/xx/yy
   whenever another task is executed
 
 *Bugfixes:
+- properly init a repo from local sources (used to fail at least on windows)

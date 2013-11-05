@@ -1,5 +1,7 @@
 # general
 
+. find a better way to manage version numbers: having to save them to the config file is not very user-friendly, is config-file is stored in vcs repository
+
 . test running report generation tasks against ezp (5, community) instead of an extension
 
 . when looking around for composer dirs, test value of COMPOSER_XXX env vars (see http://getcomposer.org/doc/03-cli.md#composer-home)
@@ -19,10 +21,18 @@
 
 . add support for different dir schemas for extensions providing packages? nb: better if we can do it without that...
 
+. move all tasks involving ez4-packages to a separate php class?
+
 . improve locking schema to avoid non-reentrant operations (such as init) to execute in parallel:
   at the moment we only protect access to the "build" dir, not to the "pake" or "dist" ones
 
 # new tasks
+
+. a "deploy" task which commits the dist dir to the desired vcs repository in a separate branch / tag.
+  This makes a lot of sense since
+  - we expect end users of extensions to download them from github instead of projects.ez.no
+  - it is nicer for end users to be able to download a version of the extension which includes docs and has proper version tags,
+    rather than a version which is just a tag added on the master branch
 
 . add more code quality checks (possibly from other extensions/tools/packages)
   - proper php opening tag for ini files, absence of charset tag (or only utf8 recommended)
@@ -44,7 +54,7 @@
 . changelog generation task: if it's not there, build it from git/svn commit messages
   (also update ez package with that info)
 
-. deployment task (eg. to upload extension to projects.ez.no or branch + tag it github)
+. deployment task to upload extension to projects.ez.no
   - might need first some changes on projects.ez.no site
 
 . a task that checks for presence of update sql scripts (needs to have access to previous version sources too)

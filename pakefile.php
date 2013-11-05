@@ -1,12 +1,13 @@
 <?php
 /**
  * eZExtensionBuilder pakefile:
- * a script to build & package eZPublish extensions
+ * a script to build & package eZPublish extensions (focused on Legacy Stack)
  *
  * Needs the Pake tool to run: https://github.com/indeyets/pake/wiki
  *
  * It should be installed from the web via composer - just declare
  * "require-dev": { "gggeek/ezextensionbuilder": "*" } in your main composer.json file
+ * or run "composer install" after installing it
  *
  * @author    G. Giunta
  * @copyright (C) G. Giunta 2011-2013

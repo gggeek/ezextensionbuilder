@@ -1,10 +1,23 @@
 Changes for version 0.5 - released 2013/xx/yy
 
-*General:
+*Changes:
 - upped requirements to php 5.3. Your extensions can still run on legacy php, please use a modern php on the build server
 - the supported installation method of the tool itself is now via composer. No more self-update or bootstrap!
   (this also means we rely on the standard pake, and do not bundle it anymore)
   Note that the preferred directory layout has now changed. See the README file for more details
+- task show_properties now shows all the configured options, not just extension name and version
+- no more need for eZComponents for creation of standard tarballs. You need tar and zip cli tools installed
+- we now avoid packing composer.json and composer.phar, .idea/ and vendor/ in the build artifacts
+- a simple locking scheme has been put in place to prevent running in parallel many tasks on the same extension where
+  results would be unpredictable: now only 1 task can write to the "dist" dir at any time, and many can read (as long as
+  there is no writer active).
+  Stale "lock" files will be left in dist/locks if you kill executing tasks, but they will be automatically cleaned up
+  whenever another task is executed 
+
+*Bugfixes:
+- properly init a repo from local sources (used to fail at least on windows)
+
+* New:
 - added 2 new tasks to check validity of any .tpl and .php file found. Active by default as part of "build" task
 - added a new task: list-extensions. It lists all extensions which can be built (because they have a config file available)
 - added a new task: tool-version. It displays complete version info for the tool itself
@@ -20,19 +33,10 @@ Changes for version 0.5 - released 2013/xx/yy
 - added a new task: php-pdepend-report. It uses pdepend to generate a code-metrics report (an xml file and 2 images).
 - added a new task: code-metrics-report. It incorporates all reports for code metrics
 - added a new task: code-checks. It groups all the code checks part of the "build" task
-- task show_properties now shows all the configured options, not just extension name and version
 - a local options file will be read if present: pake/options-user.yaml.
   This makes it easier to keep config files with things specific to current build server separate from generic build options
   which are generally commited to the source repository
 - all options from config file can now be overridden on command line, using --option.<name>.<suboption>.<etc>=value syntax
 - the directory where config files are stored can be changed using cli switch --config-dir=<dir>
-- no more need for eZComponents for creation of standard tarballs. You need tar and zip cli tools installed
-- we now avoid packing composer.json and composer.phar, .idea/ and vendor/ in the build artifacts
-- a simple locking scheme has been put in place to prevent running in parallel many tasks on the same extension where
-  results would be unpredictable: now only 1 task can write to the "dist" dir at any time, and many can read (as long as
-  there is no writer active).
-  Stale "lock" files will be left in dist/locks if you kill executing tasks, but they will be automatically cleaned up
-  whenever another task is executed
-
-*Bugfixes:
-- properly init a repo from local sources (used to fail at least on windows)
+- the version number can now be specified on the command line after the extension name.
+  When it is so, the value overrides the one from the configuration file.

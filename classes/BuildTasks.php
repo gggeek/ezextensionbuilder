@@ -33,7 +33,7 @@ class BuildTasks extends Builder
 
         if ( ! $skip_init )
         {
-            $opts = self::getOpts( @$args[0], $cliopts );
+            $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
             pake_mkdirs( self::getBuildDir( $opts ) );
 
             $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
@@ -156,7 +156,7 @@ class BuildTasks extends Builder
      */
     static function run_clean( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -173,7 +173,7 @@ class BuildTasks extends Builder
      */
     static function run_dist( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( $opts['create']['tarball'] || $opts['create']['zip'] || $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
         {
             if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
@@ -255,7 +255,7 @@ class BuildTasks extends Builder
      */
     static function run_dist_clean( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         pake_remove_dir( $opts['dist']['dir'] );
     }
 
@@ -266,7 +266,7 @@ class BuildTasks extends Builder
      */
     static function run_build_dependencies( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         $current = $opts['extension']['name'];
         foreach( $opts['dependencies']['extensions'] as $ext => $source )
         {
@@ -323,7 +323,7 @@ class BuildTasks extends Builder
      */
     static function run_fat_dist( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         pake_mkdirs( $opts['dist']['dir'] );
         $files = pakeFinder::type( 'any' )->in( self::getBuildDir( $opts ) );
         // get absolute path to build dir
@@ -377,7 +377,7 @@ class BuildTasks extends Builder
      */
     static function run_update_ezinfo( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -416,7 +416,7 @@ class BuildTasks extends Builder
      */
     static function run_update_license_headers( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -436,7 +436,7 @@ class BuildTasks extends Builder
      */
     static function run_update_extra_files( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -473,7 +473,7 @@ class BuildTasks extends Builder
      */
     static function run_generate_documentation( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -529,7 +529,7 @@ class BuildTasks extends Builder
      */
     static function run_generate_md5sums( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( $opts['create']['filelist_md5'] )
         {
             if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
@@ -561,7 +561,7 @@ class BuildTasks extends Builder
      */
     static function run_generate_package_filelist( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( $opts['create']['ezpackage'] || $opts['create']['pearpackage'] )
         {
             if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
@@ -645,7 +645,7 @@ class BuildTasks extends Builder
      */
     static function run_check_sql_files( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -713,7 +713,7 @@ class BuildTasks extends Builder
      */
     static function run_check_gnu_files( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -739,7 +739,7 @@ class BuildTasks extends Builder
      */
     static function run_check_templates( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -785,7 +785,7 @@ class BuildTasks extends Builder
      */
     static function run_check_php_files( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -820,7 +820,7 @@ class BuildTasks extends Builder
     {
         /// @todo replace hostname, build time
 
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_EX, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 

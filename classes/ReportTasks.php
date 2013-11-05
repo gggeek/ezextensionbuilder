@@ -38,7 +38,7 @@ class ReportTasks extends Builder
      */
     static function run_code_mess_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -73,7 +73,7 @@ class ReportTasks extends Builder
      */
     static function run_coding_style_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -120,7 +120,7 @@ class ReportTasks extends Builder
      */
     static function run_copy_paste_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -158,7 +158,7 @@ class ReportTasks extends Builder
      */
     static function run_php_loc_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -179,7 +179,7 @@ class ReportTasks extends Builder
      */
     static function run_php_pdepend_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 
@@ -201,7 +201,7 @@ class ReportTasks extends Builder
      */
     static function run_dead_code_report( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         if ( !SharedLock::acquire( $opts['extension']['name'], LOCK_SH, $opts ) )
             throw new PakeException( "Source code locked by another process" );
 

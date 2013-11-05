@@ -16,15 +16,18 @@ class GenericTasks extends Builder
     static function run_default( $task=null, $args=array(), $cliopts=array() )
     {
         pake_echo ( "eZ Extension Builder ver." . self::VERSION .
-            "\n\nSyntax: ezextbuilder [--\$pake-options] \$task [\$extension] [--\$general-options] [--\$task-options].\n" .
+            "\n\nSyntax: ezextbuilder [--\$pake-options] \$task [\$extension] [\$version] [--\$general-options] [--\$task-options]\n" .
             "  If no extension name is provided, a default configuration file will be searched for.\n" .
+            "  If no version number is provided, it will be searched for in the configuration file.\n" .
             "  General options:\n" .
             "    --config-dir=\$dir             to be used instead of ./pake\n" .
             "    --config-file=\$file           to be used instead of ./pake/options-\$ext.yaml\n" .
             "    --user-config-file=\$file      to be used instead of ./pake/options-user.yaml\n" .
             "    --option.\$option.\$name=\$value to override any configuration setting\n" .
-            "  Run: ezextbuilder help to learn about the options for pake.\n" .
-            "  Run: ezextbuilder --tasks to learn more about available tasks.\n"
+            "\nRun: ezextbuilder help       to learn about the options for pake.\n" .
+            "Run: ezextbuilder --tasks    to list available tasks.\n" .
+            "Run: ezextbuilder -P         to display tasks dependencies.\n" .
+            "Run: ezextbuilder help \$task to display description and options of a specific task\n"
         );
     }
 
@@ -41,7 +44,7 @@ class GenericTasks extends Builder
      */
     static function run_show_properties( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0], $cliopts );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         pake_echo ( print_r( $opts, true ) );
     }
 
@@ -210,7 +213,7 @@ class GenericTasks extends Builder
     /*
     static function run_update_extension_config( $task=null, $args=array(), $cliopts=array() )
     {
-        $opts = self::getOpts( @$args[0] );
+        $opts = self::getOpts( @$args[0], @$args[1], $cliopts );
         $destfile = self::getOptionsDir() . "/options-.yaml";
         if ( @$opts['svn']['url'] != '' )
         {

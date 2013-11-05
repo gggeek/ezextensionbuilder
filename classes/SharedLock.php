@@ -153,7 +153,7 @@ class SharedLock
         }
         foreach( glob( $lockDir . "/*_R/*.lock" ) as $readLock )
         {
-            $pid = file_get_contents( $writeLock ); // strstr( file_get_contents( $readLock ), ' ', true );
+            $pid = file_get_contents( $readLock ); // strstr( file_get_contents( $readLock ), ' ', true );
             if ( !in_array( $pid, $runningProcesses ) )
             {
                 pake_unlink( $readLock );

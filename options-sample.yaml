@@ -2,7 +2,8 @@
 ### to be saved in $rootdir/pake-$extension.yaml
 
 extension:
-    # if not set, extension name is taken from command line parameters
+    # if not set, extension name is taken from command line parameters.
+    # Will be used amongst other things as directory name inside build/ and dist/ dirs
     name: myextension
 
 version:

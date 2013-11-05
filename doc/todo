@@ -1,8 +1,6 @@
 # general
 
-. find a better way to manage version numbers: having to save them to the config file is not very user-friendly, is config-file is stored in vcs repository
-
-. test running report generation tasks against ezp (5, community) instead of an extension
+. test running report generation tasks against ezp (5) instead of an extension
 
 . when looking around for composer dirs, test value of COMPOSER_XXX env vars (see http://getcomposer.org/doc/03-cli.md#composer-home)
 
@@ -74,6 +72,8 @@
 . all report tasks:
   . allow exclusion of directories from code analysis
   . allow usage of "stdout" as directory for outputting reports
+
+. init task: take list of removed dirs/files from config file
 
 . init task that starts with a file untar
 

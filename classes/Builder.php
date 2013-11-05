@@ -11,6 +11,7 @@ namespace eZExtBuilder;
 
 use pakeException;
 use pakeFinder;
+use PakeOption;
 use pakeYaml;
 
 class Builder
@@ -128,11 +129,29 @@ class Builder
 
     /**
      * Loads, caches and returns the config options for a given extension
+     *
+     * Too smart fo our own good: we accept
+     * - (nothing: extension is figured out based on single existing config file, version from config file)
+     * - extension (version taken from config file)
+     * - version (extension is figured out based on single existing config file, version from cli)
+     * - extension, version
      * @return array
      */
-    static function getOpts( $extname='', $cliopts = array() )
+    static function getOpts( $extname='', $version='', $cliopts = array() )
     {
         self::setConfigDir( $cliopts );
+
+        if ( $version == '' && self::isValidVersion( $extname ) )
+        {
+            // lazy user
+            $version = $extname;
+            $extname = '';
+        }
+
+        if ( $version != '' && !self::isValidVersion( $version ) )
+        {
+            throw new PakeOption( "'$version' is not a valid version number" );
+        }
 
         if ( $extname == '' )
         {
@@ -184,14 +203,19 @@ class Builder
                 }
             }
 
-            self::loadConfiguration( $cfgfile, $extname, $usercfgfile, $cliopts );
+            self::loadConfiguration( $cfgfile, $extname, $version, $usercfgfile, $cliopts );
         }
+
+        pake_echo( "Building extension $extname ( " . self::$options[$extname]['extension']['name'] . " ) version " .
+            self::$options[$extname]['version']['alias'] .
+            self::$options[$extname]['releasenr']['separator'] .
+            self::$options[$extname]['version']['release'] );
 
         return self::$options[$extname];
     }
 
     /// @bug this only works as long as all defaults are 2 levels deep
-    static protected function loadConfiguration ( $infile='', $extname='', $useroptsfile='', $overrideoptions=array() )
+    static protected function loadConfiguration ( $infile='', $extname='', $extversion='', $useroptsfile='', $overrideoptions=array() )
     {
         if ( $infile == '' )
         {
@@ -242,12 +266,21 @@ class Builder
         // hardcoded overrides
         if ( !isset( $options['extension']['name'] ) || $options['extension']['name'] == '' )
         {
+            // ext. name from cli only trumps one from ext. file if not there
             $options['extension']['name'] = $extname;
+        }
+        if ( $extversion != '' )
+        {
+            $pieces = self::splitVersion( $extversion );
+            $options['version']['major'] = $pieces[0];
+            $options['version']['minor'] = $pieces[1];
+            $options['version']['release'] = $pieces[2];
         }
         if ( !isset( $options['version']['alias'] ) || $options['version']['alias'] == '' )
         {
             $options['version']['alias'] = $options['version']['major'] . '.' . $options['version']['minor'];
         }
+
 
         // merge default values
         foreach( $default_opts as $key => $opts )
@@ -522,8 +555,17 @@ class Builder
         }
     }
 
-    // *** helper functions ***
+    static protected function isValidVersion( $versionString )
+    {
+        return preg_match( '/^v?[0-9]+\.[0-9]+(\.[0-9]+.*)?$/', $versionString );
+    }
 
+    static protected function splitVersion( $versionString )
+    {
+        preg_match( '/v?([0-9]+)\.([0-9]+)(?:\.([0-9]+.*))?$/', $versionString, $matches );
+        return array( $matches[1], $matches[2], ( isset( $matches[3] ) ? $matches[3] : 0 ) );
+    }
+- the version number can now be specified on the command line after the extension name.
     /**
      * Mimics ant pattern matching.
      *

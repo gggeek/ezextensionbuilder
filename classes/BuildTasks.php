@@ -383,14 +383,15 @@ class BuildTasks extends Builder
 
         $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
 
-        $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->maxdepth( 0 )->in( $destdir );
+        $files = pakeFinder::type( 'file' )->name( 'ezinfo.php' )->maxdepth( 0 );
+
         /// @todo use a real php parser instead
         pake_replace_regexp( $files, $destdir, array(
                 '/^([\s]{1,25}\x27Version\x27[\s]+=>[\s]+[\x27\x22])(.*)([\x27\x22],?\r?\n?)/m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
                 '/^([\s]{1,25}\x27License\x27[\s]+=>[\s]+[\x27\x22])(.*)([\x27\x22],?\r?\n?)/m' => '${1}' . $opts['version']['license'] . '$3' ),
             1 );
 
-        $files = pakeFinder::type( 'file' )->maxdepth( 0 )->name( 'extension.xml' )->in( $destdir );
+        $files = pakeFinder::type( 'file' )->maxdepth( 0 )->name( 'extension.xml' );
         /// @todo use a real xml parser instead
         pake_replace_regexp( $files, $destdir, array(
                 '#^([\s]{1,8}<version>)([^<]*)(</version>\r?\n?)#m' => '${1}' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'] . '$3',
@@ -825,7 +826,7 @@ class BuildTasks extends Builder
             throw new PakeException( "Source code locked by another process" );
 
         $destdir = $opts['build']['dir'];
-        $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 0 )->in( $destdir );
+        $files = pakeFinder::type( 'file' )->name( 'package.xml' )->maxdepth( 0 );
         if ( count( $files ) == 1 )
         {
             // original format

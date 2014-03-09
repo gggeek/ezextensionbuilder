@@ -121,7 +121,7 @@ class Builder
         {
             if( !is_dir( $cliopts['config-dir'] ) )
             {
-                throw new PakeOption( "Could not find configuration-file directory {$cliopts['config-dir']}" );
+                throw new pakeException( "Could not find configuration-file directory {$cliopts['config-dir']}" );
             }
             self::$options_dir = $cliopts['config-dir'];
         }
@@ -565,7 +565,7 @@ class Builder
         preg_match( '/v?([0-9]+)\.([0-9]+)(?:\.([0-9]+.*))?$/', $versionString, $matches );
         return array( $matches[1], $matches[2], ( isset( $matches[3] ) ? $matches[3] : 0 ) );
     }
-- the version number can now be specified on the command line after the extension name.
+
     /**
      * Mimics ant pattern matching.
      *

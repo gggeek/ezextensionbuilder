@@ -11,7 +11,6 @@ namespace eZExtBuilder;
 
 use pakeException;
 use pakeFinder;
-use PakeOption;
 use pakeYaml;
 
 class Builder
@@ -150,7 +149,7 @@ class Builder
 
         if ( $version != '' && !self::isValidVersion( $version ) )
         {
-            throw new PakeOption( "'$version' is not a valid version number" );
+            throw new PakeException( "'$version' is not a valid version number" );
         }
 
         if ( $extname == '' )
@@ -177,7 +176,7 @@ class Builder
                 $usercfgfile = $cliopts['user-config-file'];
                 if ( !is_file( $cliopts['user-config-file'] ) )
                 {
-                    throw new PakeOption( "Could not find user-configuration-file {$cliopts['user-config-file']}" );
+                    throw new PakeException( "Could not find user-configuration-file {$cliopts['user-config-file']}" );
                 }
             }
             else

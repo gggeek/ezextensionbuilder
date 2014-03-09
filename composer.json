@@ -6,7 +6,7 @@
     "require": {
         "php": ">=5.3",
 
-        "indeyets/pake": ">=1.7.4",
+        "indeyets/pake": ">=1.99.2",
         "phploc/phploc": "2.*",
         "phpmd/phpmd": "1.*",
         "phpunit/phpunit": "3.7.*",

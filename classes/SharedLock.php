@@ -13,7 +13,7 @@
  * - not really thread safe (esp. if user code tries to acquire 2 R locks on same token at same time in different threads)
  *
  * @author    G. Giunta
- * @copyright (C) G. Giunta 2013
+ * @copyright (C) G. Giunta 2013-2014
  * @license   code licensed under the GNU GPL 2.0: see README file
  */
 
@@ -167,4 +167,4 @@ class SharedLock
         return $build == '' ? './locks' : "$build/locks";
     }
 
-} 
+}

@@ -3,7 +3,7 @@
  * Core functionality
  *
  * @author    G. Giunta
- * @copyright (C) G. Giunta 2013
+ * @copyright (C) G. Giunta 2013-2014
  * @license   code licensed under the GNU GPL 2.0: see README file
  */
 
@@ -279,7 +279,6 @@ class Builder
         {
             $options['version']['alias'] = $options['version']['major'] . '.' . $options['version']['minor'];
         }
-
 
         // merge default values
         foreach( $default_opts as $key => $opts )

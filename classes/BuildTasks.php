@@ -3,7 +3,7 @@
  * A class containing all pake tasks related to the build process
  *
  * @author    G. Giunta
- * @copyright (C) G. Giunta 2013
+ * @copyright (C) G. Giunta 2013-2014
  * @license   code licensed under the GNU GPL 2.0: see README file
  */
 
@@ -422,7 +422,7 @@ class BuildTasks extends Builder
             throw new PakeException( "Source code locked by another process" );
 
         $destdir = self::getBuildDir( $opts ) . '/' . $opts['extension']['name'];
-        $files = pakeFinder::type( 'file' )->name( array( '*.php', '*.css', '*.js' ) )->in( $destdir );
+        $files = pakeFinder::type( 'file' )->name( array( '*.php', '*.css', '*.js' ) );
         pake_replace_regexp( $files, $destdir, array(
             '#// SOFTWARE RELEASE: (.*)#m' => '// SOFTWARE RELEASE: ' . $opts['version']['alias'] . $opts['releasenr']['separator'] . $opts['version']['release'],
             '/Copyright \(C\) 1999-[\d]{4} eZ Systems AS/m' => 'Copyright (C) 1999-' . strftime( '%Y' ). ' eZ Systems AS',

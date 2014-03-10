@@ -3,7 +3,7 @@
  * A class containing all generic pake tasks
  *
  * @author    G. Giunta
- * @copyright (C) G. Giunta 2013
+ * @copyright (C) G. Giunta 2013-2014
  * @license   code licensed under the GNU GPL 2.0: see README file
  */
 
@@ -298,4 +298,4 @@ class GenericTasks extends Builder
         }
     }
 
-} 
+}

@@ -166,5 +166,4 @@ class SharedLock
         $build = Builder::getBuildDir( $opts );
         return $build == '' ? './locks' : "$build/locks";
     }
-
 }

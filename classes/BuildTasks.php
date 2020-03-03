@@ -3,7 +3,7 @@
  * A class containing all pake tasks related to the build process
  *
  * @author    G. Giunta
- * @copyright (C) G. Giunta 2013-2020
+* @copyright (C) G. Giunta 2013-2020
  * @license   code licensed under the GNU GPL 2.0: see README file
  */
 

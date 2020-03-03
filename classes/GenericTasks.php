@@ -297,5 +297,4 @@ class GenericTasks extends Builder
             }
         }
     }
-
 }

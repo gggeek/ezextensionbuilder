@@ -1,3 +1,7 @@
-. problems on windows running init with tortoisegit and tortoisesvn (locked files/dirs cannot be deleted)
+blockers:
+- building zip in tarballs broken (needs to calculate relative path)
+- when build command finds an existing build dir, it stops leaving a stale (useless) lock
 
+low-priority
+. problems on windows running init with tortoisegit and tortoisesvn (locked files/dirs cannot be deleted)
 . the extension is not 100% able to build self (it will replace erroneous things in pakefile.php files)

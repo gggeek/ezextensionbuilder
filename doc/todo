@@ -1,3 +1,16 @@
+# high priority
+
+. acommodate better git-based workflows:
+  1. a "validate" task which runs unit tests / compliance checks
+  2. a "tag" task which changes the version info files (even in pake config file itself?), and uploads them to git. It also gives feedback on git revision
+  3. a "build" task which produces artifacts
+  4. an "upload" task which creates the release on github and uploads the artifacts
+     q: shall we instead upload in a separate branch the whole artifacts?
+
+. fix: zip command does not work (searches for dist dir inside build dir)
+
+. fix: all-code-reports task give "Notice: Undefined index: phpcs" and phpmd as well
+
 # general
 
 . test running report generation tasks against ezp (5) instead of an extension

@@ -25,7 +25,7 @@ You can declare the script as a dependency in the composer.json file of your ext
     "require": {
         "ezsystems/ezpublish-legacy-installer": "*"
     },
-	"require-dev": {
+    "require-dev": {
         "gggeek/ezextensionbuilder": "*"
     }
 }

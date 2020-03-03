@@ -132,6 +132,7 @@ tools:
     # in case these are not in your path or you want to use alternative versions
     tar:
     zip:
+    php:
 
     phpmd:
         # leave empty to use the one installed with composer

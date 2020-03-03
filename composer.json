@@ -1,12 +1,12 @@
 {
     "name": "gggeek/ezextensionbuilder",
     "description": "Provides tools to build (package) extensions for eZ Publish (4.x or Legacy Stack extensions only)",
-    "license": "GNU General Public License v2.0",
-    "homepage": "http://projects.ez.no/ezextensionbuilder",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://github.com/gggeek/ezextensionbuilder",
     "require": {
         "php": ">=5.3",
 
-        "indeyets/pake": ">=1.7.4",
+        "indeyets/pake": ">=1.99.2",
         "phploc/phploc": "2.*",
         "phpmd/phpmd": "1.*",
         "phpunit/phpunit": "3.7.*",

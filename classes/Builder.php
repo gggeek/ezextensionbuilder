@@ -3,7 +3,7 @@
  * Core functionality
  *
  * @author    G. Giunta
- * @copyright (C) G. Giunta 2013
+ * @copyright (C) G. Giunta 2013-2020
  * @license   code licensed under the GNU GPL 2.0: see README file
  */
 
@@ -11,7 +11,6 @@ namespace eZExtBuilder;
 
 use pakeException;
 use pakeFinder;
-use PakeOption;
 use pakeYaml;
 
 class Builder
@@ -121,7 +120,7 @@ class Builder
         {
             if( !is_dir( $cliopts['config-dir'] ) )
             {
-                throw new PakeOption( "Could not find configuration-file directory {$cliopts['config-dir']}" );
+                throw new pakeException( "Could not find configuration-file directory {$cliopts['config-dir']}" );
             }
             self::$options_dir = $cliopts['config-dir'];
         }
@@ -150,7 +149,7 @@ class Builder
 
         if ( $version != '' && !self::isValidVersion( $version ) )
         {
-            throw new PakeOption( "'$version' is not a valid version number" );
+            throw new PakeException( "'$version' is not a valid version number" );
         }
 
         if ( $extname == '' )
@@ -177,7 +176,7 @@ class Builder
                 $usercfgfile = $cliopts['user-config-file'];
                 if ( !is_file( $cliopts['user-config-file'] ) )
                 {
-                    throw new PakeOption( "Could not find user-configuration-file {$cliopts['user-config-file']}" );
+                    throw new PakeException( "Could not find user-configuration-file {$cliopts['user-config-file']}" );
                 }
             }
             else
@@ -280,7 +279,6 @@ class Builder
         {
             $options['version']['alias'] = $options['version']['major'] . '.' . $options['version']['minor'];
         }
-
 
         // merge default values
         foreach( $default_opts as $key => $opts )
@@ -410,7 +408,7 @@ class Builder
     /**
      * Creates an archive out of a directory.
      *
-     * Uses command-lne tar as Zeta Cmponents do no compress well, and pake
+     * Uses command-line tar as Zeta Components do no compress well, and pake
      * relies on phar which is buggy/unstable on old php versions
      *
      * @param boolean $no_top_dir when set, $sourcedir directory is not packaged as top-level dir in archive
@@ -565,7 +563,7 @@ class Builder
         preg_match( '/v?([0-9]+)\.([0-9]+)(?:\.([0-9]+.*))?$/', $versionString, $matches );
         return array( $matches[1], $matches[2], ( isset( $matches[3] ) ? $matches[3] : 0 ) );
     }
-- the version number can now be specified on the command line after the extension name.
+
     /**
      * Mimics ant pattern matching.
      *
@@ -636,5 +634,4 @@ class Builder
         }
         return $results;
     }
-
 }

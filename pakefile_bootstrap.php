@@ -7,7 +7,7 @@
  * It is messy by nature :-)
  *
  * @author    G. Giunta
- * @copyright (C) G. Giunta 2011-2013
+ * @copyright (C) G. Giunta 2011-2020
  * @license   code licensed under the GNU GPL 2.0: see README file
  */
 
@@ -94,5 +94,3 @@ if ($retval === false )
 {
     exit(1);
 }
-
-?>

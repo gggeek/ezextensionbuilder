@@ -7,7 +7,7 @@ version:
     release: 0-dev
 
 git:
-    url:  https://github.com/gggeek/ezextensionbuilder
+    url: https://github.com/gggeek/ezextensionbuilder
 
 files:
     gnu_dir: pake

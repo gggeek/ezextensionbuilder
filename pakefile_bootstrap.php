@@ -92,7 +92,7 @@ else
     $retval = $pake->run();
 }
 
-if ($retval === false )
+if ( $retval === false )
 {
     exit(1);
 }

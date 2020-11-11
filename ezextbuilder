@@ -1,4 +1,5 @@
 #!/usr/bin/env php
 <?php
 
+// q: will this load the correct pakefile.php when we are installed as composer dependency ?
 include( __DIR__ . '/pakefile.php' );

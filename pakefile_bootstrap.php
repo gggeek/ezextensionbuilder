@@ -59,7 +59,9 @@ if ( !function_exists( 'pake_exception_default_handler' ) )
     }
 }
 set_exception_handler( 'pake_exception_default_handler' );
-mb_internal_encoding( 'utf-8' );
+if (function_exists('mb_internal_encoding')) {
+    mb_internal_encoding( 'utf-8' );
+}
 
 // take over display of help - in case we want to modify some of it
 function run_help( $task=null, $args=array(), $cliopts=array() )

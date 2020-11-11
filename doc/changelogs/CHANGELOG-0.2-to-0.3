@@ -1,6 +1,6 @@
 Changes for version 0.3 - released 2011/5/XX
 
-*General:
+* General:
 
 . new task: generate-sample-package-xml: will generate a sample package.xml to be used for creating an ezp package out of the extension.
     Once this file is generated, it should be copied to the root dir in the extension sources, and completed by replacing tokens
@@ -8,7 +8,7 @@ Changes for version 0.3 - released 2011/5/XX
     the package is created.
 
 . new task: generate-package-filelist: generates the xml file listing all extensions files that is used in creating an ezp package
-    This task is alwyas run as part of the build process, but the xml file is only generated when in the yaml configuration file
+    This task is always run as part of the build process, but the xml file is only generated when in the yaml configuration file
     the option to create a package as part of the distribution is set (create:ezpackage: yes)
 
 . as part of the dist task, an ezpackage package of the extension can be built.
@@ -16,6 +16,6 @@ Changes for version 0.3 - released 2011/5/XX
     - in the yaml configuration file, the option to create a package as part of the distribution must be on (create:ezpackage: yes)
     - in the extension sources, a package.xml file must be present (in the root dir of the extension)
 
-*Bugfixes:
+* Bugfixes:
 
 . create directory for doxygen output if it's not already present

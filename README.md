@@ -4,7 +4,7 @@ Introduction
 What is the eZ Extension Builder?
 ---------------------------------
 
-A set of php files and tools to "build" eZ Publish extensions and deliverables.
+A set of php files and tools to "build" eZ Publish extensions and deliverables (eZP 4.x or Legacy Stack extensions only).
 It is based on the Pake tool.
 
 The build process consists currently of the following steps:
@@ -34,11 +34,10 @@ Requirements
   or as part of the extension itself, using composer installation
 - other php tools and libraries: all dependencies are managed automatically through composer
 
-4. Installing
--------------
+Installing and running
+----------------------
 
 Read the INSTALL file to get started and for usage instructions
-
 
 Directory structure
 -------------------
@@ -82,8 +81,9 @@ FAQ
 ---
 
 - Can a standalone copy of pake be used with the pakefile instead of the bundled one?
-    Yes: just use a different command line: ::
-    pake -f ./vendor/gggeek/ezextensionbuilder/pakefile.php build myext
+    Yes: just use a different command line:
+
+        pake -f ./vendor/gggeek/ezextensionbuilder/pakefile.php build myext
 
 - Can multiple extensions be built in the same ROOT_DIR?
     Yes. Just create an option file for each

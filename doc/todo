@@ -1,17 +1,24 @@
 # high priority
 
-. acommodate better git-based workflows:
+. update dependencies in composer.json
+
+. accommodate better git-based workflows:
   1. a "validate" task which runs unit tests / compliance checks
-  2. a "tag" task which changes the version info files (even in pake config file itself?), and uploads them to git. It also gives feedback on git revision
+  2. a "tag" task which changes the version info files (even in pake config file itself?), and pushes them to git. It also gives feedback on git revision
   3. a "build" task which produces artifacts
   4. an "upload" task which creates the release on github and uploads the artifacts
      q: shall we instead upload in a separate branch the whole artifacts?
+  5. document how to trigger this automatically via github actions
 
 . fix: zip command does not work (searches for dist dir inside build dir)
 
 . fix: all-code-reports task give "Notice: Undefined index: phpcs" and phpmd as well
 
 # general
+
+. support .gitattributes file out of the box if found
+
+. make it easy to use a custom build config file from cli option and/or env var
 
 . test running report generation tasks against ezp (5) instead of an extension
 
@@ -20,8 +27,6 @@
 . rewrite fat_dist task not to use eZComponents for creating the tarball
 
 . ezfind: should not pack manual in odf format => improve exclude list w. depth
-
-. allow ezextensionbuilder to build self (does it means anything at all now?)
 
 . allow to build many extensions in a single call
   (workaround: use extension dependencies with a fake 'root' extension)
@@ -36,6 +41,8 @@
 
 . improve locking schema to avoid non-reentrant operations (such as init) to execute in parallel:
   at the moment we only protect access to the "build" dir, not to the "pake" or "dist" ones
+
+. allow ezextensionbuilder to build self (does it means anything at all now?)
 
 # new tasks
 
@@ -64,9 +71,6 @@
 
 . changelog generation task: if it's not there, build it from git/svn commit messages
   (also update ez package with that info)
-
-. deployment task to upload extension to projects.ez.no
-  - might need first some changes on projects.ez.no site
 
 . a task that checks for presence of update sql scripts (needs to have access to previous version sources too)
 

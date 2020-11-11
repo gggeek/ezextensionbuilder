@@ -1,13 +1,13 @@
 Changes for version 0.2 - released 2011/4/28
 
-*General:
+* General:
 . changed task execution order: now all 'check' tasks are run before any 'file changing' tasks
 . allow more flexibility in naming the .sql files
 . check for minimum pake version when not using bundled version
 . when upgrading, upgrade also the bundled pake version
 . find extension name, if not specified on cli, even when pake/options-ezextensionbuilder.yaml is present besides options-extension.yaml
 
-*Bugfixes:
+* Bugfixes:
 . on windows allow to find doxygen if not specified as cli option
 . the .tar.gz files built on windows would not open fine on mac/unix (cuz' of backslash in pathnames)
 . fix a fatal error in tool-upgrade-check task

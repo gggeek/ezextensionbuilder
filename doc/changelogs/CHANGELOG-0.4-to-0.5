@@ -1,6 +1,6 @@
-Changes for version 0.5 - released 2014/xx/yy
+Changes for version 0.5 - released 2020/11/11
 
-*Changes:
+* Changes:
 - upped requirements to php 5.3. Your extensions can still run on legacy php, please use a modern php on the build server
 - the supported installation method of the tool itself is now via composer. No more self-update or bootstrap!
   (this also means we rely on the standard pake, and do not bundle it anymore)
@@ -12,9 +12,9 @@ Changes for version 0.5 - released 2014/xx/yy
   results would be unpredictable: now only 1 task can write to the "dist" dir at any time, and many can read (as long as
   there is no writer active).
   Stale "lock" files will be left in dist/locks if you kill executing tasks, but they will be automatically cleaned up
-  whenever another task is executed 
+  whenever another task is executed
 
-*Bugfixes:
+* Bugfixes:
 - properly init a repo from local sources (used to fail at least on windows)
 
 * New:
@@ -35,7 +35,7 @@ Changes for version 0.5 - released 2014/xx/yy
 - added a new task: code-checks. It groups all the code checks part of the "build" task
 - a local options file will be read if present: pake/options-user.yaml.
   This makes it easier to keep config files with things specific to current build server separate from generic build options
-  which are generally commited to the source repository
+  which are generally committed to the source repository
 - all options from config file can now be overridden on command line, using --option.<name>.<suboption>.<etc>=value syntax
 - the directory where config files are stored can be changed using cli switch --config-dir=<dir>
 - the version number can now be specified on the command line after the extension name.

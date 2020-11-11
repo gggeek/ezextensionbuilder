@@ -18,41 +18,41 @@ This is a 4 steps tutorial. The fifth step is optional ;-)
 
 You can declare the script as a dependency in the composer.json file of your extension:
 
-{
-    "name": "<me>/<myextension>",
-    "type": "ezpublish-legacy-extension",
-    "minimum-stability": "dev",
-    "require": {
-        "ezsystems/ezpublish-legacy-installer": "*"
-    },
-    "require-dev": {
-        "gggeek/ezextensionbuilder": "*"
+    {
+        "name": "<me>/<myextension>",
+        "type": "ezpublish-legacy-extension",
+        "minimum-stability": "dev",
+        "require": {
+            "ezsystems/ezpublish-legacy-installer": "*"
+        },
+        "require-dev": {
+            "gggeek/ezextensionbuilder": "*"
+        }
     }
-}
 
 Usually you would run the build script in the root directory of your extension,
-but that is not a strict requisite (you could run the build process in some other dir). ::
+but that is not a strict requisite (you could run the build process in some other dir).
 
     cd <myextension_directory>
-    php composer.phar install
+    composer install
 
-If you do not have composer.phar, see here how to install it: http://getcomposer.org/doc/00-intro.md
+If you do not have composer, see here how to install it: https://getcomposer.org/doc/00-intro.md
 
-To test that installation worked fine, try getting a list of available tasks: run::
-To get a list of all available tasks run::
+To test that installation worked fine, try getting a list of available tasks.
+To get a list of all available tasks run:
 
     ./vendor/bin/ezextbuilder --tasks
 
 2. Create the configuration file (once)
 ---------------------------------------
 
-A configuration file is needed to drive the build. The extension can generate a sample one for you ::
+A configuration file is needed to drive the build. The extension can generate a sample one for you:
 
     ./vendor/bin/ezextbuilder generate-extension-config <myextension>
 
 This will create a directory ./pake/ and save into it the file options-<myextension>.yaml
 
-If your extension already has such file in its source repository, you can instead just download it ::
+If your extension already has such file in its source repository but not on local disk, you can instead just download it:
 
     ./vendor/bin/ezextbuilder download-extension-config myextension https://raw.github.com/<me>/<myextension>/master/pake/options-<myextension>.yaml
 
@@ -65,7 +65,7 @@ You should edit ./pake/options-<myextension>.yaml to suit your needs.
 Note that steps 1 and 2 have to be executed only once.
 
 Note also that you can pass any configuration option on the command line as well.
-This makes it easy to keep the same configuration file and run different builds. Ex: ::
+This makes it easy to keep the same configuration file and run different builds. Ex:
 
     ./vendor/bin/ezextbuilder show-properties --option.version.major=99
 
@@ -76,8 +76,8 @@ To build your extension run::
 
     ./vendor/bin/ezextbuilder build <myextension>
 
-NB: every time the extension is built, a fresh version is retrieved from its
-svn/git repository. The local copy is not used at all.
+NB: every time the extension is built, a fresh version is retrieved from its svn/git repository. The local copy is not
+used at all.
 
 You can also execute the different steps of the build process one by one, as well as execute optional tasks, such as
 generating QA reports of your code.
